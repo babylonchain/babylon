@@ -2008,35 +2008,35 @@ paths:
                       beginning, and
 
                       is set upon the end of this epoch.
-                  app_hash_root:
+                  app_hash_root_hex:
                     type: string
-                    format: byte
-                    title: >-
+                    description: >-
                       app_hash_root is the Merkle root of all AppHashs in this
                       epoch
 
-                      It will be used for proving a block is in an epoch
-                  sealer_app_hash:
+                      It will be used for proving a block is in an epoch as hex
+                      string.
+                  sealer_app_hash_hex:
                     type: string
-                    format: byte
-                    title: >-
+                    description: >-
                       sealer is the last block of the sealed epoch
 
                       sealer_app_hash points to the sealer but stored in the 1st
                       header
 
-                      of the next epoch
+                      of the next epoch as hex string.
                   sealer_block_hash:
                     type: string
-                    format: byte
-                    title: >-
+                    description: >-
                       sealer_block_hash is the hash of the sealer
 
                       the validator set has generated a BLS multisig on the
                       hash,
 
-                      i.e., hash of the last block in the epoch
-                title: Epoch is a structure that contains the metadata of an epoch
+                      i.e., hash of the last block in the epoch as hex string.
+                title: >-
+                  EpochResponse is a structure that contains the metadata of an
+                  epoch
             title: >-
               QueryEpochInfoRequest is the response type for the Query/EpochInfo
               method
@@ -10724,6 +10724,54 @@ definitions:
           the validator set has generated a BLS multisig on the hash,
           i.e., hash of the last block in the epoch
     title: Epoch is a structure that contains the metadata of an epoch
+  babylon.epoching.v1.EpochResponse:
+    type: object
+    properties:
+      epoch_number:
+        type: string
+        format: uint64
+        title: epoch_number is the number of this epoch
+      current_epoch_interval:
+        type: string
+        format: uint64
+        title: current_epoch_interval is the epoch interval at the time of this epoch
+      first_block_height:
+        type: string
+        format: uint64
+        title: first_block_height is the height of the first block in this epoch
+      last_block_time:
+        type: string
+        format: date-time
+        description: >-
+          last_block_time is the time of the last block in this epoch.
+
+          Babylon needs to remember the last header's time of each epoch to
+          complete
+
+          unbonding validators/delegations when a previous epoch's checkpoint is
+
+          finalised. The last_block_time field is nil in the epoch's beginning,
+          and
+
+          is set upon the end of this epoch.
+      app_hash_root_hex:
+        type: string
+        description: |-
+          app_hash_root is the Merkle root of all AppHashs in this epoch
+          It will be used for proving a block is in an epoch as hex string.
+      sealer_app_hash_hex:
+        type: string
+        description: |-
+          sealer is the last block of the sealed epoch
+          sealer_app_hash points to the sealer but stored in the 1st header
+          of the next epoch as hex string.
+      sealer_block_hash:
+        type: string
+        description: |-
+          sealer_block_hash is the hash of the sealer
+          the validator set has generated a BLS multisig on the hash,
+          i.e., hash of the last block in the epoch as hex string.
+    title: EpochResponse is a structure that contains the metadata of an epoch
   babylon.epoching.v1.Params:
     type: object
     properties:
@@ -10848,27 +10896,24 @@ definitions:
               beginning, and
 
               is set upon the end of this epoch.
-          app_hash_root:
+          app_hash_root_hex:
             type: string
-            format: byte
-            title: |-
+            description: |-
               app_hash_root is the Merkle root of all AppHashs in this epoch
-              It will be used for proving a block is in an epoch
-          sealer_app_hash:
+              It will be used for proving a block is in an epoch as hex string.
+          sealer_app_hash_hex:
             type: string
-            format: byte
-            title: |-
+            description: |-
               sealer is the last block of the sealed epoch
               sealer_app_hash points to the sealer but stored in the 1st header
-              of the next epoch
+              of the next epoch as hex string.
           sealer_block_hash:
             type: string
-            format: byte
-            title: |-
+            description: |-
               sealer_block_hash is the hash of the sealer
               the validator set has generated a BLS multisig on the hash,
-              i.e., hash of the last block in the epoch
-        title: Epoch is a structure that contains the metadata of an epoch
+              i.e., hash of the last block in the epoch as hex string.
+        title: EpochResponse is a structure that contains the metadata of an epoch
     title: QueryEpochInfoRequest is the response type for the Query/EpochInfo method
   babylon.epoching.v1.QueryEpochMsgsResponse:
     type: object

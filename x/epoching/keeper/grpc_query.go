@@ -49,10 +49,10 @@ func (k Keeper) EpochInfo(c context.Context, req *types.QueryEpochInfoRequest) (
 	if err != nil {
 		return nil, err
 	}
-	resp := &types.QueryEpochInfoResponse{
-		Epoch: epoch,
-	}
-	return resp, nil
+
+	return &types.QueryEpochInfoResponse{
+		Epoch: epoch.ToResponse(),
+	}, nil
 }
 
 // EpochsInfo handles the QueryEpochsInfoRequest query
