@@ -63,12 +63,6 @@ func (tx BTCSlashingTx) MarshalTo(data []byte) (int, error) {
 
 func (tx *BTCSlashingTx) Unmarshal(data []byte) error {
 	*tx = data
-
-	// ensure data can be decoded to a tx
-	if _, err := tx.ToMsgTx(); err != nil {
-		return err
-	}
-
 	return nil
 }
 

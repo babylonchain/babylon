@@ -12,8 +12,14 @@ type BIP340Signature []byte
 const BIP340SignatureLen = schnorr.SignatureSize
 
 func NewBIP340Signature(data []byte) (*BIP340Signature, error) {
+
 	var sig BIP340Signature
 	err := sig.Unmarshal(data)
+
+	if _, err := sig.ToBTCSig(); err != nil {
+		return nil, errors.New("bytes cannot be converted to a *schnorr.Signature object")
+	}
+
 	return &sig, err
 }
 
@@ -69,15 +75,6 @@ func (sig BIP340Signature) MarshalTo(data []byte) (int, error) {
 }
 
 func (sig *BIP340Signature) Unmarshal(data []byte) error {
-	newSig := BIP340Signature(data)
-
-	// ensure that the bytes can be transformed to a *schnorr.Signature object
-	// this includes all format checks
-	_, err := newSig.ToBTCSig()
-	if err != nil {
-		return errors.New("bytes cannot be converted to a *schnorr.Signature object")
-	}
-
 	*sig = data
 	return nil
 }
