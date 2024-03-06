@@ -158,9 +158,10 @@ func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMs
 		}
 
 		if accumulate {
+			msgs := k.GetEpochMsgs(ctx, epochNumber)
 			msgList := &types.QueuedMessageList{
 				EpochNumber: epochNumber,
-				Msgs:        k.GetEpochMsgs(ctx, epochNumber),
+				Msgs:        types.NewQueuedMessagesResponse(msgs),
 			}
 			latestEpochMsgs = append(latestEpochMsgs, msgList)
 		}

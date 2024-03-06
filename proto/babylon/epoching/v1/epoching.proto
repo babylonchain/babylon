@@ -57,13 +57,6 @@ message QueuedMessage {
   }
 }
 
-// QueuedMessageList is a message that contains a list of staking-related
-// messages queued for an epoch
-message QueuedMessageList {
-  uint64 epoch_number = 1;
-  repeated QueuedMessage msgs = 2;
-}
-
 // BondState is the bond state of a validator or delegation
 enum BondState {
   // CREATED is when the validator/delegation has been created
