@@ -1385,10 +1385,8 @@ paths:
                         state update of a
 
                         delegation
-                title: >-
-                  ValidatorLifecycle is a message that records records the
-                  lifecycle of
-
+                title: |-
+                  ValidatorLifecycle is a message that records the lifecycle of
                   a delegation
             title: |-
               QueryDelegationLifecycleRequest is the response type for the
@@ -3537,14 +3535,14 @@ paths:
                         block_time:
                           type: string
                           format: date-time
-                      title: >-
-                        ValStateUpdateResponse is a messages that records a
-                        state update of a validator
-                title: >-
-                  ValidatorLifecycleResponse is a message that records records
+                      description: >-
+                        ValStateUpdateResponse is a message response that
+                        records a state update of a validator.
+                description: >-
+                  ValidatorLifecycleResponse is a message response that records
                   the lifecycle of
 
-                  a validator
+                  a validator.
             title: |-
               QueryValidatorLifecycleResponse is the response type for the
               Query/ValidatorLifecycle RPC method
@@ -9854,7 +9852,7 @@ definitions:
 
             delegation
     title: |-
-      ValidatorLifecycle is a message that records records the lifecycle of
+      ValidatorLifecycle is a message that records the lifecycle of
       a delegation
   babylon.epoching.v1.DelegationStateUpdate:
     type: object
@@ -10029,7 +10027,7 @@ definitions:
 
                 delegation
         title: |-
-          ValidatorLifecycle is a message that records records the lifecycle of
+          ValidatorLifecycle is a message that records the lifecycle of
           a delegation
     title: |-
       QueryDelegationLifecycleRequest is the response type for the
@@ -10440,14 +10438,14 @@ definitions:
                 block_time:
                   type: string
                   format: date-time
-              title: >-
-                ValStateUpdateResponse is a messages that records a state update
-                of a validator
-        title: >-
-          ValidatorLifecycleResponse is a message that records records the
+              description: >-
+                ValStateUpdateResponse is a message response that records a
+                state update of a validator.
+        description: >-
+          ValidatorLifecycleResponse is a message response that records the
           lifecycle of
 
-          a validator
+          a validator.
     title: |-
       QueryValidatorLifecycleResponse is the response type for the
       Query/ValidatorLifecycle RPC method
@@ -10552,9 +10550,9 @@ definitions:
       block_time:
         type: string
         format: date-time
-    title: >-
-      ValStateUpdateResponse is a messages that records a state update of a
-      validator
+    description: >-
+      ValStateUpdateResponse is a message response that records a state update
+      of a validator.
   babylon.epoching.v1.Validator:
     type: object
     properties:
@@ -10603,14 +10601,14 @@ definitions:
             block_time:
               type: string
               format: date-time
-          title: >-
-            ValStateUpdateResponse is a messages that records a state update of
-            a validator
-    title: >-
-      ValidatorLifecycleResponse is a message that records records the lifecycle
-      of
+          description: >-
+            ValStateUpdateResponse is a message response that records a state
+            update of a validator.
+    description: >-
+      ValidatorLifecycleResponse is a message response that records the
+      lifecycle of
 
-      a validator
+      a validator.
   cosmos.base.v1beta1.Coin:
     type: object
     properties:

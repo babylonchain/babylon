@@ -233,7 +233,7 @@ message QueuedMessageList {
   repeated QueuedMessageResponse msgs = 2;
 }
 
-// ValStateUpdateResponse is a messages that records a state update of a validator
+// ValStateUpdateResponse is a message response that records a state update of a validator.
 message ValStateUpdateResponse {
   BondState state = 1;
   // StateDesc defines the descriptive state.
@@ -242,8 +242,8 @@ message ValStateUpdateResponse {
   google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
 }
 
-// ValidatorLifecycleResponse is a message that records records the lifecycle of
-// a validator
+// ValidatorLifecycleResponse is a message response that records the lifecycle of
+// a validator.
 message ValidatorLifecycleResponse {
   string val_addr = 1;
   repeated ValStateUpdateResponse val_life = 2;

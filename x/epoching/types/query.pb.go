@@ -1180,7 +1180,7 @@ func (m *QueuedMessageList) GetMsgs() []*QueuedMessageResponse {
 	return nil
 }
 
-// ValStateUpdateResponse is a messages that records a state update of a validator
+// ValStateUpdateResponse is a message response that records a state update of a validator.
 type ValStateUpdateResponse struct {
 	State BondState `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.epoching.v1.BondState" json:"state,omitempty"`
 	// StateDesc defines the descriptive state.
@@ -1250,8 +1250,8 @@ func (m *ValStateUpdateResponse) GetBlockTime() *time.Time {
 	return nil
 }
 
-// ValidatorLifecycleResponse is a message that records records the lifecycle of
-// a validator
+// ValidatorLifecycleResponse is a message response that records the lifecycle of
+// a validator.
 type ValidatorLifecycleResponse struct {
 	ValAddr string                    `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
 	ValLife []*ValStateUpdateResponse `protobuf:"bytes,2,rep,name=val_life,json=valLife,proto3" json:"val_life,omitempty"`
