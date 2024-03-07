@@ -100,8 +100,8 @@ The requirements for a valid staking transaction are:
 
 - it can contain arbitrary number of inputs
 - it can contain arbitrary number of outputs. One of those outputs must be
-a Taproot output committing to the BTC staking scripts recognized by Babylon.
-Henceforth known as `Staking Output`.
+  a Taproot output committing to the BTC staking scripts recognized by Babylon.
+  Henceforth known as `Staking Output`.
 
 ### Unbonding Transaction
 
@@ -111,9 +111,9 @@ their stake before their originally committed timelock has expired.
 The requirements for a valid unbonding transaction are:
 
 - it contains exactly one input which points to staking transaction's `Staking
-  Output`.
+Output`.
 - it contains exactly one output which must be a Taproot output committing to
-the BTC unbonding scripts recognized by Babylon. Henceforth known as `Unbonding
+  the BTC unbonding scripts recognized by Babylon. Henceforth known as `Unbonding
 Output`.
 
 ### Slashing Transaction
@@ -126,8 +126,8 @@ The requirements for a valid slashing transaction are:
 - it must have exactly one input pointing to either the staking output or the
   unbonding output
 - it must have exactly two outputs, the first sending the slashed fraction of
-the funds to a burn address specified in the Babylon chain's parameters and the
-second sending the remaining funds back to the BTC staker's address.
+  the funds to a burn address specified in the Babylon chain's parameters and the
+  second sending the remaining funds back to the BTC staker's address.
 - the fee for the slashing transactions must be larger than or equal to the
   minimal fee specified in Babylon's parameters
 
@@ -164,9 +164,9 @@ where:
 
 - `<Staker_PK>` is the BTC staker's public key..
 - `<Timelock_Blocks>` is the lockup period denoted in Bitcoin blocks. The
-timelock comes into effect after the Bitcoin transaction has been included in a
-mined block. In essence, the script denotes that only the staker can unlock the
-funds after the timelock has passed. It must be lower than `65535`.
+  timelock comes into effect after the Bitcoin transaction has been included in a
+  mined block. In essence, the script denotes that only the staker can unlock the
+  funds after the timelock has passed. It must be lower than `65535`.
 
 #### 2. Unbonding path
 
@@ -183,9 +183,9 @@ where:
 
 - `Staker_PK` is the BTC staker's public key
 - `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
-current covenant committee recognized by the Babylon chain
+  current covenant committee recognized by the Babylon chain
 - `CovenantThreshold` is a Babylon parameter specifying the number of how many
-covenant committee member signatures are required.
+  covenant committee member signatures are required.
 
 Signatures from a quorum of the covenant committee are required to ensure that
 this script is not used for on-demand unlocking without the stake going through
@@ -193,7 +193,7 @@ an unbonding period. reward all covenant members for their work.
 
 #### 3. Slashing path
 
-The slashing path is utilised for punishing finality providers and their
+The slashing path is utilized for punishing finality providers and their
 delegators in the case of double signing. It commits to a script:
 
 ```
@@ -209,9 +209,9 @@ where:
 - `FinalityProviderPk` is the BTC public key of the finality provider to which
   the staker delegates their stake
 - `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
-current covenant committee members recognized by the Babylon chain
+  current covenant committee members recognized by the Babylon chain
 - `CovenantThreshold` is a Babylon parameter denoting how many covenant
-committee member signatures are required.
+  committee member signatures are required.
 
 This path can only be executed with the collaboration of the BTC staker,
 finality provider, and covenant committee.
@@ -220,8 +220,8 @@ It is used in following way:
 - for stake to become active, staker must publish pre signed slashing transaction
 - covenant committee validates such transaction, and publish its own signatures.
 - the only signature missing to send slashing transaction is finality provider
-signature. If finality provider private key leaks due to infractions, anyone can
-sign slashing transaction and send slashing transaction to Bitcoin network.
+  signature. If finality provider private key leaks due to infractions, anyone can
+  sign slashing transaction and send slashing transaction to Bitcoin network.
 
 #### Difference between Unbonding and Slashing Path
 
@@ -231,16 +231,16 @@ The main difference between the unbonding and slashing paths is the existence of
 This leads to following system wide repercussions:
 
 - for staking request to become active, btc holder needs to provide valid
-unbonding transaction in this staking request. This staking request will become
-active only when `CovenantThreshold` signatures will be received by Babylon
-chain. Lack of `FinalityProviderPk` in unbonding path, means that after
-delegation becomes active, staker can send unbodning transaction any time
-without asking finality provider for permission.
+  unbonding transaction in this staking request. This staking request will become
+  active only when `CovenantThreshold` signatures will be received by Babylon
+  chain. Lack of `FinalityProviderPk` in unbonding path, means that after
+  delegation becomes active, staker can send unbodning transaction any time
+  without asking finality provider for permission.
 - existence of `FinalityProviderPk` in slashing path, coupled with the fact that
-btc holder needs to provide pre-signed slashing transaction which needs to be
-signed by covenant committee for delegation request to become active, leads to
-situation in which the only signature missing to send slashing transaction to
-btc is signature of finality provider.
+  btc holder needs to provide pre-signed slashing transaction which needs to be
+  signed by covenant committee for delegation request to become active, leads to
+  situation in which the only signature missing to send slashing transaction to
+  btc is signature of finality provider.
 
 ### Unbonding output
 
@@ -266,8 +266,8 @@ where:
 
 - Staker_PK is btc holder public key
 - Timelock_Blocks is unbonding time. It must be lower or equal 65535, but larger
-than `max(MinUnbondingTime, CheckpointFinalizationTimeout)`. `MinUnbondingTime`
-and `CheckpointFinalizationTimeout` are Babylon parameters.
+  than `max(MinUnbondingTime, CheckpointFinalizationTimeout)`. `MinUnbondingTime`
+  and `CheckpointFinalizationTimeout` are Babylon parameters.
 
 #### 2. Slashing path
 
@@ -287,9 +287,9 @@ where:
 - `FinalityProviderPk` is the BTC public key of the finality provider to which
   the staker delegates their stake
 - `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
-current covenant committee members recognized by the Babylon chain
+  current covenant committee members recognized by the Babylon chain
 - `CovenantThreshold` is a Babylon parameter denoting how many covenant
-committee member signatures are required.
+  committee member signatures are required.
 
 #### Existence of Slashing path in Unbonding output
 
