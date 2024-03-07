@@ -29,8 +29,8 @@ func (q *QueuedMessage) ToResponse() *QueuedMessageResponse {
 }
 
 // NewQueuedMessagesResponse parses all the queued messages as response.
-func NewQueuedMessagesResponse(msgs []*QueuedMessage) (resp []*QueuedMessageResponse) {
-	resp = make([]*QueuedMessageResponse, len(msgs))
+func NewQueuedMessagesResponse(msgs []*QueuedMessage) []*QueuedMessageResponse {
+	resp := make([]*QueuedMessageResponse, len(msgs))
 	for i, m := range msgs {
 		resp[i] = m.ToResponse()
 	}
