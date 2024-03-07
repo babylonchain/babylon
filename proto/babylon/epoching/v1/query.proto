@@ -108,7 +108,7 @@ message QueryCurrentEpochRequest {}
 message QueryCurrentEpochResponse {
   // current_epoch is the current epoch number
   uint64 current_epoch = 1;
-  // epoch_boundary is the height of this epoch's last blockf
+  // epoch_boundary is the height of this epoch's last block
   uint64 epoch_boundary = 2;
 }
 

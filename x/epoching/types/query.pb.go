@@ -350,7 +350,7 @@ var xxx_messageInfo_QueryCurrentEpochRequest proto.InternalMessageInfo
 type QueryCurrentEpochResponse struct {
 	// current_epoch is the current epoch number
 	CurrentEpoch uint64 `protobuf:"varint,1,opt,name=current_epoch,json=currentEpoch,proto3" json:"current_epoch,omitempty"`
-	// epoch_boundary is the height of this epoch's last blockf
+	// epoch_boundary is the height of this epoch's last block
 	EpochBoundary uint64 `protobuf:"varint,2,opt,name=epoch_boundary,json=epochBoundary,proto3" json:"epoch_boundary,omitempty"`
 }
 

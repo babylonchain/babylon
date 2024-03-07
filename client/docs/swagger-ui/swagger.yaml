@@ -1115,7 +1115,7 @@ paths:
               epoch_boundary:
                 type: string
                 format: uint64
-                title: epoch_boundary is the height of this epoch's last blockf
+                title: epoch_boundary is the height of this epoch's last block
             title: >-
               QueryCurrentEpochResponse is the response type for the
               Query/CurrentEpoch RPC
@@ -9961,7 +9961,7 @@ definitions:
       epoch_boundary:
         type: string
         format: uint64
-        title: epoch_boundary is the height of this epoch's last blockf
+        title: epoch_boundary is the height of this epoch's last block
     title: >-
       QueryCurrentEpochResponse is the response type for the Query/CurrentEpoch
       RPC
