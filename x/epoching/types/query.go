@@ -28,6 +28,33 @@ func (q *QueuedMessage) ToResponse() *QueuedMessageResponse {
 	}
 }
 
+// ToResponse parses a ValStateUpdate into a query response valset update struct.
+func (v *ValStateUpdate) ToResponse() *ValStateUpdateResponse {
+	return &ValStateUpdateResponse{
+		State:       v.State,
+		StateDesc:   v.State.String(),
+		BlockHeight: v.BlockHeight,
+		BlockTime:   v.BlockTime,
+	}
+}
+
+// ToResponse parses a ValidatorLifecycle into a query response validator lifecycle struct.
+func (v *ValidatorLifecycle) ToResponse() *ValidatorLifecycleResponse {
+	return &ValidatorLifecycleResponse{
+		ValAddr: v.ValAddr,
+		ValLife: NewValsetUpdateResponses(v.ValLife),
+	}
+}
+
+// NewValsetUpdateResponses parses all the valset updates as response.
+func NewValsetUpdateResponses(vs []*ValStateUpdate) []*ValStateUpdateResponse {
+	resp := make([]*ValStateUpdateResponse, len(vs))
+	for i, v := range vs {
+		resp[i] = v.ToResponse()
+	}
+	return resp
+}
+
 // NewQueuedMessagesResponse parses all the queued messages as response.
 func NewQueuedMessagesResponse(msgs []*QueuedMessage) []*QueuedMessageResponse {
 	resp := make([]*QueuedMessageResponse, len(msgs))

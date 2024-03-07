@@ -3528,6 +3528,9 @@ paths:
                           title: >-
                             BondState is the bond state of a validator or
                             delegation
+                        state_desc:
+                          type: string
+                          description: StateDesc defines the descriptive state.
                         block_height:
                           type: string
                           format: uint64
@@ -3535,11 +3538,11 @@ paths:
                           type: string
                           format: date-time
                       title: >-
-                        ValStateUpdate is a messages that records a state update
-                        of a validator
+                        ValStateUpdateResponse is a messages that records a
+                        state update of a validator
                 title: >-
-                  ValidatorLifecycle is a message that records records the
-                  lifecycle of
+                  ValidatorLifecycleResponse is a message that records records
+                  the lifecycle of
 
                   a validator
             title: |-
@@ -10428,6 +10431,9 @@ definitions:
                      - UNBONDED: CREATED is when the validator/delegation has become unbonded
                      - REMOVED: CREATED is when the validator/delegation has been removed
                   title: BondState is the bond state of a validator or delegation
+                state_desc:
+                  type: string
+                  description: StateDesc defines the descriptive state.
                 block_height:
                   type: string
                   format: uint64
@@ -10435,10 +10441,12 @@ definitions:
                   type: string
                   format: date-time
               title: >-
-                ValStateUpdate is a messages that records a state update of a
-                validator
-        title: |-
-          ValidatorLifecycle is a message that records records the lifecycle of
+                ValStateUpdateResponse is a messages that records a state update
+                of a validator
+        title: >-
+          ValidatorLifecycleResponse is a message that records records the
+          lifecycle of
+
           a validator
     title: |-
       QueryValidatorLifecycleResponse is the response type for the
@@ -10516,7 +10524,7 @@ definitions:
       is delayed
 
       to the end of an epoch
-  babylon.epoching.v1.ValStateUpdate:
+  babylon.epoching.v1.ValStateUpdateResponse:
     type: object
     properties:
       state:
@@ -10535,13 +10543,18 @@ definitions:
            - UNBONDED: CREATED is when the validator/delegation has become unbonded
            - REMOVED: CREATED is when the validator/delegation has been removed
         title: BondState is the bond state of a validator or delegation
+      state_desc:
+        type: string
+        description: StateDesc defines the descriptive state.
       block_height:
         type: string
         format: uint64
       block_time:
         type: string
         format: date-time
-    title: ValStateUpdate is a messages that records a state update of a validator
+    title: >-
+      ValStateUpdateResponse is a messages that records a state update of a
+      validator
   babylon.epoching.v1.Validator:
     type: object
     properties:
@@ -10554,7 +10567,7 @@ definitions:
         format: int64
         title: power is the validator's voting power
     title: Validator is a message that denotes a validator
-  babylon.epoching.v1.ValidatorLifecycle:
+  babylon.epoching.v1.ValidatorLifecycleResponse:
     type: object
     properties:
       val_addr:
@@ -10581,6 +10594,9 @@ definitions:
                  - UNBONDED: CREATED is when the validator/delegation has become unbonded
                  - REMOVED: CREATED is when the validator/delegation has been removed
               title: BondState is the bond state of a validator or delegation
+            state_desc:
+              type: string
+              description: StateDesc defines the descriptive state.
             block_height:
               type: string
               format: uint64
@@ -10588,10 +10604,12 @@ definitions:
               type: string
               format: date-time
           title: >-
-            ValStateUpdate is a messages that records a state update of a
-            validator
-    title: |-
-      ValidatorLifecycle is a message that records records the lifecycle of
+            ValStateUpdateResponse is a messages that records a state update of
+            a validator
+    title: >-
+      ValidatorLifecycleResponse is a message that records records the lifecycle
+      of
+
       a validator
   cosmos.base.v1beta1.Coin:
     type: object

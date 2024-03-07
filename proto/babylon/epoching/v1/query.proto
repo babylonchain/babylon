@@ -158,7 +158,7 @@ message QueryValidatorLifecycleRequest { string val_addr = 1; }
 
 // QueryValidatorLifecycleResponse is the response type for the
 // Query/ValidatorLifecycle RPC method
-message QueryValidatorLifecycleResponse { ValidatorLifecycle val_life = 1; }
+message QueryValidatorLifecycleResponse { ValidatorLifecycleResponse val_life = 1; }
 
 // QueryDelegationLifecycleRequest is the request type for the
 // Query/DelegationLifecycle RPC method
@@ -231,4 +231,20 @@ message QueuedMessageResponse {
 message QueuedMessageList {
   uint64 epoch_number = 1;
   repeated QueuedMessageResponse msgs = 2;
+}
+
+// ValStateUpdateResponse is a messages that records a state update of a validator
+message ValStateUpdateResponse {
+  BondState state = 1;
+  // StateDesc defines the descriptive state.
+  string state_desc = 2;
+  uint64 block_height = 3;
+  google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
+}
+
+// ValidatorLifecycleResponse is a message that records records the lifecycle of
+// a validator
+message ValidatorLifecycleResponse {
+  string val_addr = 1;
+  repeated ValStateUpdateResponse val_life = 2;
 }

@@ -188,7 +188,7 @@ func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorL
 	}
 	lc := k.GetValLifecycle(ctx, valAddr)
 	return &types.QueryValidatorLifecycleResponse{
-		ValLife: lc,
+		ValLife: lc.ToResponse(),
 	}, nil
 }
 
