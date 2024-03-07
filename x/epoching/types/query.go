@@ -1,6 +1,8 @@
 package types
 
-import "encoding/hex"
+import (
+	"encoding/hex"
+)
 
 // ToResponse parses a Epoch into a query response epoch struct.
 func (e *Epoch) ToResponse() *EpochResponse {
@@ -13,4 +15,24 @@ func (e *Epoch) ToResponse() *EpochResponse {
 		SealerAppHashHex:     hex.EncodeToString(e.SealerAppHash),
 		SealerBlockHash:      hex.EncodeToString(e.SealerBlockHash),
 	}
+}
+
+// ToResponse parses a QueuedMessage into a query response queued message struct.
+func (q *QueuedMessage) ToResponse() *QueuedMessageResponse {
+	return &QueuedMessageResponse{
+		TxId:        hex.EncodeToString(q.TxId),
+		MsgId:       hex.EncodeToString(q.MsgId),
+		BlockHeight: q.BlockHeight,
+		BlockTime:   q.BlockTime,
+		Msg:         q.UnwrapToSdkMsg().String(),
+	}
+}
+
+// NewQueuedMessagesResponse parses all the queued messages as response.
+func NewQueuedMessagesResponse(msgs []*QueuedMessage) []*QueuedMessageResponse {
+	resp := make([]*QueuedMessageResponse, len(msgs))
+	for i, m := range msgs {
+		resp[i] = m.ToResponse()
+	}
+	return resp
 }

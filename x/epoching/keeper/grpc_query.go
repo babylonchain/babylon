@@ -90,7 +90,7 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 		return nil, types.ErrUnknownEpochNumber
 	}
 
-	var msgs []*types.QueuedMessage
+	var msgs []*types.QueuedMessageResponse
 	epochMsgsStore := k.msgQueueStore(ctx, req.EpochNum)
 
 	// handle pagination
@@ -109,17 +109,17 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 			return errors.New("invalid queue message")
 		}
 		// append to msgs
-		msgs = append(msgs, queuedMsg)
+		msgs = append(msgs, queuedMsg.ToResponse())
 		return nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	resp := &types.QueryEpochMsgsResponse{
+
+	return &types.QueryEpochMsgsResponse{
 		Msgs:       msgs,
 		Pagination: pageRes,
-	}
-	return resp, nil
+	}, nil
 }
 
 // LatestEpochMsgs handles the QueryLatestEpochMsgsRequest query
@@ -158,9 +158,10 @@ func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMs
 		}
 
 		if accumulate {
+			msgs := k.GetEpochMsgs(ctx, epochNumber)
 			msgList := &types.QueuedMessageList{
 				EpochNumber: epochNumber,
-				Msgs:        k.GetEpochMsgs(ctx, epochNumber),
+				Msgs:        types.NewQueuedMessagesResponse(msgs),
 			}
 			latestEpochMsgs = append(latestEpochMsgs, msgList)
 		}

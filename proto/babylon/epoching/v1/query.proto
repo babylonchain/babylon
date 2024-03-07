@@ -125,7 +125,7 @@ message QueryEpochMsgsRequest {
 // method
 message QueryEpochMsgsResponse {
   // msgs is the list of messages queued in the current epoch
-  repeated babylon.epoching.v1.QueuedMessage msgs = 1;
+  repeated QueuedMessageResponse msgs = 1;
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -145,9 +145,9 @@ message QueryLatestEpochMsgsRequest {
 // QueryLatestEpochMsgsResponse is the response type for the
 // Query/LatestEpochMsgs RPC method
 message QueryLatestEpochMsgsResponse {
-  // epoch_msg_map is a list of QueuedMessageList
+  // latest_epoch_msgs is a list of QueuedMessageList
   // each QueuedMessageList has a field identifying the epoch number
-  repeated babylon.epoching.v1.QueuedMessageList latest_epoch_msgs = 1;
+  repeated QueuedMessageList latest_epoch_msgs = 1;
 
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -208,4 +208,27 @@ message EpochResponse {
   // the validator set has generated a BLS multisig on the hash,
   // i.e., hash of the last block in the epoch as hex string.
   string sealer_block_hash = 7;
+}
+
+// QueuedMessageResponse is a message that can change the validator set and is delayed
+// to the end of an epoch
+message QueuedMessageResponse {
+  // tx_id is the ID of the tx that contains the message as hex.
+  string tx_id = 1;
+  // msg_id is the original message ID, i.e., hash of the marshaled message as hex.
+  string msg_id = 2;
+  // block_height is the height when this msg is submitted to Babylon
+  uint64 block_height = 3;
+  // block_time is the timestamp when this msg is submitted to Babylon
+  google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
+  // msg is the actual message that is sent by a user and is queued by the
+  // epoching module as string.
+  string msg = 5;
+}
+
+// QueuedMessageList is a message that contains a list of staking-related
+// messages queued for an epoch
+message QueuedMessageList {
+  uint64 epoch_number = 1;
+  repeated QueuedMessageResponse msgs = 2;
 }
