@@ -145,9 +145,9 @@ message QueryLatestEpochMsgsRequest {
 // QueryLatestEpochMsgsResponse is the response type for the
 // Query/LatestEpochMsgs RPC method
 message QueryLatestEpochMsgsResponse {
-  // epoch_msg_map is a list of QueuedMessageList
+  // latest_epoch_msgs is a list of QueuedMessageList
   // each QueuedMessageList has a field identifying the epoch number
-  repeated babylon.epoching.v1.QueuedMessageList latest_epoch_msgs = 1;
+  repeated QueuedMessageList latest_epoch_msgs = 1;
 
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -224,4 +224,11 @@ message QueuedMessageResponse {
   // msg is the actual message that is sent by a user and is queued by the
   // epoching module as string.
   string msg = 5;
+}
+
+// QueuedMessageList is a message that contains a list of staking-related
+// messages queued for an epoch
+message QueuedMessageList {
+  uint64 epoch_number = 1;
+  repeated QueuedMessageResponse msgs = 2;
 }
