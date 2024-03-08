@@ -31,7 +31,6 @@ func (q *QueuedMessage) ToResponse() *QueuedMessageResponse {
 // ToResponse parses a ValStateUpdate into a query response valset update struct.
 func (v *ValStateUpdate) ToResponse() *ValStateUpdateResponse {
 	return &ValStateUpdateResponse{
-		State:       v.State,
 		StateDesc:   v.State.String(),
 		BlockHeight: v.BlockHeight,
 		BlockTime:   v.BlockTime,

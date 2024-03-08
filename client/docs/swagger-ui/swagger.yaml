@@ -3504,23 +3504,6 @@ paths:
                 items:
                   type: object
                   properties:
-                    state:
-                      type: string
-                      enum:
-                        - CREATED
-                        - BONDED
-                        - UNBONDING
-                        - UNBONDED
-                        - REMOVED
-                      default: CREATED
-                      description: >-
-                        - CREATED: CREATED is when the validator/delegation has
-                        been created
-                         - BONDED: CREATED is when the validator/delegation has become bonded
-                         - UNBONDING: CREATED is when the validator/delegation has become unbonding
-                         - UNBONDED: CREATED is when the validator/delegation has become unbonded
-                         - REMOVED: CREATED is when the validator/delegation has been removed
-                      title: BondState is the bond state of a validator or delegation
                     state_desc:
                       type: string
                       description: StateDesc defines the descriptive state.
@@ -10399,23 +10382,6 @@ definitions:
         items:
           type: object
           properties:
-            state:
-              type: string
-              enum:
-                - CREATED
-                - BONDED
-                - UNBONDING
-                - UNBONDED
-                - REMOVED
-              default: CREATED
-              description: >-
-                - CREATED: CREATED is when the validator/delegation has been
-                created
-                 - BONDED: CREATED is when the validator/delegation has become bonded
-                 - UNBONDING: CREATED is when the validator/delegation has become unbonding
-                 - UNBONDED: CREATED is when the validator/delegation has become unbonded
-                 - REMOVED: CREATED is when the validator/delegation has been removed
-              title: BondState is the bond state of a validator or delegation
             state_desc:
               type: string
               description: StateDesc defines the descriptive state.
@@ -10507,22 +10473,6 @@ definitions:
   babylon.epoching.v1.ValStateUpdateResponse:
     type: object
     properties:
-      state:
-        type: string
-        enum:
-          - CREATED
-          - BONDED
-          - UNBONDING
-          - UNBONDED
-          - REMOVED
-        default: CREATED
-        description: |-
-          - CREATED: CREATED is when the validator/delegation has been created
-           - BONDED: CREATED is when the validator/delegation has become bonded
-           - UNBONDING: CREATED is when the validator/delegation has become unbonding
-           - UNBONDED: CREATED is when the validator/delegation has become unbonded
-           - REMOVED: CREATED is when the validator/delegation has been removed
-        title: BondState is the bond state of a validator or delegation
       state_desc:
         type: string
         description: StateDesc defines the descriptive state.

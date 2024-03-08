@@ -238,9 +238,8 @@ message QueuedMessageList {
 
 // ValStateUpdateResponse is a message response that records a state update of a validator.
 message ValStateUpdateResponse {
-  BondState state = 1;
   // StateDesc defines the descriptive state.
-  string state_desc = 2;
-  uint64 block_height = 3;
-  google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
+  string state_desc = 1;
+  uint64 block_height = 2;
+  google.protobuf.Timestamp block_time = 3 [ (gogoproto.stdtime) = true ];
 }
