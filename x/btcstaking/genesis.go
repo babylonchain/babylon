@@ -2,6 +2,7 @@ package btcstaking
 
 import (
 	"context"
+
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 )

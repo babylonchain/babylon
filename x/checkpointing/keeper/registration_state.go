@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -61,7 +62,7 @@ func (rs RegistrationState) CreateRegistration(key bls12381.PublicKey, valAddr s
 // GetBlsPubKey retrieves BLS public key by validator's address
 func (rs RegistrationState) GetBlsPubKey(addr sdk.ValAddress) (bls12381.PublicKey, error) {
 	pkKey := types.AddrToBlsKeyKey(addr)
-	rawBytes := rs.addrToBlsKeys.Get(pkKey)
+	rawBytes := rs.addrToBlsKeys.Get(pkKey) // "&\x8c%!\t\xc3Èl\x92\xfemwȡ5\xf5{\x1f\xc4"
 	if rawBytes == nil {
 		return nil, types.ErrBlsKeyDoesNotExist.Wrapf("BLS public key does not exist with address %s", addr)
 	}
