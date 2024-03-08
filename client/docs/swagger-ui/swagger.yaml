@@ -3497,52 +3497,42 @@ paths:
           schema:
             type: object
             properties:
+              val_addr:
+                type: string
               val_life:
-                type: object
-                properties:
-                  val_addr:
-                    type: string
-                  val_life:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        state:
-                          type: string
-                          enum:
-                            - CREATED
-                            - BONDED
-                            - UNBONDING
-                            - UNBONDED
-                            - REMOVED
-                          default: CREATED
-                          description: >-
-                            - CREATED: CREATED is when the validator/delegation
-                            has been created
-                             - BONDED: CREATED is when the validator/delegation has become bonded
-                             - UNBONDING: CREATED is when the validator/delegation has become unbonding
-                             - UNBONDED: CREATED is when the validator/delegation has become unbonded
-                             - REMOVED: CREATED is when the validator/delegation has been removed
-                          title: >-
-                            BondState is the bond state of a validator or
-                            delegation
-                        state_desc:
-                          type: string
-                          description: StateDesc defines the descriptive state.
-                        block_height:
-                          type: string
-                          format: uint64
-                        block_time:
-                          type: string
-                          format: date-time
+                type: array
+                items:
+                  type: object
+                  properties:
+                    state:
+                      type: string
+                      enum:
+                        - CREATED
+                        - BONDED
+                        - UNBONDING
+                        - UNBONDED
+                        - REMOVED
+                      default: CREATED
                       description: >-
-                        ValStateUpdateResponse is a message response that
-                        records a state update of a validator.
-                description: >-
-                  ValidatorLifecycleResponse is a message response that records
-                  the lifecycle of
-
-                  a validator.
+                        - CREATED: CREATED is when the validator/delegation has
+                        been created
+                         - BONDED: CREATED is when the validator/delegation has become bonded
+                         - UNBONDING: CREATED is when the validator/delegation has become unbonding
+                         - UNBONDED: CREATED is when the validator/delegation has become unbonded
+                         - REMOVED: CREATED is when the validator/delegation has been removed
+                      title: BondState is the bond state of a validator or delegation
+                    state_desc:
+                      type: string
+                      description: StateDesc defines the descriptive state.
+                    block_height:
+                      type: string
+                      format: uint64
+                    block_time:
+                      type: string
+                      format: date-time
+                  description: >-
+                    ValStateUpdateResponse is a message response that records a
+                    state update of a validator.
             title: |-
               QueryValidatorLifecycleResponse is the response type for the
               Query/ValidatorLifecycle RPC method
@@ -10402,50 +10392,42 @@ definitions:
   babylon.epoching.v1.QueryValidatorLifecycleResponse:
     type: object
     properties:
+      val_addr:
+        type: string
       val_life:
-        type: object
-        properties:
-          val_addr:
-            type: string
-          val_life:
-            type: array
-            items:
-              type: object
-              properties:
-                state:
-                  type: string
-                  enum:
-                    - CREATED
-                    - BONDED
-                    - UNBONDING
-                    - UNBONDED
-                    - REMOVED
-                  default: CREATED
-                  description: >-
-                    - CREATED: CREATED is when the validator/delegation has been
-                    created
-                     - BONDED: CREATED is when the validator/delegation has become bonded
-                     - UNBONDING: CREATED is when the validator/delegation has become unbonding
-                     - UNBONDED: CREATED is when the validator/delegation has become unbonded
-                     - REMOVED: CREATED is when the validator/delegation has been removed
-                  title: BondState is the bond state of a validator or delegation
-                state_desc:
-                  type: string
-                  description: StateDesc defines the descriptive state.
-                block_height:
-                  type: string
-                  format: uint64
-                block_time:
-                  type: string
-                  format: date-time
+        type: array
+        items:
+          type: object
+          properties:
+            state:
+              type: string
+              enum:
+                - CREATED
+                - BONDED
+                - UNBONDING
+                - UNBONDED
+                - REMOVED
+              default: CREATED
               description: >-
-                ValStateUpdateResponse is a message response that records a
-                state update of a validator.
-        description: >-
-          ValidatorLifecycleResponse is a message response that records the
-          lifecycle of
-
-          a validator.
+                - CREATED: CREATED is when the validator/delegation has been
+                created
+                 - BONDED: CREATED is when the validator/delegation has become bonded
+                 - UNBONDING: CREATED is when the validator/delegation has become unbonding
+                 - UNBONDED: CREATED is when the validator/delegation has become unbonded
+                 - REMOVED: CREATED is when the validator/delegation has been removed
+              title: BondState is the bond state of a validator or delegation
+            state_desc:
+              type: string
+              description: StateDesc defines the descriptive state.
+            block_height:
+              type: string
+              format: uint64
+            block_time:
+              type: string
+              format: date-time
+          description: >-
+            ValStateUpdateResponse is a message response that records a state
+            update of a validator.
     title: |-
       QueryValidatorLifecycleResponse is the response type for the
       Query/ValidatorLifecycle RPC method
@@ -10565,50 +10547,6 @@ definitions:
         format: int64
         title: power is the validator's voting power
     title: Validator is a message that denotes a validator
-  babylon.epoching.v1.ValidatorLifecycleResponse:
-    type: object
-    properties:
-      val_addr:
-        type: string
-      val_life:
-        type: array
-        items:
-          type: object
-          properties:
-            state:
-              type: string
-              enum:
-                - CREATED
-                - BONDED
-                - UNBONDING
-                - UNBONDED
-                - REMOVED
-              default: CREATED
-              description: >-
-                - CREATED: CREATED is when the validator/delegation has been
-                created
-                 - BONDED: CREATED is when the validator/delegation has become bonded
-                 - UNBONDING: CREATED is when the validator/delegation has become unbonding
-                 - UNBONDED: CREATED is when the validator/delegation has become unbonded
-                 - REMOVED: CREATED is when the validator/delegation has been removed
-              title: BondState is the bond state of a validator or delegation
-            state_desc:
-              type: string
-              description: StateDesc defines the descriptive state.
-            block_height:
-              type: string
-              format: uint64
-            block_time:
-              type: string
-              format: date-time
-          description: >-
-            ValStateUpdateResponse is a message response that records a state
-            update of a validator.
-    description: >-
-      ValidatorLifecycleResponse is a message response that records the
-      lifecycle of
-
-      a validator.
   cosmos.base.v1beta1.Coin:
     type: object
     properties:

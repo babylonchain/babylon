@@ -38,14 +38,6 @@ func (v *ValStateUpdate) ToResponse() *ValStateUpdateResponse {
 	}
 }
 
-// ToResponse parses a ValidatorLifecycle into a query response validator lifecycle struct.
-func (v *ValidatorLifecycle) ToResponse() *ValidatorLifecycleResponse {
-	return &ValidatorLifecycleResponse{
-		ValAddr: v.ValAddr,
-		ValLife: NewValsetUpdateResponses(v.ValLife),
-	}
-}
-
 // NewValsetUpdateResponses parses all the valset updates as response.
 func NewValsetUpdateResponses(vs []*ValStateUpdate) []*ValStateUpdateResponse {
 	resp := make([]*ValStateUpdateResponse, len(vs))
