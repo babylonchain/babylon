@@ -5,9 +5,11 @@ installed. If the repository was only built, then `./build/babylond` should be
 used in its place.
 
 ### Generating the node configuration
+
 The configuration for a single node can be created through the `testnet`
 command. While the `testnet` command can create an arbitrary number of nodes that
 communicate on a testnet, here we focus on the setup of a single node.
+
 ```console
 babylond testnet \
     --v                     1 \
@@ -18,6 +20,7 @@ babylond testnet \
 ```
 
 The flags specify the following:
+
 - `--output-dir <testnet-dir>`: Specifies that the testnet files should
   reside under this directory.
 - `--v <N>`: Leads to the creation of `N` nodes, each one residing under the
@@ -27,10 +30,11 @@ The flags specify the following:
   second one on `192.168.10.3:46656` etc.
 - `--keyring-backend {os,file,test}`: Specifies the backend to use for the keyring. Available
   choices include `os`, `file`, and `test`. We use `test` for convenience.
-- `--chain-id`: An identifier for the chain. Useful when perrforming operations
+- `--chain-id`: An identifier for the chain. Useful when performing operations
   later.
 
 In this case, we generated a single node. If we take a look under `.testnet`:
+
 ```console
 $ ls .testnet
 gentxs node0
@@ -41,12 +45,14 @@ transactions that assign bbn tokens to a single address that is defined for each
 node.
 
 The `node0` directory contains the the following,
+
 ```console
 $ ls .testnet/node0/babylond
 config        data          key_seed.json keyring-test
 ```
 
 A brief description of the contents:
+
 - `config`: Contains the configuration files for the node.
 - `data`: Contains the database storage for the node.
 - `key_seed.json`: Seed to generate the keys maintained by the keyring.
@@ -57,6 +63,7 @@ A brief description of the contents:
   The keys for this node can be pointed to by the `node{i}` name.
 
 ### Running the node
+
 ```console
 babylond start --home ./.testnet/node0/babylond
 ```
@@ -69,6 +76,7 @@ The logs for a particular node can be found under
 ### Performing queries
 
 After building a node and starting it, you can perform queries.
+
 ```console
 babylond --home .testnet/node{i}/babylond/ --chain-id <chain-id> \
     query <module-name> <query-name>
@@ -76,6 +84,7 @@ babylond --home .testnet/node{i}/babylond/ --chain-id <chain-id> \
 
 For example, in order to get the hashes maintained by the `btcligthclient`
 module:
+
 ```console
 $ babylond --home .testnet/node0/babylond/ --chain-id chain-test query btclightclient hashes
 
@@ -89,6 +98,7 @@ pagination:
 ### Submitting transactions
 
 After building a node and running it, one can send transactions as follows:
+
 ```console
 babylond --home .testnet/node{i}/babylond --chain-id <chain-id> \
          --keyring-backend {os,file,test} --fees <amount><denom> \
@@ -106,6 +116,7 @@ and `block` means after the transaction has been processed by the next block.
 
 For example, in the `btclightclient` module, in order
 to submit a header, one should:
+
 ```console
 babylond --home .testnet/node0/babylond --chain-id chain-test \
          --keyring-backend test --fees 100bbn \
@@ -122,6 +133,7 @@ make localnet-start
 ```
 
 The corresponding node directories can be found under `.testnets`
+
 ```console
 $ ls .testnets
 gentxs node0 node1 node2 node3
@@ -132,4 +144,3 @@ gentxs node0 node1 node2 node3
 ```console
 make test
 ```
-
