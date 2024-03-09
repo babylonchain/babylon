@@ -5,45 +5,46 @@ providers and BTC delegations under them. This includes:
 
 - handling requests for creating finality providers,
 - handling requests for creating BTC delegations,
-- handlilng requests for submitting signatures of covenant emulators,
+- handling requests for submitting signatures of covenant emulators,
 - handling requests for unbonding BTC delegations, and
 - proactively refreshing the active set of finality providers and BTC
   delegations.
 
 ## Table of contents
 
-- [Table of contents](#table-of-contents)
-- [Concepts](#concepts)
-- [States](#states)
-  - [Parameters](#parameters)
-  - [Finality providers](#finality-providers)
-  - [BTC delegations](#btc-delegations)
-  - [BTC delegation index](#btc-delegation-index)
-  - [Voting power table](#voting-power-table)
-  - [Params](#params)
-- [Messages](#messages)
-  - [MsgCreateFinalityProvider](#msgcreatefinalityprovider)
-  - [MsgEditFinalityProvider](#msgeditfinalityprovider)
-  - [MsgCreateBTCDelegation](#msgcreatebtcdelegation)
-  - [MsgAddCovenantSigs](#msgaddcovenantsigs)
-  - [MsgBTCUndelegate](#msgbtcundelegate)
-  - [MsgUpdateParams](#msgupdateparams)
-  - [MsgSelectiveSlashingEvidence](#msgselectiveslashingevidence)
-- [BeginBlocker](#beginblocker)
-- [Events](#events)
-- [Queries](#queries)
+- [BTCStaking](#btcstaking)
+  - [Table of contents](#table-of-contents)
+  - [Concepts](#concepts)
+  - [States](#states)
+    - [Parameters](#parameters)
+    - [Finality providers](#finality-providers)
+    - [BTC delegations](#btc-delegations)
+    - [BTC delegation index](#btc-delegation-index)
+    - [Voting power table](#voting-power-table)
+    - [Params](#params)
+  - [Messages](#messages)
+    - [MsgCreateFinalityProvider](#msgcreatefinalityprovider)
+    - [MsgEditFinalityProvider](#msgeditfinalityprovider)
+    - [MsgCreateBTCDelegation](#msgcreatebtcdelegation)
+    - [MsgAddCovenantSigs](#msgaddcovenantsigs)
+    - [MsgBTCUndelegate](#msgbtcundelegate)
+    - [MsgUpdateParams](#msgupdateparams)
+    - [MsgSelectiveSlashingEvidence](#msgselectiveslashingevidence)
+  - [BeginBlocker](#beginblocker)
+  - [Events](#events)
+  - [Queries](#queries)
 
 ## Concepts
 
-Babylon's Bitcoin Staking protocol allows bitcoin holders to *trustlessly* stake
+Babylon's Bitcoin Staking protocol allows bitcoin holders to _trustlessly_ stake
 their bitcoins for providing economic security to the Babylon chain and other
-Proof-of-Stake (PoS) blockchains, *without bridging their bitcoins elsewhere*.
+Proof-of-Stake (PoS) blockchains, _without bridging their bitcoins elsewhere_.
 The protocol consists of the following participants:
 
 - **BTC staker (aka delegator)** who delegates their bitcoins to a finality
   provider in order to obtain staking reward.
 - **Finality provider** who receives bitcoin delegations and participates in the
-  *finality vote round* on top of the CometBFT consensus.
+  _finality vote round_ on top of the CometBFT consensus.
 - **Covenant emulation committee** who serves as the
   [covenants](https://covenants.info) to enforce spending conditions on bitcoins
   staked on Babylon.
@@ -55,16 +56,16 @@ follows:
 1. A finality provider registers itself on the BTC Staking module.
 2. A BTC staker delegates some bitcoins to the finality provider. This involves
    the following steps:
-   1. The BTC staker submits a *staking transaction* to Bitcoin. The staking
+   1. The BTC staker submits a _staking transaction_ to Bitcoin. The staking
       transaction locks its bitcoins for a long period of time and specifies
       slashing conditions.
    2. The BTC staker constructs the following transactions (whose specifications
       can be found [here](../../docs/staking-script.md)):
-      - a *slashing transaction* that can spend the staking transaction once the
+      - a _slashing transaction_ that can spend the staking transaction once the
         finality provider is slashed,
-      - an *unbonding transaction* that spends the staking transaction to start
+      - an _unbonding transaction_ that spends the staking transaction to start
         the early unbonding process, and
-      - an *unbonding slashing transaction* that can spend the unbonding
+      - an _unbonding slashing transaction_ that can spend the unbonding
         transaction once the finality provider is slashed. The BTC staker
         pre-signs the slashing transaction and unbonding slashing transaction.
    3. Once the staking transaction is confirmed on Bitcoin, the BTC staker sends
@@ -256,7 +257,7 @@ message BTCUndelegation {
     repeated CovenantAdaptorSignatures covenant_slashing_sigs = 5;
     // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
     // by covenant members
-    // It must be provided after processing undelagate message by Babylon
+    // It must be provided after processing undelegate message by Babylon
     repeated SignatureInfo covenant_unbonding_sig_list = 6;
 }
 ```
@@ -432,7 +433,7 @@ Upon `MsgEditFinalityProvider`, a Babylon node will execute as follows:
 4. Ensure the address `signer` corresponds to the Babylon public key
    `babylon_pk` in the finality provider.
 5. Change the `description` and `commission` in the finality provider to the
-   values supplied in the message, and write back the finlaity provider to the
+   values supplied in the message, and write back the finality provider to the
    finality provider storage.
 
 ### MsgCreateBTCDelegation
@@ -494,7 +495,7 @@ message MsgCreateBTCDelegation {
 Upon `MsgCreateBTCDelegation`, a Babylon node will execute as follows:
 
 1. Ensure the given unbonding time is larger than `max(MinUnbondingTime,
-   CheckpointFinalizationTimeout)`, where `MinUnbondingTime` and
+CheckpointFinalizationTimeout)`, where `MinUnbondingTime` and
    `CheckpointFinalizationTimeout` are module parameters from BTC Staking module
    and BTC Checkpoint module, respectively.
 2. Verify a [proof of
@@ -697,7 +698,7 @@ Upon `BeginBlock`, the BTC Staking module will execute the following:
    active BTC delegation, then record the reward distribution w.r.t. the active
    finality providers and active BTC delegations.
 
-The logic is defined at [x/btcstaking/abci.go]((./abci.go)).
+The logic is defined at [x/btcstaking/abci.go](<(./abci.go)>).
 
 ## Events
 
@@ -713,7 +714,7 @@ message EventNewFinalityProvider { FinalityProvider fp = 1; }
 // - non-existing -> pending, which happens upon `MsgCreateBTCDelegation`
 // - pending -> active, which happens upon `MsgAddCovenantSigs`
 // - active -> unbonded, which happens upon `MsgBTCUndelegate` or upon staking tx timelock expires
-message EventBTCDelegationStateUpdate { 
+message EventBTCDelegationStateUpdate {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
@@ -721,7 +722,7 @@ message EventBTCDelegationStateUpdate {
   BTCDelegationStatus new_state = 2;
 }
 
-// EventSelectiveSlashing is the event emitted when an adversarial 
+// EventSelectiveSlashing is the event emitted when an adversarial
 // finality provider selectively slashes a BTC delegation. This will
 // result in slashing of all BTC delegations under this finality provider.
 message EventSelectiveSlashing {
@@ -754,4 +755,5 @@ message EventPowerDistUpdate {
 The BTC staking module provides a set of queries about the status of finality
 providers and BTC delegations, listed at
 [docs.babylonchain.io](https://docs.babylonchain.io/docs/developer-guides/grpcrestapi#tag/BTCStaking).
+
 <!-- TODO: update Babylon doc website -->
