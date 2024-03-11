@@ -698,7 +698,7 @@ Upon `BeginBlock`, the BTC Staking module will execute the following:
    active BTC delegation, then record the reward distribution w.r.t. the active
    finality providers and active BTC delegations.
 
-The logic is defined at [x/btcstaking/abci.go](<(./abci.go)>).
+The logic is defined at [x/btcstaking/abci.go](./abci.go).
 
 ## Events
 
