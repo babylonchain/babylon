@@ -22,7 +22,7 @@ func setupMsgServer(t testing.TB) (types.MsgServer, *keeper.Keeper, context.Cont
 }
 
 func setupMsgServerWithCustomParams(t testing.TB, p types.Params) (types.MsgServer, *keeper.Keeper, context.Context) {
-	k, ctx := keepertest.BTCLightClientKeeperWithCustomParams(t, p)
+	k, ctx, _ := keepertest.BTCLightClientKeeperWithCustomParams(t, p)
 	return keeper.NewMsgServerImpl(*k), k, ctx
 }
 
@@ -38,7 +38,7 @@ func FuzzMsgServerInsertNewTip(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		srv, blcKeeper, sdkCtx := setupMsgServer(t)
 		ctx := sdk.UnwrapSDKContext(sdkCtx)
-		_, chain := genRandomChain(
+		_, chain := keepertest.BTCLightGenRandomChain(
 			t,
 			r,
 			blcKeeper,
@@ -67,7 +67,7 @@ func FuzzMsgServerInsertNewTip(f *testing.F) {
 		)
 		chainExtensionWork := chainWork(chainExtension)
 
-		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: chainToChainBytes(chainExtension)}
+		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: keepertest.ChainToChainBytes(chainExtension)}
 
 		_, err := srv.InsertHeaders(sdkCtx, msg)
 		require.NoError(t, err)
@@ -99,7 +99,7 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 		ctx := sdk.UnwrapSDKContext(sdkCtx)
 
 		chainLength := datagen.RandomInt(r, 50) + 10
-		_, chain := genRandomChain(
+		_, chain := keepertest.BTCLightGenRandomChain(
 			t,
 			r,
 			blcKeeper,
@@ -134,7 +134,7 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 			uint32(forkChainLen),
 		)
 		chainExtensionWork := chainWork(chainExtension)
-		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: chainToChainBytes(chainExtension)}
+		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: keepertest.ChainToChainBytes(chainExtension)}
 
 		_, err := srv.InsertHeaders(sdkCtx, msg)
 		require.NoError(t, err)
@@ -173,7 +173,7 @@ func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
 	srv, blcKeeper, sdkCtx := setupMsgServerWithCustomParams(t, params)
 	ctx := sdk.UnwrapSDKContext(sdkCtx)
 
-	_, chain := genRandomChain(
+	_, chain := keepertest.BTCLightGenRandomChain(
 		t,
 		r,
 		blcKeeper,
@@ -201,7 +201,7 @@ func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
 	)
 
 	// sender 1 is allowed to update, it should succeed
-	msg := &types.MsgInsertHeaders{Signer: address1.String(), Headers: chainToChainBytes(chainExtension)}
+	msg := &types.MsgInsertHeaders{Signer: address1.String(), Headers: keepertest.ChainToChainBytes(chainExtension)}
 	_, err = srv.InsertHeaders(sdkCtx, msg)
 	require.NoError(t, err)
 
@@ -217,13 +217,13 @@ func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
 	)
 
 	// sender 3 is not allowed to update, it should fail
-	msg1 := &types.MsgInsertHeaders{Signer: address3.String(), Headers: chainToChainBytes(newChainExt)}
+	msg1 := &types.MsgInsertHeaders{Signer: address3.String(), Headers: keepertest.ChainToChainBytes(newChainExt)}
 	_, err = srv.InsertHeaders(sdkCtx, msg1)
 	require.Error(t, err)
 	require.ErrorIs(t, err, types.ErrUnauthorizedReporter)
 
 	// sender 2 is allowed to update, it should succeed
-	msg1 = &types.MsgInsertHeaders{Signer: address2.String(), Headers: chainToChainBytes(newChainExt)}
+	msg1 = &types.MsgInsertHeaders{Signer: address2.String(), Headers: keepertest.ChainToChainBytes(newChainExt)}
 	_, err = srv.InsertHeaders(sdkCtx, msg1)
 	require.NoError(t, err)
 }
