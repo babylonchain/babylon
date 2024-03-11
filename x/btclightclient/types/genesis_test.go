@@ -23,6 +23,15 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{},
 			valid:    true,
 		},
+		{
+			desc: "invalid genesis state",
+			genState: &types.GenesisState{
+				BtcHeaders: []types.BTCHeaderInfo{types.BTCHeaderInfo{
+					Height: 1,
+				}},
+			},
+			valid: false,
+		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tc.genState.Validate()

@@ -138,7 +138,7 @@ func PrepareGenesis(
 
 	// btclightclient genesis
 	btclightclientGenState := btclightclienttypes.DefaultGenesis()
-	btclightclientGenState.BaseBtcHeader = genesisParams.BtclightclientBaseBtcHeader
+	btclightclientGenState.BtcHeaders = []btclightclienttypes.BTCHeaderInfo{genesisParams.BtclightclientBaseBtcHeader}
 	btclightclientGenState.Params = genesisParams.BtclightclientParams
 	genesisState[btclightclienttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btclightclientGenState)
 

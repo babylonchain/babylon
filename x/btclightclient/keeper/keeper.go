@@ -94,6 +94,25 @@ func (k Keeper) insertHeaders(
 	return nil
 }
 
+// InsertHeaderInfos inserts multiple headers info at the store.
+func (k Keeper) InsertHeaderInfos(ctx context.Context, infos []types.BTCHeaderInfo) {
+	hs := k.headersState(ctx)
+	for _, inf := range infos {
+		hs.insertHeader(&inf)
+	}
+}
+
+// GetAllHeaderInfos iterates over all header infos, starting from base.
+func (k Keeper) GetAllHeaderInfos(ctx context.Context) []types.BTCHeaderInfo {
+	infos := make([]types.BTCHeaderInfo, 0)
+	k.headersState(ctx).IterateForwardHeaders(0, func(bi *types.BTCHeaderInfo) bool {
+		infos = append(infos, *bi)
+		return false
+	})
+
+	return infos
+}
+
 func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes) error {
 	if len(headers) == 0 {
 		return types.ErrEmptyMessage

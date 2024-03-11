@@ -13,7 +13,7 @@ import (
 func TestGenesis(t *testing.T) {
 	baseHeaderInfo := types.SimnetGenesisBlock()
 	genesisState := types.GenesisState{
-		BaseBtcHeader: baseHeaderInfo,
+		BtcHeaders: []types.BTCHeaderInfo{baseHeaderInfo},
 	}
 
 	k, ctx := keepertest.BTCLightClientKeeper(t)

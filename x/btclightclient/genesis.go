@@ -9,27 +9,22 @@ import (
 
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
-func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisState) {
-	if err := genState.Validate(); err != nil {
+func InitGenesis(ctx context.Context, k keeper.Keeper, gs types.GenesisState) {
+	if err := gs.Validate(); err != nil {
 		panic(err)
 	}
 
-	k.SetBaseBTCHeader(ctx, genState.BaseBtcHeader)
-	if err := k.SetParams(ctx, genState.Params); err != nil {
+	if err := k.SetParams(ctx, gs.Params); err != nil {
 		panic(err)
 	}
+
+	k.InsertHeaderInfos(ctx, gs.BtcHeaders)
 }
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
-	genesis := types.DefaultGenesis()
-	baseBTCHeader := k.GetBaseBTCHeader(ctx)
-	if baseBTCHeader == nil {
-		panic("A base BTC Header has not been set")
+	return &types.GenesisState{
+		Params:     k.GetParams(ctx),
+		BtcHeaders: k.GetAllHeaderInfos(ctx),
 	}
-
-	genesis.BaseBtcHeader = *baseBTCHeader
-	genesis.Params = k.GetParams(ctx)
-
-	return genesis
 }
