@@ -71,14 +71,14 @@ enum BondState {
   REMOVED = 4;
 }
 
-// ValStateUpdate is a messages that records a state update of a validator
+// ValStateUpdate is a message that records a state update of a validator
 message ValStateUpdate {
   BondState state = 1;
   uint64 block_height = 2;
   google.protobuf.Timestamp block_time = 3 [ (gogoproto.stdtime) = true ];
 }
 
-// ValidatorLifecycle is a message that records records the lifecycle of
+// ValidatorLifecycle is a message that records the lifecycle of
 // a validator
 message ValidatorLifecycle {
   string val_addr = 1;
@@ -95,7 +95,7 @@ message DelegationStateUpdate {
   google.protobuf.Timestamp block_time = 5 [ (gogoproto.stdtime) = true ];
 }
 
-// ValidatorLifecycle is a message that records records the lifecycle of
+// ValidatorLifecycle is a message that records the lifecycle of
 // a delegation
 message DelegationLifecycle {
   string del_addr = 1;

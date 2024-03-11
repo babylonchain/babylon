@@ -343,7 +343,7 @@ func (*QueuedMessage) XXX_OneofWrappers() []interface{} {
 	}
 }
 
-// ValStateUpdate is a messages that records a state update of a validator
+// ValStateUpdate is a message that records a state update of a validator
 type ValStateUpdate struct {
 	State       BondState  `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.epoching.v1.BondState" json:"state,omitempty"`
 	BlockHeight uint64     `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
@@ -404,7 +404,7 @@ func (m *ValStateUpdate) GetBlockTime() *time.Time {
 	return nil
 }
 
-// ValidatorLifecycle is a message that records records the lifecycle of
+// ValidatorLifecycle is a message that records the lifecycle of
 // a validator
 type ValidatorLifecycle struct {
 	ValAddr string            `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
@@ -536,7 +536,7 @@ func (m *DelegationStateUpdate) GetBlockTime() *time.Time {
 	return nil
 }
 
-// ValidatorLifecycle is a message that records records the lifecycle of
+// ValidatorLifecycle is a message that records the lifecycle of
 // a delegation
 type DelegationLifecycle struct {
 	DelAddr string                   `protobuf:"bytes,1,opt,name=del_addr,json=delAddr,proto3" json:"del_addr,omitempty"`
