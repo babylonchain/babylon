@@ -92,7 +92,7 @@ There are three special transaction types recognized by the Babylon chain:
 
 A BTC holder gains voting power by creating a staking transaction. This is a
 Bitcoin transaction that commits a certain amount of to-be-staked bitcoin to
-Babylon recognised BTC staking scripts. These scripts lock the stake for a
+Babylon recognized BTC staking scripts. These scripts lock the stake for a
 chosen amount of BTC blocks and enable other features such as unbonding and
 slashable safety.
 
@@ -105,7 +105,7 @@ The requirements for a valid staking transaction are:
 
 ### Unbonding Transaction
 
-The BTC staker utilises the unbonding transaction when they want to unlock
+The BTC staker utilizes the unbonding transaction when they want to unlock
 their stake before their originally committed timelock has expired.
 
 The requirements for a valid unbonding transaction are:
@@ -271,7 +271,7 @@ where:
 
 #### 2. Slashing path
 
-The slashing path is utilised for punishing finality providers and their
+The slashing path is utilized for punishing finality providers and their
 delegators in the case of double signing. It commits to a script:
 
 ```
