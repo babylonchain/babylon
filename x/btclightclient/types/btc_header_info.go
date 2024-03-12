@@ -37,10 +37,6 @@ func (m *BTCHeaderInfo) Validate() error {
 		return errors.New("work is nil")
 	}
 
-	if m.Height == 0 {
-		return errors.New("height is zero")
-	}
-
 	if m.Work.IsZero() {
 		return errors.New("work is zero")
 	}

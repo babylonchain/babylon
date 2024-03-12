@@ -104,17 +104,7 @@ func TestBTCHeaderInfoValidate(t *testing.T) {
 			errors.New("work is nil"),
 		},
 		{
-			"invalid: height is zero",
-			types.BTCHeaderInfo{
-				Header: valid.Header,
-				Hash:   valid.Hash,
-				Work:   valid.Work,
-				Height: 0,
-			},
-			errors.New("height is zero"),
-		},
-		{
-			"invalid: height is zero",
+			"invalid: work is zero",
 			types.BTCHeaderInfo{
 				Header: valid.Header,
 				Hash:   valid.Hash,
