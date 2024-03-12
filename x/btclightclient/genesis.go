@@ -25,6 +25,6 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, gs types.GenesisState) {
 func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
 	return &types.GenesisState{
 		Params:     k.GetParams(ctx),
-		BtcHeaders: k.GetAllHeaderInfos(ctx),
+		BtcHeaders: k.GetMainChainFrom(ctx, 0),
 	}
 }

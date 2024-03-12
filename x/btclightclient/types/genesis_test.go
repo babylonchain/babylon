@@ -26,7 +26,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid genesis state",
 			genState: &types.GenesisState{
-				BtcHeaders: []types.BTCHeaderInfo{types.BTCHeaderInfo{
+				BtcHeaders: []*types.BTCHeaderInfo{&types.BTCHeaderInfo{
 					Height: 1,
 				}},
 			},

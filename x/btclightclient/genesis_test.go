@@ -21,7 +21,7 @@ import (
 func TestGenesis(t *testing.T) {
 	baseHeaderInfo := types.SimnetGenesisBlock()
 	genesisState := types.GenesisState{
-		BtcHeaders: []types.BTCHeaderInfo{baseHeaderInfo},
+		BtcHeaders: []*types.BTCHeaderInfo{&baseHeaderInfo},
 	}
 
 	k, ctx := keepertest.BTCLightClientKeeper(t)
@@ -87,7 +87,7 @@ func TestImportExport(t *testing.T) {
 	kB, ctxb, stServB := keepertest.BTCLightClientKeeperWithCustomParams(t, params)
 	btclightclient.InitGenesis(ctxb, *kB, *genState)
 
-	infos := kB.GetAllHeaderInfos(ctxb)
+	infos := kB.GetMainChainFrom(ctxb, 0)
 	require.Equal(t, len(infos), len(genState.BtcHeaders), "it should have the same amount of headers from before")
 
 	KvB := stServB.OpenKVStore(ctxb)

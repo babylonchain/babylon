@@ -314,7 +314,7 @@ func updateBtcLightClientGenesis(blcGenState *blctypes.GenesisState) {
 		panic(err)
 	}
 	work := blctypes.CalcWork(&baseBtcHeader)
-	blcGenState.BtcHeaders = []blctypes.BTCHeaderInfo{*blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
+	blcGenState.BtcHeaders = []*blctypes.BTCHeaderInfo{blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
 }
 
 func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.GenesisState) {

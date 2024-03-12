@@ -29,7 +29,7 @@ func DefaultGenesis() *GenesisState {
 	defaultBaseHeader := SimnetGenesisBlock()
 
 	return &GenesisState{
-		BtcHeaders: []BTCHeaderInfo{defaultBaseHeader},
+		BtcHeaders: []*BTCHeaderInfo{&defaultBaseHeader},
 		Params:     DefaultParams(),
 	}
 }
@@ -50,7 +50,7 @@ func (gs GenesisState) Validate() error {
 	// TODO: Even though number of block per re-target depends on the network, in reality it
 	// is always 2016. Maybe we should consider moving it to param, or try to pass
 	// it through
-	isRetarget := IsRetargetBlock(&gs.BtcHeaders[0], &chaincfg.MainNetParams)
+	isRetarget := IsRetargetBlock(gs.BtcHeaders[0], &chaincfg.MainNetParams)
 	if !isRetarget {
 		return fmt.Errorf("genesis block must be a difficulty adjustment block")
 	}
