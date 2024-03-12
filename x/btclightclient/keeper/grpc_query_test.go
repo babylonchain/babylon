@@ -59,7 +59,7 @@ func FuzzHashesQuery(f *testing.F) {
 			t.Errorf("Invalid key led to a nil error")
 		}
 
-		baseHeader, chain := keepertest.BTCLightGenRandomChain(
+		baseHeader, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -145,7 +145,7 @@ func FuzzContainsQuery(f *testing.F) {
 		}
 
 		// Generate a random chain of headers and insert it into storage
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -226,7 +226,7 @@ func FuzzMainChainQuery(f *testing.F) {
 		}
 
 		// Generate a random chain of headers and insert it into storage
-		base, chain := keepertest.BTCLightGenRandomChain(
+		base, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -339,7 +339,7 @@ func FuzzTipQuery(f *testing.F) {
 		}
 
 		// Generate a random chain of headers and insert it into storage
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -385,7 +385,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 		}
 
 		// Generate a random chain of headers and insert it into storage
-		base, _ := keepertest.BTCLightGenRandomChain(
+		base, _ := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,

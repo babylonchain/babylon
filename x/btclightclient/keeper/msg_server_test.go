@@ -38,7 +38,7 @@ func FuzzMsgServerInsertNewTip(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		srv, blcKeeper, sdkCtx := setupMsgServer(t)
 		ctx := sdk.UnwrapSDKContext(sdkCtx)
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -99,7 +99,7 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 		ctx := sdk.UnwrapSDKContext(sdkCtx)
 
 		chainLength := datagen.RandomInt(r, 50) + 10
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -173,7 +173,7 @@ func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
 	srv, blcKeeper, sdkCtx := setupMsgServerWithCustomParams(t, params)
 	ctx := sdk.UnwrapSDKContext(sdkCtx)
 
-	_, chain := keepertest.BTCLightGenRandomChain(
+	_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 		t,
 		r,
 		blcKeeper,

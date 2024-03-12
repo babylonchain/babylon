@@ -50,7 +50,7 @@ func TestImportExport(t *testing.T) {
 	k, ctx, stServ := keepertest.BTCLightClientKeeperWithCustomParams(t, params)
 	srv := keeper.NewMsgServerImpl(*k)
 
-	_, chain := keepertest.BTCLightGenRandomChain(t, r, k, ctx, 0, 10)
+	_, chain := datagen.GenRandBtcChainInsertingInKeeper(t, r, k, ctx, 0, 10)
 	initTip := chain.GetTipInfo()
 
 	chainExtension := datagen.GenRandomValidChainStartingFrom(

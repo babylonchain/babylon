@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"context"
-	"math/rand"
 	"testing"
 
 	"cosmossdk.io/core/header"
@@ -23,14 +21,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	bapp "github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btclightclient/keeper"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
+	btclightclientk "github.com/babylonchain/babylon/x/btclightclient/keeper"
+	btclightclientt "github.com/babylonchain/babylon/x/btclightclient/types"
 )
 
-func BTCLightClientKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
-	k, ctx, _ := BTCLightClientKeeperWithCustomParams(t, types.DefaultParams())
+func BTCLightClientKeeper(t testing.TB) (*btclightclientk.Keeper, sdk.Context) {
+	k, ctx, _ := BTCLightClientKeeperWithCustomParams(t, btclightclientt.DefaultParams())
 	return k, ctx
 }
 
@@ -42,34 +39,8 @@ func ChainToChainBytes(chain []*wire.BlockHeader) []bbn.BTCHeaderBytes {
 	return chainBytes
 }
 
-// this function must not be used at difficulty adjustment boundaries, as then
-// difficulty adjustment calculation will fail
-func BTCLightGenRandomChain(
-	t *testing.T,
-	r *rand.Rand,
-	k *keeper.Keeper,
-	ctx context.Context,
-	initialHeight uint64,
-	chainLength uint64,
-) (*types.BTCHeaderInfo, *datagen.BTCHeaderPartialChain) {
-	genesisHeader := datagen.NewBTCHeaderChainWithLength(r, initialHeight, 0, 1)
-	genesisHeaderInfo := genesisHeader.GetChainInfo()[0]
-	k.SetBaseBTCHeader(ctx, *genesisHeaderInfo)
-	randomChain := datagen.NewBTCHeaderChainFromParentInfo(
-		r,
-		genesisHeaderInfo,
-		uint32(chainLength),
-	)
-	err := k.InsertHeaders(ctx, randomChain.ChainToBytes())
-	require.NoError(t, err)
-	tip := k.GetTipInfo(ctx)
-	randomChainTipInfo := randomChain.GetTipInfo()
-	require.True(t, tip.Eq(randomChainTipInfo))
-	return genesisHeaderInfo, randomChain
-}
-
-func BTCLightClientKeeperWithCustomParams(t testing.TB, p types.Params) (*keeper.Keeper, sdk.Context, corestore.KVStoreService) {
-	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+func BTCLightClientKeeperWithCustomParams(t testing.TB, p btclightclientt.Params) (*btclightclientk.Keeper, sdk.Context, corestore.KVStoreService) {
+	storeKey := storetypes.NewKVStoreKey(btclightclientt.StoreKey)
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
@@ -82,7 +53,7 @@ func BTCLightClientKeeperWithCustomParams(t testing.TB, p types.Params) (*keeper
 	testCfg := bbn.ParseBtcOptionsFromConfig(bapp.EmptyAppOptions{})
 
 	stServ := runtime.NewKVStoreService(storeKey)
-	k := keeper.NewKeeper(
+	k := btclightclientk.NewKeeper(
 		cdc,
 		stServ,
 		testCfg,

@@ -53,7 +53,7 @@ func FuzzKeeperMainChainDepth(f *testing.F) {
 			t.Errorf("Non existing header led to a result that is not -1")
 		}
 
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -106,7 +106,7 @@ func FuzzKeeperBlockHeight(f *testing.F) {
 			t.Errorf("Non existing header led to a result that is not -1")
 		}
 
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -132,7 +132,7 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -214,7 +214,7 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -320,7 +320,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
-		_, _ = keepertest.BTCLightGenRandomChain(
+		_, _ = datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,

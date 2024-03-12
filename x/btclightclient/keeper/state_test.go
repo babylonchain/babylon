@@ -62,7 +62,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		initchainHeight := datagen.RandomInt(r, 50) + 10
 
 		// populate the state with random chain
-		_, chain := keepertest.BTCLightGenRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
