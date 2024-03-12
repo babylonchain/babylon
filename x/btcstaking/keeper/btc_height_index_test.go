@@ -32,12 +32,10 @@ func FuzzBTCHeightIndex(f *testing.F) {
 		keeper.IndexBTCHeight(ctx)
 
 		// assert BTC height
-		actualBtcHeight, err := keeper.GetBTCHeightAtBabylonHeight(ctx, babylonHeight)
-		require.NoError(t, err)
+		actualBtcHeight := keeper.GetBTCHeightAtBabylonHeight(ctx, babylonHeight)
 		require.Equal(t, btcHeight, actualBtcHeight)
 		// assert current BTC height
-		curBtcHeight, err := keeper.GetCurrentBTCHeight(ctx)
-		require.NoError(t, err)
+		curBtcHeight := keeper.GetCurrentBTCHeight(ctx)
 		require.Equal(t, btcHeight, curBtcHeight)
 	})
 }

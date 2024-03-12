@@ -39,7 +39,7 @@ message BTCSpvProof {
             "github.com/babylonchain/babylon/types.BTCHeaderBytes" ];
 }
 
-// Each provided OP_RETURN transaction can be idendtified by hash of block in
+// Each provided OP_RETURN transaction can be identified by hash of block in
 // which transaction was included and transaction index in the block
 message TransactionKey {
   uint32 index = 1;
@@ -88,20 +88,20 @@ message TransactionInfo {
   bytes transaction = 2;
   // proof is the Merkle proof that this tx is included in the position in `key`
   // TODO: maybe it could use here better format as we already processed and
-  // valideated the proof?
+  // validated the proof?
   bytes proof = 3;
 }
 
 // TODO: Determine if we should keep any block number or depth info.
-// On one hand it may be usefull to determine if block is stable or not, on
+// On one hand it may be useful to determine if block is stable or not, on
 // other depth/block number info, without context (i.e info about chain) is
-// pretty useless and blockshash in enough to retrieve is from lightclient
+// pretty useless and blockhash in enough to retrieve is from lightclient
 message SubmissionData {
   // address of the submitter and reporter
   CheckpointAddresses vigilante_addresses = 1;
   // txs_info is the two `TransactionInfo`s corresponding to the submission
   // It is used for
-  // - recovering address of sender of btc transction to payup the reward.
+  // - recovering address of sender of btc transaction to payup the reward.
   // - allowing the ZoneConcierge module to prove the checkpoint is submitted to
   // BTC
   repeated TransactionInfo txs_info = 2;
@@ -109,7 +109,7 @@ message SubmissionData {
 }
 
 // Data stored in db and indexed by epoch number
-// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching
+// TODO: Add btc blockheight at epoch end, when adding handling of epoching
 // callbacks
 message EpochData {
   // keys is the list of all received checkpoints during this epoch, sorted by

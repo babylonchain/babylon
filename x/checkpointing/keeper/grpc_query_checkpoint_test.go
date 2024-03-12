@@ -38,7 +38,7 @@ func FuzzQueryEpoch(f *testing.F) {
 		ckptRequest := types.NewQueryRawCheckpointRequest(mockCkptWithMeta.Ckpt.EpochNum)
 		ckptResp, err := ckptKeeper.RawCheckpoint(ctx, ckptRequest)
 		require.NoError(t, err)
-		require.True(t, ckptResp.RawCheckpoint.Equal(mockCkptWithMeta))
+		require.Equal(t, ckptResp.RawCheckpoint, mockCkptWithMeta.ToResponse())
 
 		// test querying the status of a given epoch number
 		statusRequest := types.NewQueryEpochStatusRequest(mockCkptWithMeta.Ckpt.EpochNum)
@@ -75,7 +75,7 @@ func FuzzQueryRawCheckpoints(f *testing.F) {
 		require.Equal(t, int(pageLimit), len(ckptResp.RawCheckpoints))
 		require.Nil(t, ckptResp.Pagination.NextKey)
 		for i, ckpt := range ckptResp.RawCheckpoints {
-			require.Equal(t, checkpoints[i], ckpt)
+			require.Equal(t, checkpoints[i].ToResponse(), ckpt)
 		}
 	})
 }
@@ -144,7 +144,7 @@ func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 		// request the last finalized checkpoint
 		req := types.NewQueryLastCheckpointWithStatus(types.Finalized)
 		expectedResp := &types.QueryLastCheckpointWithStatusResponse{
-			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt,
+			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt.ToResponse(),
 		}
 		resp, err := ckptKeeper.LastCheckpointWithStatus(ctx, req)
 		require.NoError(t, err)
@@ -153,7 +153,7 @@ func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 		// request the last confirmed checkpoint
 		req = types.NewQueryLastCheckpointWithStatus(types.Confirmed)
 		expectedResp = &types.QueryLastCheckpointWithStatusResponse{
-			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt,
+			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt.ToResponse(),
 		}
 		resp, err = ckptKeeper.LastCheckpointWithStatus(ctx, req)
 		require.NoError(t, err)

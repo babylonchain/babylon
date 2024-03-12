@@ -40,6 +40,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		NewCreateFinalityProvicerCmd(),
+		NewEditFinalityProvicerCmd(),
 		NewCreateBTCDelegationCmd(),
 		NewAddCovenantSigsCmd(),
 		NewBTCUndelegateCmd(),
@@ -114,6 +115,72 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 				BabylonPk:   &babylonPK,
 				BtcPk:       btcPK,
 				Pop:         pop,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	fs := cmd.Flags()
+	fs.String(FlagMoniker, "", "The finality provider's (optional) moniker")
+	fs.String(FlagWebsite, "", "The finality provider's (optional) website")
+	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")
+	fs.String(FlagDetails, "", "The finality provider's (optional) details")
+	fs.String(FlagIdentity, "", "The (optional) identity signature (ex. UPort or Keybase)")
+	fs.String(FlagCommissionRate, "0", "The initial commission rate percentage")
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewEditFinalityProvicerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit-finality-provider [btc_pk]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Edit an existing finality provider",
+		Long: strings.TrimSpace(
+			`Edit an existing finality provider.`, // TODO: example
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			fs := cmd.Flags()
+
+			// get description
+			moniker, _ := fs.GetString(FlagMoniker)
+			identity, _ := fs.GetString(FlagIdentity)
+			website, _ := fs.GetString(FlagWebsite)
+			security, _ := fs.GetString(FlagSecurityContact)
+			details, _ := fs.GetString(FlagDetails)
+			description := stakingtypes.NewDescription(
+				moniker,
+				identity,
+				website,
+				security,
+				details,
+			)
+			// get commission
+			rateStr, _ := fs.GetString(FlagCommissionRate)
+			rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
+			if err != nil {
+				return err
+			}
+
+			// get BTC PK
+			btcPK, err := hex.DecodeString(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgEditFinalityProvider{
+				Signer:      clientCtx.FromAddress.String(),
+				BtcPk:       btcPK,
+				Description: &description,
+				Commission:  &rate,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

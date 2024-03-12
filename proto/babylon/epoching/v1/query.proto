@@ -2,6 +2,7 @@ syntax = "proto3";
 package babylon.epoching.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/epoching/v1/params.proto";
@@ -82,7 +83,7 @@ message QueryParamsResponse {
 message QueryEpochInfoRequest { uint64 epoch_num = 1; }
 
 // QueryEpochInfoRequest is the response type for the Query/EpochInfo method
-message QueryEpochInfoResponse { babylon.epoching.v1.Epoch epoch = 1; }
+message QueryEpochInfoResponse { EpochResponse epoch = 1; }
 
 // QueryEpochInfosRequest is the request type for the Query/EpochInfos method
 message QueryEpochsInfoRequest {
@@ -92,7 +93,7 @@ message QueryEpochsInfoRequest {
 
 // QueryEpochsInfoResponse is the response type for the Query/EpochInfos method
 message QueryEpochsInfoResponse {
-  repeated babylon.epoching.v1.Epoch epochs = 1;
+  repeated EpochResponse epochs = 1;
 
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -124,7 +125,7 @@ message QueryEpochMsgsRequest {
 // method
 message QueryEpochMsgsResponse {
   // msgs is the list of messages queued in the current epoch
-  repeated babylon.epoching.v1.QueuedMessage msgs = 1;
+  repeated QueuedMessageResponse msgs = 1;
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -144,9 +145,9 @@ message QueryLatestEpochMsgsRequest {
 // QueryLatestEpochMsgsResponse is the response type for the
 // Query/LatestEpochMsgs RPC method
 message QueryLatestEpochMsgsResponse {
-  // epoch_msg_map is a list of QueuedMessageList
+  // latest_epoch_msgs is a list of QueuedMessageList
   // each QueuedMessageList has a field identifying the epoch number
-  repeated babylon.epoching.v1.QueuedMessageList latest_epoch_msgs = 1;
+  repeated QueuedMessageList latest_epoch_msgs = 1;
 
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -157,7 +158,10 @@ message QueryValidatorLifecycleRequest { string val_addr = 1; }
 
 // QueryValidatorLifecycleResponse is the response type for the
 // Query/ValidatorLifecycle RPC method
-message QueryValidatorLifecycleResponse { ValidatorLifecycle val_life = 1; }
+message QueryValidatorLifecycleResponse {
+  string val_addr = 1;
+  repeated ValStateUpdateResponse val_life = 2;
+}
 
 // QueryDelegationLifecycleRequest is the request type for the
 // Query/DelegationLifecycle RPC method
@@ -180,4 +184,62 @@ message QueryEpochValSetResponse {
   repeated babylon.epoching.v1.Validator validators = 1;
   int64 total_voting_power = 2;
   cosmos.base.query.v1beta1.PageResponse pagination = 3;
+}
+
+// EpochResponse is a structure that contains the metadata of an epoch
+message EpochResponse {
+  // epoch_number is the number of this epoch
+  uint64 epoch_number = 1;
+  // current_epoch_interval is the epoch interval at the time of this epoch
+  uint64 current_epoch_interval = 2;
+  // first_block_height is the height of the first block in this epoch
+  uint64 first_block_height = 3;
+  // last_block_time is the time of the last block in this epoch.
+  // Babylon needs to remember the last header's time of each epoch to complete
+  // unbonding validators/delegations when a previous epoch's checkpoint is
+  // finalised. The last_block_time field is nil in the epoch's beginning, and
+  // is set upon the end of this epoch.
+  google.protobuf.Timestamp last_block_time = 4 [ (gogoproto.stdtime) = true ];
+  // app_hash_root is the Merkle root of all AppHashs in this epoch
+  // It will be used for proving a block is in an epoch as hex string.
+  string app_hash_root_hex = 5;
+  // sealer is the last block of the sealed epoch
+  // sealer_app_hash points to the sealer but stored in the 1st header
+  // of the next epoch as hex string.
+  string sealer_app_hash_hex = 6;
+  // sealer_block_hash is the hash of the sealer
+  // the validator set has generated a BLS multisig on the hash,
+  // i.e., hash of the last block in the epoch as hex string.
+  string sealer_block_hash = 7;
+}
+
+// QueuedMessageResponse is a message that can change the validator set and is delayed
+// to the end of an epoch
+message QueuedMessageResponse {
+  // tx_id is the ID of the tx that contains the message as hex.
+  string tx_id = 1;
+  // msg_id is the original message ID, i.e., hash of the marshaled message as hex.
+  string msg_id = 2;
+  // block_height is the height when this msg is submitted to Babylon
+  uint64 block_height = 3;
+  // block_time is the timestamp when this msg is submitted to Babylon
+  google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
+  // msg is the actual message that is sent by a user and is queued by the
+  // epoching module as string.
+  string msg = 5;
+}
+
+// QueuedMessageList is a message that contains a list of staking-related
+// messages queued for an epoch
+message QueuedMessageList {
+  uint64 epoch_number = 1;
+  repeated QueuedMessageResponse msgs = 2;
+}
+
+// ValStateUpdateResponse is a message response that records a state update of a validator.
+message ValStateUpdateResponse {
+  // StateDesc defines the descriptive state.
+  string state_desc = 1;
+  uint64 block_height = 2;
+  google.protobuf.Timestamp block_time = 3 [ (gogoproto.stdtime) = true ];
 }
