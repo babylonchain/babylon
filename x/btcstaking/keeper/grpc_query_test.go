@@ -285,13 +285,34 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 		randomPower := datagen.RandomInt(r, 100) + 1
 		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomHeight, randomPower)
 
-		req := &types.QueryFinalityProviderPowerAtHeightRequest{
+		// happy case
+		req1 := &types.QueryFinalityProviderPowerAtHeightRequest{
 			FpBtcPkHex: fp.BtcPk.MarshalHex(),
 			Height:     randomHeight,
 		}
-		resp, err := keeper.FinalityProviderPowerAtHeight(ctx, req)
+		resp, err := keeper.FinalityProviderPowerAtHeight(ctx, req1)
 		require.NoError(t, err)
 		require.Equal(t, randomPower, resp.VotingPower)
+
+		// case where the voting power store is not updated in
+		// the given height
+		requestHeight := datagen.RandomIntOtherThan(r, int(randomHeight), 100) + 1
+		req2 := &types.QueryFinalityProviderPowerAtHeightRequest{
+			FpBtcPkHex: fp.BtcPk.MarshalHex(),
+			Height:     requestHeight,
+		}
+		_, err = keeper.FinalityProviderPowerAtHeight(ctx, req2)
+		require.ErrorIs(t, err, types.ErrVotingPowerTableNotUpdated)
+
+		// case where the given fp pk does not exist
+		randPk, err := datagen.GenRandomBIP340PubKey(r)
+		require.NoError(t, err)
+		req3 := &types.QueryFinalityProviderPowerAtHeightRequest{
+			FpBtcPkHex: randPk.MarshalHex(),
+			Height:     randomHeight,
+		}
+		_, err = keeper.FinalityProviderPowerAtHeight(ctx, req3)
+		require.ErrorIs(t, err, types.ErrFpNotFound)
 	})
 }
 

@@ -4,14 +4,15 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -129,6 +130,18 @@ func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.Qu
 	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
+	}
+
+	if !k.HasFinalityProvider(ctx, *fpBTCPK) {
+		return nil, types.ErrFpNotFound
+	}
+
+	store := k.votingPowerStore(ctx, req.Height)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	if !iter.Valid() {
+		return nil, types.ErrVotingPowerTableNotUpdated.Wrapf("height: %d", req.Height)
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
