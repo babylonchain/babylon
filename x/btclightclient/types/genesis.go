@@ -60,6 +60,7 @@ func (gs GenesisState) Validate() error {
 			return err
 		}
 	}
+	// TODO: validate headers have proper parent-child relationships and proper proof of work
 
 	return nil
 }
