@@ -37,20 +37,28 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	if len(gs.BtcHeaders) > 0 {
-		// We Require that genesis block is difficulty adjustment block, so that we can
-		// properly calculate the difficulty adjustments in the future.
-		// TODO: Even though number of block per re-target depends on the network, in reality it
-		// is always 2016. Maybe we should consider moving it to param, or try to pass
-		// it through
-		isRetarget := IsRetargetBlock(&gs.BtcHeaders[0], &chaincfg.MainNetParams)
-		if !isRetarget {
-			return fmt.Errorf("genesis block must be a difficulty adjustment block")
-		}
-	}
-
 	if err := gs.Params.Validate(); err != nil {
 		return fmt.Errorf("invalid params in genesis: %w", err)
+	}
+
+	if len(gs.BtcHeaders) == 0 {
+		return nil
+	}
+
+	// We Require that genesis block is difficulty adjustment block, so that we can
+	// properly calculate the difficulty adjustments in the future.
+	// TODO: Even though number of block per re-target depends on the network, in reality it
+	// is always 2016. Maybe we should consider moving it to param, or try to pass
+	// it through
+	isRetarget := IsRetargetBlock(&gs.BtcHeaders[0], &chaincfg.MainNetParams)
+	if !isRetarget {
+		return fmt.Errorf("genesis block must be a difficulty adjustment block")
+	}
+
+	for _, header := range gs.BtcHeaders {
+		if err := header.Validate(); err != nil {
+			return err
+		}
 	}
 
 	return nil

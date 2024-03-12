@@ -5,10 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/wire"
 	"math/big"
 	"time"
+
+	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/wire"
 )
 
 type BTCHeaderBytes []byte
@@ -71,7 +72,7 @@ func (m *BTCHeaderBytes) Unmarshal(data []byte) error {
 		return errors.New("invalid header length")
 	}
 	// Verify that the bytes can be transformed to a *wire.BlockHeader object
-	_, err := toBlockHeader(data)
+	_, err := ToBlockHeader(data)
 	if err != nil {
 		return errors.New("bytes do not correspond to a *wire.BlockHeader object")
 	}
@@ -116,7 +117,7 @@ func (m *BTCHeaderBytes) Size() int {
 }
 
 func (m BTCHeaderBytes) ToBlockHeader() *wire.BlockHeader {
-	header, err := toBlockHeader(m)
+	header, err := ToBlockHeader(m)
 	// There was a parsing error
 	if err != nil {
 		panic("BTCHeaderBytes cannot be converted to a block header object")
@@ -172,7 +173,7 @@ func (m *BTCHeaderBytes) Difficulty() *big.Int {
 	return blockchain.CompactToBig(m.Bits())
 }
 
-func toBlockHeader(data []byte) (*wire.BlockHeader, error) {
+func ToBlockHeader(data []byte) (*wire.BlockHeader, error) {
 	// Create an empty header
 	header := &wire.BlockHeader{}
 
