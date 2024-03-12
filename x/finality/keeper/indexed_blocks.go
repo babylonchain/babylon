@@ -46,6 +46,24 @@ func (k Keeper) GetBlock(ctx context.Context, height uint64) (*types.IndexedBloc
 	return &block, nil
 }
 
+// GetBlocks loads all blocks stored.
+func (k Keeper) GetBlocks(ctx context.Context) (blocks []*types.IndexedBlock, err error) {
+	blocks = make([]*types.IndexedBlock, 0)
+
+	iter := k.blockStore(ctx).Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var blk types.IndexedBlock
+		if err := k.cdc.Unmarshal(iter.Value(), &blk); err != nil {
+			return nil, err
+		}
+		blocks = append(blocks, &blk)
+	}
+
+	return blocks, nil
+}
+
 // blockStore returns the KVStore of the blocks
 // prefix: BlockKey
 // key: block height

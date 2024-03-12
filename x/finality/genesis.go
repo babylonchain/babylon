@@ -39,8 +39,21 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, gs types.GenesisState) {
 
 // ExportGenesis returns the module's exported genesis
 func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
-	// TODO: get IndexedBlocks, Evidences, VoteSigs, CommitedRandoms
+	// TODO: get VoteSigs, CommitedRandoms
+	blocks, err := k.GetBlocks(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	evidences, err := k.GetEvidences(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return &types.GenesisState{
-		Params: k.GetParams(ctx),
+		Params:        k.GetParams(ctx),
+		IndexedBlocks: blocks,
+		Evidences:     evidences,
+		// VoteSigs: ,
 	}
 }
