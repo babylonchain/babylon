@@ -3,10 +3,26 @@ package babylon.finality.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/finality/v1/params.proto";
+import "babylon/finality/v1/finality.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
 // GenesisState defines the finality module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
+  repeated IndexedBlock indexed_blocks = 2;
+  repeated Evidence evidences = 3;
+  repeated VoteSig vote_sigs = 4;
+}
+
+// VoteSig the vote of an finality provider
+// with the block of the vote, the finality provider btc public key and the vote signature.
+message VoteSig {
+  // block_height is the height of the voted block.
+  uint64 block_height = 1;
+	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+	// finality_sig is the finality signature to this block
+	// where finality signature is an EOTS signature, i.e.
+  bytes finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
 }
