@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 
 	bbn "github.com/babylonchain/babylon/types"
@@ -41,8 +42,14 @@ func (gs GenesisState) Validate() error {
 		return fmt.Errorf("invalid params in genesis: %w", err)
 	}
 
+	// Initial btc header serves as de-facto genesis header for the module.
+	// At least one BTC Header is needed to apply all validation rules to the next headers.
+	// If we don't have an initial btc header, we cannot validate the rules on the next (as it has no parent).
+	// All following headers that are to be inserted in chain are going to be validated based on the previous ones.
+	// (all parent-child relantionships, all difficulty transitions).
 	if len(gs.BtcHeaders) == 0 {
-		return nil
+		// if you have no initial header, you can't validate the following ones.
+		return errors.New("no btc header set on genesis")
 	}
 
 	// We Require that genesis block is difficulty adjustment block, so that we can
