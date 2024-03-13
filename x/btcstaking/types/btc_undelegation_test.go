@@ -9,7 +9,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
@@ -25,9 +24,11 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 
-		fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+		// restaked to a random number of finality providers
+		numRestakedFPs := int(datagen.RandomInt(r, 4) + 1)
+		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
+		fpBTCPKs := bbn.NewBIP340PKsFromBTCPKs(fpPKs)
 		require.NoError(t, err)
-		fpPKList := []*btcec.PublicKey{fpPK}
 
 		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
@@ -48,7 +49,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		btcDel, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
-			bbn.NewBIP340PKsFromBTCPKs(fpPKList),
+			fpBTCPKs,
 			delSK,
 			covenantSKs,
 			covenantQuorum,
@@ -68,7 +69,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			t,
 			net,
 			delSK,
-			fpPKList,
+			fpPKs,
 			covenantPKs,
 			covenantQuorum,
 			wire.NewOutPoint(&stakingTxHash, 0),
@@ -93,7 +94,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		// covenant signs (using adaptor signature) the slashing tx
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
 			covenantSKs,
-			[]*btcec.PublicKey{fpPK},
+			fpPKs,
 			testInfo.UnbondingTx,
 			unbondingSlashingSpendInfo.GetPkScriptPath(),
 			testInfo.SlashingTx,
@@ -114,6 +115,9 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		}
 
 		// build slashing tx with witness for spending the unbonding tx
+		// a random finality provider gets slashed
+		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		fpSK := fpSKs[slashedFPIdx]
 		unbondingSlashingTxWithWitness, err := btcDel.BuildUnbondingSlashingTxWithWitness(bsParams, net, fpSK)
 		require.NoError(t, err)
 

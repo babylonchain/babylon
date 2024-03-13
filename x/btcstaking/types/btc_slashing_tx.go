@@ -247,10 +247,26 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
 
 }
 
+// findFPIdxInWitness returns the index of the finality provider's signature
+// in the witness stack of 1-out-of-n multisig from finality providers
+func findFPIdxInWitness(fpSK *btcec.PrivateKey, fpBTCPKs []bbn.BIP340PubKey) (int, error) {
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey())
+	sortedFPBTCPKList := bbn.SortBIP340PKs(fpBTCPKs)
+	for i, pk := range sortedFPBTCPKList {
+		if pk.Equals(fpBTCPK) {
+			return i, nil
+		}
+	}
+	return 0, fmt.Errorf("the given finality provider's PK is not found in the BTC delegation")
+}
+
+// BuildSlashingTxWithWitness builds the witness for the slashing tx, including
+// - a (covenant_quorum, covenant_committee_size) multisig from covenant committee
+// - a (1, num_restaked_finality_providers) multisig from the slashed finality provider
+// - 1 Schnorr signature from the staker
 func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	fpSK *btcec.PrivateKey,
-	fpIdxInWitness int,
-	numRestakedFPs int,
+	fpBTCPKs []bbn.BIP340PubKey,
 	fundingMsgTx *wire.MsgTx,
 	outputIdx uint32,
 	delegatorSig *bbn.BIP340Signature,
@@ -281,7 +297,12 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 		construct finality providers' part of witness, i.e.,
 		1 out of numRestakedFPs signature
 	*/
-	fpSigs := make([]*schnorr.Signature, numRestakedFPs)
+	numRestakedFPs := len(fpBTCPKs)
+	fpIdxInWitness, err := findFPIdxInWitness(fpSK, fpBTCPKs)
+	if err != nil {
+		return nil, err
+	}
+	fpSigs := make([]*schnorr.Signature, len(fpBTCPKs))
 	for i := 0; i < numRestakedFPs; i++ {
 		if i == fpIdxInWitness {
 			fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)

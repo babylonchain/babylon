@@ -309,18 +309,10 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 	return unbondingInfo, nil
 }
 
-func (d *BTCDelegation) FindFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
+// FindFPIdx returns the index of the given finality provider
+// among all restaked finality providers
+func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
 	for i, pk := range d.FpBtcPkList {
-		if pk.Equals(fpBTCPK) {
-			return i, nil
-		}
-	}
-	return 0, fmt.Errorf("the given finality provider's PK is not found in the BTC delegation")
-}
-
-func (d *BTCDelegation) FindFPIdxInWitness(fpBTCPK *bbn.BIP340PubKey) (int, error) {
-	sortedFPBTCPKList := bbn.SortBIP340PKs(d.FpBtcPkList)
-	for i, pk := range sortedFPBTCPKList {
 		if pk.Equals(fpBTCPK) {
 			return i, nil
 		}
@@ -350,7 +342,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 
 	// get the list of covenant signatures encrypted by the given finality provider's PK
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey())
-	fpIdx, err := d.FindFPIdx(fpBTCPK)
+	fpIdx, err := d.findFPIdx(fpBTCPK)
 	if err != nil {
 		return nil, err
 	}
@@ -360,14 +352,9 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	}
 
 	// assemble witness for slashing tx
-	fpIdxInWitness, err := d.FindFPIdxInWitness(fpBTCPK)
-	if err != nil {
-		return nil, err
-	}
 	slashingMsgTxWithWitness, err := d.SlashingTx.BuildSlashingTxWithWitness(
 		fpSK,
-		fpIdxInWitness,
-		len(d.FpBtcPkList),
+		d.FpBtcPkList,
 		stakingMsgTx,
 		d.StakingOutputIdx,
 		d.DelegatorSig,
@@ -404,7 +391,7 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 
 	// get the list of covenant signatures encrypted by the given finality provider's PK
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey())
-	fpIdx, err := d.FindFPIdx(fpBTCPK)
+	fpIdx, err := d.findFPIdx(fpBTCPK)
 	if err != nil {
 		return nil, err
 	}
@@ -414,14 +401,9 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	}
 
 	// assemble witness for unbonding slashing tx
-	fpIdxInWitness, err := d.FindFPIdxInWitness(fpBTCPK)
-	if err != nil {
-		return nil, err
-	}
 	slashingMsgTxWithWitness, err := d.BtcUndelegation.SlashingTx.BuildSlashingTxWithWitness(
 		fpSK,
-		fpIdxInWitness,
-		len(d.FpBtcPkList),
+		d.FpBtcPkList,
 		unbondingMsgTx,
 		0,
 		d.BtcUndelegation.DelegatorSlashingSig,
