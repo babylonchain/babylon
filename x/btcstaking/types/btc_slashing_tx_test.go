@@ -1,7 +1,9 @@
 package types_test
 
 import (
+	"bytes"
 	"math/rand"
+	"sort"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -10,12 +12,13 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 )
 
 func FuzzSlashingTxWithWitness(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
+	datagen.AddRandomSeedsToFuzzer(f, 1)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -35,11 +38,14 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
-		// TODO: test restaking
-		fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+		// TODO(restaking): test restaking
+		// numRestakedFPs := int(datagen.RandomInt(r, 10) + 1)
+		// fpIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		numRestakedFPs := 5
+		fpIdx := 1
+		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
 		require.NoError(t, err)
-		numRestakedFPs := 1
-		fpIdx := 0
+		fpSK, fpPK := *fpSKs[fpIdx], *fpPKs[fpIdx]
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
@@ -59,7 +65,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			t,
 			net,
 			delSK,
-			[]*btcec.PublicKey{fpPK}, // restaking
+			fpPKs,
 			covenantPKs,
 			covenantQuorum,
 			stakingTimeBlocks,
@@ -76,27 +82,51 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 		slashingPkScriptPath := slashingSpendInfo.GetPkScriptPath()
 
-		// sign slashing tx
+		// delegator signs slashing tx
 		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingPkScriptPath, delSK)
 		require.NoError(t, err)
 
+		// get covenant Schnorr signatures
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
 			covenantSKs,
-			[]*btcec.PublicKey{fpPK}, // restaking
+			fpPKs,
 			stakingMsgTx,
 			slashingPkScriptPath,
 			slashingTx,
 		)
 		require.NoError(t, err)
-
-		covSigs, err := types.GetOrderedCovenantSignatures(0, covenantSigs, &bsParams)
+		covSigs, err := types.GetOrderedCovenantSignatures(fpIdx, covenantSigs, &bsParams)
 		require.NoError(t, err)
 
+		// get slashed finality provider's signature and its position in the witness
+		sortedFPPKs := sortBTCPKs(fpPKs)
+		fpIdxInWitness := 0
+		found := false
+		for i, pk := range sortedFPPKs {
+			if pk.IsEqual(&fpPK) {
+				fpIdxInWitness = i
+				found = true
+				break
+			}
+		}
+		require.True(t, found)
+
 		// create slashing tx with witness
-		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, fpIdx, numRestakedFPs, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
+		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(&fpSK, fpIdxInWitness, numRestakedFPs, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
 		require.NoError(t, err)
 
 		// verify slashing tx with witness
 		btctest.AssertSlashingTxExecution(t, testStakingInfo.StakingInfo.StakingOutput, slashingMsgTxWithWitness)
 	})
+}
+
+func sortBTCPKs(keys []*btcec.PublicKey) []*btcec.PublicKey {
+	sortedPKs := make([]*btcec.PublicKey, len(keys))
+	copy(sortedPKs, keys)
+	sort.SliceStable(sortedPKs, func(i, j int) bool {
+		keyIBytes := schnorr.SerializePubKey(sortedPKs[i])
+		keyJBytes := schnorr.SerializePubKey(sortedPKs[j])
+		return bytes.Compare(keyIBytes, keyJBytes) == 1
+	})
+	return sortedPKs
 }

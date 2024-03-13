@@ -78,9 +78,10 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		require.NoError(t, err)
 		delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
 
-		fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+		// restaked to a random number of finality providers
+		numRestakedFPs := int(datagen.RandomInt(r, 4) + 1)
+		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
 		require.NoError(t, err)
-		fpPKList := []*btcec.PublicKey{fpPK}
 
 		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
@@ -105,7 +106,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			t,
 			net,
 			delSK,
-			fpPKList,
+			fpPKs,
 			covenantPKs,
 			covenantQuorum,
 			stakingTimeBlocks,
@@ -126,7 +127,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		delSig, err := testInfo.SlashingTx.Sign(testInfo.StakingTx, 0, slashingSpendInfo.GetPkScriptPath(), delSK)
 		require.NoError(t, err)
 		// covenant signs (using adaptor signature) the slashing tx
-		covenantSigs, err := datagen.GenCovenantAdaptorSigs(covenantSKs, []*btcec.PublicKey{fpPK}, testInfo.StakingTx, slashingSpendInfo.GetPkScriptPath(), testInfo.SlashingTx)
+		covenantSigs, err := datagen.GenCovenantAdaptorSigs(covenantSKs, fpPKs, testInfo.StakingTx, slashingSpendInfo.GetPkScriptPath(), testInfo.SlashingTx)
 		require.NoError(t, err)
 		covenantSigs = covenantSigs[2:] // discard 2 out of 5 signatures
 
@@ -135,7 +136,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			BabylonPk:        nil, // not relevant here
 			BtcPk:            delBTCPK,
 			Pop:              nil, // not relevant here
-			FpBtcPkList:      bbn.NewBIP340PKsFromBTCPKs(fpPKList),
+			FpBtcPkList:      bbn.NewBIP340PKsFromBTCPKs(fpPKs),
 			StartHeight:      1000, // not relevant here
 			EndHeight:        uint64(1000 + stakingTimeBlocks),
 			TotalSat:         uint64(stakingValue),
@@ -153,6 +154,9 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		btcNet := &chaincfg.SimNetParams
 
 		// build slashing tx with witness for spending the staking tx
+		// a random finality provider gets slashed
+		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		fpSK := fpSKs[slashedFPIdx]
 		slashingTxWithWitness, err := btcDel.BuildSlashingTxWithWitness(bsParams, btcNet, fpSK)
 		require.NoError(t, err)
 

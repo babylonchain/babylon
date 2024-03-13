@@ -249,7 +249,7 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
 
 func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	fpSK *btcec.PrivateKey,
-	fpIdx int,
+	fpIdxInWitness int,
 	numRestakedFPs int,
 	fundingMsgTx *wire.MsgTx,
 	outputIdx uint32,
@@ -257,23 +257,6 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	covenantSigs []*asig.AdaptorSignature,
 	slashingPathSpendInfo *btcstaking.SpendInfo,
 ) (*wire.MsgTx, error) {
-	/*
-		construct finality providers' part of witness, i.e.,
-		1 out of numRestakedFPs signature
-	*/
-	fpSigs := make([]*schnorr.Signature, numRestakedFPs)
-	for i := 0; i < numRestakedFPs; i++ {
-		if i == fpIdx {
-			fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
-			if err != nil {
-				return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
-			}
-			fpSigs[i] = fpSig.MustToBTCSig()
-		} else {
-			fpSigs[i] = nil
-		}
-	}
-
 	/*
 		construct covenant committee's part of witness, i.e.,
 		a quorum number of covenant Schnorr signatures
@@ -284,13 +267,30 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get decryption key from BTC SK: %w", err)
 	}
-
-	var covSigs []*schnorr.Signature
-	for _, covenantSig := range covenantSigs {
+	// decrypt each covenant adaptor signature to Schnorr signature
+	covSigs := make([]*schnorr.Signature, len(covenantSigs))
+	for i, covenantSig := range covenantSigs {
 		if covenantSig != nil {
-			covSigs = append(covSigs, covenantSig.Decrypt(decKey))
+			covSigs[i] = covenantSig.Decrypt(decKey)
 		} else {
-			covSigs = append(covSigs, nil)
+			covSigs[i] = nil
+		}
+	}
+
+	/*
+		construct finality providers' part of witness, i.e.,
+		1 out of numRestakedFPs signature
+	*/
+	fpSigs := make([]*schnorr.Signature, numRestakedFPs)
+	for i := 0; i < numRestakedFPs; i++ {
+		if i == fpIdxInWitness {
+			fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
+			if err != nil {
+				return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
+			}
+			fpSigs[i] = fpSig.MustToBTCSig()
+		} else {
+			fpSigs[i] = nil
 		}
 	}
 
@@ -303,6 +303,7 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	if err != nil {
 		return nil, err
 	}
+
 	// add witness to slashing tx
 	slashingMsgTxWithWitness, err := tx.ToMsgTx()
 	if err != nil {
