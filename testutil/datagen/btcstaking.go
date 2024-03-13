@@ -111,13 +111,9 @@ func GenRandomBTCDelegation(
 		covenantBTCPKs = append(covenantBTCPKs, covenantSK.PubKey())
 	}
 	// list of finality provider PKs
-	fpPKs := []*btcec.PublicKey{}
-	for _, fpBTCPK := range fpBTCPKs {
-		fpPK, err := fpBTCPK.ToBTCPK()
-		if err != nil {
-			return nil, err
-		}
-		fpPKs = append(fpPKs, fpPK)
+	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(fpBTCPKs)
+	if err != nil {
+		return nil, err
 	}
 
 	// BTC delegation Babylon key pairs

@@ -14,7 +14,7 @@ import (
 )
 
 func FuzzSlashingTxWithWitness(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 1)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -24,7 +24,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			net               = &chaincfg.SimNetParams
 		)
 
-		// slashing address and key paris
+		// slashing address and key pairs
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
@@ -34,13 +34,11 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
-		// TODO(restaking): test restaking
+		// restaked to a random number of finality providers
 		numRestakedFPs := int(datagen.RandomInt(r, 10) + 1)
-		fpIdx := int(datagen.RandomInt(r, numRestakedFPs))
 		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
 		require.NoError(t, err)
 		fpBTCPKs := bbn.NewBIP340PKsFromBTCPKs(fpPKs)
-		fpSK := *fpSKs[fpIdx]
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
@@ -81,6 +79,10 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingPkScriptPath, delSK)
 		require.NoError(t, err)
 
+		// a random finality provider gets slashed
+		fpIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		fpSK := fpSKs[fpIdx]
+
 		// get covenant Schnorr signatures
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
 			covenantSKs,
@@ -94,7 +96,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 
 		// create slashing tx with witness
-		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(&fpSK, fpBTCPKs, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
+		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, fpBTCPKs, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
 		require.NoError(t, err)
 
 		// verify slashing tx with witness

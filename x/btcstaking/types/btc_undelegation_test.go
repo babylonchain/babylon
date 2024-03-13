@@ -25,7 +25,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		require.NoError(t, err)
 
 		// restaked to a random number of finality providers
-		numRestakedFPs := int(datagen.RandomInt(r, 4) + 1)
+		numRestakedFPs := int(datagen.RandomInt(r, 10) + 1)
 		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
 		fpBTCPKs := bbn.NewBIP340PKsFromBTCPKs(fpPKs)
 		require.NoError(t, err)
