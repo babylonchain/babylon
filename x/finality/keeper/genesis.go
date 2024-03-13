@@ -46,10 +46,16 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	commitedRandoms, err := k.commitedRandoms(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
-		Params:        k.GetParams(ctx),
-		IndexedBlocks: blocks,
-		Evidences:     evidences,
-		VoteSigs:      voteSigs,
+		Params:          k.GetParams(ctx),
+		IndexedBlocks:   blocks,
+		Evidences:       evidences,
+		VoteSigs:        voteSigs,
+		CommitedRandoms: commitedRandoms,
 	}, nil
 }

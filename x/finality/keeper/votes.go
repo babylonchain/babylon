@@ -100,7 +100,7 @@ func (k Keeper) voteSigs(ctx context.Context) ([]*types.VoteSig, error) {
 	voteSigs := make([]*types.VoteSig, 0)
 	for ; iter.Valid(); iter.Next() {
 		// key contains the height and the fp
-		blkHeight, fpBTCPK, err := parseHeightAndPubKeyFromStoreKey(iter.Key())
+		blkHeight, fpBTCPK, err := parseBlkHeightAndPubKeyFromStoreKey(iter.Key())
 		if err != nil {
 			return nil, err
 		}
@@ -137,10 +137,12 @@ func (k Keeper) voteStore(ctx context.Context) prefix.Store {
 	return prefix.NewStore(storeAdapter, types.VoteKey)
 }
 
-func parseHeightAndPubKeyFromStoreKey(key []byte) (blkHeight uint64, fpBTCPK *bbn.BIP340PubKey, err error) {
+// parseBlkHeightAndPubKeyFromStoreKey expects to receive a key with
+// BigEndianUint64(blkHeight) || BIP340PubKey(fpBTCPK)
+func parseBlkHeightAndPubKeyFromStoreKey(key []byte) (blkHeight uint64, fpBTCPK *bbn.BIP340PubKey, err error) {
 	sizeBigEndian := 8
 	if len(key) < sizeBigEndian+1 {
-		return 0, nil, fmt.Errorf("key not long enough to parse block height and BIP340PubKey %s", key)
+		return 0, nil, fmt.Errorf("key not long enough to parse block height and BIP340PubKey: %s", key)
 	}
 
 	fpBTCPK, err = bbn.NewBIP340PubKey(key[sizeBigEndian:])

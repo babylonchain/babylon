@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExportGenesisCheckEvidences(t *testing.T) {
+func TestExportGenesis(t *testing.T) {
 	k, ctx := keepertest.FinalityKeeper(t, nil, nil)
 
 	r := rand.New(rand.NewSource(10))
@@ -30,8 +30,30 @@ func TestExportGenesisCheckEvidences(t *testing.T) {
 	msgAddFinalitySig, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blkHeight, blockHash)
 	require.NoError(t, err)
 
+	allVotes := make([]*types.VoteSig, numPubRand)
+	allBlocks := make([]*types.IndexedBlock, numPubRand)
 	allEvidences := make([]*types.Evidence, numPubRand)
+	allCommitedRandoms := make([]*types.PublicRandomness, numPubRand)
 	for i := 0; i < int(numPubRand); i++ {
+		// Votes
+		vt := &types.VoteSig{
+			FpBtcPk:     fpBTCPK,
+			BlockHeight: blkHeight,
+			FinalitySig: msgAddFinalitySig.FinalitySig,
+		}
+		k.SetSig(ctx, vt.BlockHeight, vt.FpBtcPk, vt.FinalitySig)
+		allVotes[i] = vt
+
+		// Blocks
+		blk := &types.IndexedBlock{
+			Height:    blkHeight,
+			AppHash:   blockHash,
+			Finalized: i%2 == 0,
+		}
+		k.SetBlock(ctx, blk)
+		allBlocks[i] = blk
+
+		// Evidences
 		evidence := &types.Evidence{
 			FpBtcPk:              fpBTCPK,
 			BlockHeight:          blkHeight,
@@ -43,46 +65,31 @@ func TestExportGenesisCheckEvidences(t *testing.T) {
 		}
 		k.SetEvidence(ctx, evidence)
 		allEvidences[i] = evidence
-		blkHeight++
-	}
 
-	gs, err := k.ExportGenesis(ctx)
-	require.NoError(t, err)
-	require.Equal(t, allEvidences, gs.Evidences)
-}
-
-func TestExportGenesisCheckVoteSigs(t *testing.T) {
-	k, ctx := keepertest.FinalityKeeper(t, nil, nil)
-	r := rand.New(rand.NewSource(10))
-
-	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
-	require.NoError(t, err)
-
-	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-	blkHeight, startHeight, numPubRand := uint64(1), uint64(0), uint64(5)
-
-	srList, _, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
-	require.NoError(t, err)
-
-	sr := srList[startHeight+blkHeight]
-	blockHash := datagen.GenRandomByteArray(r, 32)
-	signer := datagen.GenRandomAccount().Address
-	msgAddFinalitySig, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blkHeight, blockHash)
-	require.NoError(t, err)
-
-	allVotes := make([]*types.VoteSig, numPubRand)
-	for i := 0; i < int(numPubRand); i++ {
-		vt := &types.VoteSig{
-			FpBtcPk:     fpBTCPK,
+		// PubRandoms
+		pubRand := msgCommitPubRandList.PubRandList[i]
+		k.SetPubRandList(ctx, fpBTCPK, blkHeight, []bbn.SchnorrPubRand{pubRand})
+		randomness := &types.PublicRandomness{
 			BlockHeight: blkHeight,
-			FinalitySig: msgAddFinalitySig.FinalitySig,
+			FpBtcPk:     fpBTCPK,
+			PubRand:     &pubRand,
 		}
-		k.SetSig(ctx, vt.BlockHeight, vt.FpBtcPk, vt.FinalitySig)
-		allVotes[i] = vt
+		allCommitedRandoms[i] = randomness
+
+		// updates the block everytime to make sure something is different.
 		blkHeight++
 	}
+	require.Equal(t, len(allVotes), int(numPubRand))
+	require.Equal(t, len(allBlocks), int(numPubRand))
+	require.Equal(t, len(allEvidences), int(numPubRand))
+	require.Equal(t, len(allCommitedRandoms), int(numPubRand))
 
 	gs, err := k.ExportGenesis(ctx)
 	require.NoError(t, err)
+	require.Equal(t, k.GetParams(ctx), gs.Params)
+
 	require.Equal(t, allVotes, gs.VoteSigs)
+	require.Equal(t, allBlocks, gs.IndexedBlocks)
+	require.Equal(t, allEvidences, gs.Evidences)
+	require.Equal(t, allCommitedRandoms, gs.CommitedRandoms)
 }
