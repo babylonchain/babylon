@@ -62,7 +62,7 @@ func TestImportExport(t *testing.T) {
 	)
 
 	// sender 1 is allowed to update, it should succeed
-	msg := &types.MsgInsertHeaders{Signer: address1.String(), Headers: keepertest.ChainToChainBytes(chainExtension)}
+	msg := &types.MsgInsertHeaders{Signer: address1.String(), Headers: keepertest.NewBTCHeaderBytesList(chainExtension)}
 	_, err = srv.InsertHeaders(ctx, msg)
 	require.NoError(t, err)
 
@@ -77,7 +77,7 @@ func TestImportExport(t *testing.T) {
 		10,
 	)
 
-	msg1 := &types.MsgInsertHeaders{Signer: address2.String(), Headers: keepertest.ChainToChainBytes(newChainExt)}
+	msg1 := &types.MsgInsertHeaders{Signer: address2.String(), Headers: keepertest.NewBTCHeaderBytesList(newChainExt)}
 	_, err = srv.InsertHeaders(ctx, msg1)
 	require.NoError(t, err)
 

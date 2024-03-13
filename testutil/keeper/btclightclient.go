@@ -31,7 +31,8 @@ func BTCLightClientKeeper(t testing.TB) (*btclightclientk.Keeper, sdk.Context) {
 	return k, ctx
 }
 
-func ChainToChainBytes(chain []*wire.BlockHeader) []bbn.BTCHeaderBytes {
+// NewBTCHeaderBytesList takes a list of block headers and parses it to BTCHeaderBytes.
+func NewBTCHeaderBytesList(chain []*wire.BlockHeader) []bbn.BTCHeaderBytes {
 	chainBytes := make([]bbn.BTCHeaderBytes, len(chain))
 	for i, header := range chain {
 		chainBytes[i] = bbn.NewBTCHeaderBytesFromBlockHeader(header)

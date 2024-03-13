@@ -160,7 +160,7 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 		extendedChainWork := oldTip.Work.Add(*chainExtensionWork)
 		extendedChainHeight := uint64(uint32(oldTip.Height) + newChainLength)
 
-		err := blcKeeper.InsertHeaders(ctx, keepertest.ChainToChainBytes(chainToInsert))
+		err := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.NoError(t, err)
 
 		// updated tip
@@ -247,7 +247,7 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 
 		require.True(t, len(removedBranch) > 0)
 
-		err := blcKeeper.InsertHeaders(ctx, keepertest.ChainToChainBytes(chainToInsert))
+		err := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.NoError(t, err)
 
 		// updated tip
@@ -358,7 +358,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 
 		// bump the nonce, it should fail validation and tip should not change
 		chainToInsert[3].Nonce = chainToInsert[3].Nonce + 1
-		errInvalidHeader := blcKeeper.InsertHeaders(ctx, keepertest.ChainToChainBytes(chainToInsert))
+		errInvalidHeader := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.Error(t, errInvalidHeader)
 		newTip := blcKeeper.GetTipInfo(ctx)
 		// tip did not change
@@ -374,7 +374,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 			nil,
 			1,
 		)
-		errWorseChain := blcKeeper.InsertHeaders(ctx, keepertest.ChainToChainBytes(worseChain))
+		errWorseChain := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(worseChain))
 		require.Error(t, errWorseChain)
 		require.True(t, errors.Is(errWorseChain, types.ErrChainWithNotEnoughWork))
 	})
@@ -413,7 +413,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 		require.Error(t, err)
 
 		randomChainWithoutLastHeader := randomChain.Headers[:len(randomChain.Headers)-1]
-		chain := keepertest.ChainToChainBytes(randomChainWithoutLastHeader)
+		chain := keepertest.NewBTCHeaderBytesList(randomChainWithoutLastHeader)
 		// now all headers are valid, and we are below adjustment boundary
 		err = blcKeeper.InsertHeaders(ctx, chain)
 		require.NoError(t, err)

@@ -67,7 +67,7 @@ func FuzzMsgServerInsertNewTip(f *testing.F) {
 		)
 		chainExtensionWork := chainWork(chainExtension)
 
-		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: keepertest.ChainToChainBytes(chainExtension)}
+		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: keepertest.NewBTCHeaderBytesList(chainExtension)}
 
 		_, err := srv.InsertHeaders(sdkCtx, msg)
 		require.NoError(t, err)
@@ -134,7 +134,7 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 			uint32(forkChainLen),
 		)
 		chainExtensionWork := chainWork(chainExtension)
-		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: keepertest.ChainToChainBytes(chainExtension)}
+		msg := &types.MsgInsertHeaders{Signer: address.String(), Headers: keepertest.NewBTCHeaderBytesList(chainExtension)}
 
 		_, err := srv.InsertHeaders(sdkCtx, msg)
 		require.NoError(t, err)
@@ -201,7 +201,7 @@ func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
 	)
 
 	// sender 1 is allowed to update, it should succeed
-	msg := &types.MsgInsertHeaders{Signer: address1.String(), Headers: keepertest.ChainToChainBytes(chainExtension)}
+	msg := &types.MsgInsertHeaders{Signer: address1.String(), Headers: keepertest.NewBTCHeaderBytesList(chainExtension)}
 	_, err = srv.InsertHeaders(sdkCtx, msg)
 	require.NoError(t, err)
 
@@ -217,13 +217,13 @@ func TestAllowUpdatesOnlyFromReportesInTheList(t *testing.T) {
 	)
 
 	// sender 3 is not allowed to update, it should fail
-	msg1 := &types.MsgInsertHeaders{Signer: address3.String(), Headers: keepertest.ChainToChainBytes(newChainExt)}
+	msg1 := &types.MsgInsertHeaders{Signer: address3.String(), Headers: keepertest.NewBTCHeaderBytesList(newChainExt)}
 	_, err = srv.InsertHeaders(sdkCtx, msg1)
 	require.Error(t, err)
 	require.ErrorIs(t, err, types.ErrUnauthorizedReporter)
 
 	// sender 2 is allowed to update, it should succeed
-	msg1 = &types.MsgInsertHeaders{Signer: address2.String(), Headers: keepertest.ChainToChainBytes(newChainExt)}
+	msg1 = &types.MsgInsertHeaders{Signer: address2.String(), Headers: keepertest.NewBTCHeaderBytesList(newChainExt)}
 	_, err = srv.InsertHeaders(sdkCtx, msg1)
 	require.NoError(t, err)
 }
