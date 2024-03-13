@@ -13,12 +13,12 @@ import (
 )
 
 func (k Keeper) SetSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340PubKey, sig *bbn.SchnorrEOTSSig) {
-	store := k.voteStore(ctx, height)
+	store := k.voteHeightStore(ctx, height)
 	store.Set(fpBtcPK.MustMarshal(), sig.MustMarshal())
 }
 
 func (k Keeper) HasSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340PubKey) bool {
-	store := k.voteStore(ctx, height)
+	store := k.voteHeightStore(ctx, height)
 	return store.Has(fpBtcPK.MustMarshal())
 }
 
@@ -26,7 +26,7 @@ func (k Keeper) GetSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340Pu
 	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < height {
 		return nil, types.ErrHeightTooHigh
 	}
-	store := k.voteStore(ctx, height)
+	store := k.voteHeightStore(ctx, height)
 	sigBytes := store.Get(fpBtcPK.MustMarshal())
 	if len(sigBytes) == 0 {
 		return nil, types.ErrVoteNotFound
@@ -40,7 +40,7 @@ func (k Keeper) GetSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340Pu
 
 // GetSigSet gets all EOTS signatures at a given height
 func (k Keeper) GetSigSet(ctx context.Context, height uint64) map[string]*bbn.SchnorrEOTSSig {
-	store := k.voteStore(ctx, height)
+	store := k.voteHeightStore(ctx, height)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
@@ -68,7 +68,7 @@ func (k Keeper) GetSigSet(ctx context.Context, height uint64) map[string]*bbn.Sc
 
 // GetVoters gets returns a map of voters' BTC PKs to the given height
 func (k Keeper) GetVoters(ctx context.Context, height uint64) map[string]struct{} {
-	store := k.voteStore(ctx, height)
+	store := k.voteHeightStore(ctx, height)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
@@ -90,12 +90,22 @@ func (k Keeper) GetVoters(ctx context.Context, height uint64) map[string]struct{
 	return voterBTCPKs
 }
 
-// voteStore returns the KVStore of the votes
+// voteHeightStore returns the KVStore of the votes
 // prefix: VoteKey
 // key: (block height || finality provider PK)
 // value: EOTS sig
-func (k Keeper) voteStore(ctx context.Context, height uint64) prefix.Store {
+func (k Keeper) voteHeightStore(ctx context.Context, height uint64) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	prefixedStore := prefix.NewStore(storeAdapter, types.VoteKey)
 	return prefix.NewStore(prefixedStore, sdk.Uint64ToBigEndian(height))
 }
+
+// // voteHeightStore returns the KVStore of the votes
+// // prefix: VoteKey
+// // key: (block height || finality provider PK)
+// // value: EOTS sig
+// func (k Keeper) voteHeightStore(ctx context.Context, height uint64) prefix.Store {
+// 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+// 	prefixedStore := prefix.NewStore(storeAdapter, types.VoteKey)
+// 	return prefix.NewStore(prefixedStore, sdk.Uint64ToBigEndian(height))
+// }
