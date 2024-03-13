@@ -30,7 +30,7 @@ message VoteSig {
   bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
 	// finality_sig is the finality signature to this block
 	// where finality signature is an EOTS signature, i.e.
-  bytes finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+  bytes finality_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
 }
 
 // PublicRandomness the block height and public randomness that the finality provider has submitted.
