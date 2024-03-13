@@ -41,7 +41,7 @@ func (m *BTCHeaderInfo) Validate() error {
 		return errors.New("work is zero")
 	}
 
-	btcHeader, err := bbn.ToBlockHeader(*m.Header)
+	btcHeader, err := bbn.NewBlockHeader(*m.Header)
 	if err != nil {
 		return err
 	}

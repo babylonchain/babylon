@@ -72,7 +72,7 @@ func (m *BTCHeaderBytes) Unmarshal(data []byte) error {
 		return errors.New("invalid header length")
 	}
 	// Verify that the bytes can be transformed to a *wire.BlockHeader object
-	_, err := ToBlockHeader(data)
+	_, err := NewBlockHeader(data)
 	if err != nil {
 		return errors.New("bytes do not correspond to a *wire.BlockHeader object")
 	}
@@ -117,7 +117,7 @@ func (m *BTCHeaderBytes) Size() int {
 }
 
 func (m BTCHeaderBytes) ToBlockHeader() *wire.BlockHeader {
-	header, err := ToBlockHeader(m)
+	header, err := NewBlockHeader(m)
 	// There was a parsing error
 	if err != nil {
 		panic("BTCHeaderBytes cannot be converted to a block header object")
@@ -173,7 +173,8 @@ func (m *BTCHeaderBytes) Difficulty() *big.Int {
 	return blockchain.CompactToBig(m.Bits())
 }
 
-func ToBlockHeader(data []byte) (*wire.BlockHeader, error) {
+// NewBlockHeader creates a block header from bytes.
+func NewBlockHeader(data []byte) (*wire.BlockHeader, error) {
 	// Create an empty header
 	header := &wire.BlockHeader{}
 
