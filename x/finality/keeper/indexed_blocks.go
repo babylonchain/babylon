@@ -47,8 +47,8 @@ func (k Keeper) GetBlock(ctx context.Context, height uint64) (*types.IndexedBloc
 }
 
 // GetBlocks loads all blocks stored.
-func (k Keeper) GetBlocks(ctx context.Context) (blocks []*types.IndexedBlock, err error) {
-	blocks = make([]*types.IndexedBlock, 0)
+func (k Keeper) GetBlocks(ctx context.Context) ([]*types.IndexedBlock, error) {
+	blocks := make([]*types.IndexedBlock, 0)
 
 	iter := k.blockStore(ctx).Iterator(nil, nil)
 	defer iter.Close()
