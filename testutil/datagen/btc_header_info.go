@@ -1,17 +1,21 @@
 package datagen
 
 import (
+	"context"
 	"math/big"
 	"math/rand"
+	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
+	btclightclientk "github.com/babylonchain/babylon/x/btclightclient/keeper"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/stretchr/testify/require"
 )
 
 type RetargetInfo struct {
@@ -268,6 +272,34 @@ func GenRandomValidChainStartingFrom(
 		headers[i] = GenRandomBtcdValidHeader(r, headers[i-1], timeBetweenBlocks, nil)
 	}
 	return headers
+}
+
+// GenRandBtcChainInsertingInKeeper generates random BTCHeaderInfo and insert its headers
+// into the keeper store.
+// this function must not be used at difficulty adjustment boundaries, as then
+// difficulty adjustment calculation will fail
+func GenRandBtcChainInsertingInKeeper(
+	t *testing.T,
+	r *rand.Rand,
+	k *btclightclientk.Keeper,
+	ctx context.Context,
+	initialHeight uint64,
+	chainLength uint64,
+) (*btclightclienttypes.BTCHeaderInfo, *BTCHeaderPartialChain) {
+	genesisHeader := NewBTCHeaderChainWithLength(r, initialHeight, 0, 1)
+	genesisHeaderInfo := genesisHeader.GetChainInfo()[0]
+	k.SetBaseBTCHeader(ctx, *genesisHeaderInfo)
+	randomChain := NewBTCHeaderChainFromParentInfo(
+		r,
+		genesisHeaderInfo,
+		uint32(chainLength),
+	)
+	err := k.InsertHeaders(ctx, randomChain.ChainToBytes())
+	require.NoError(t, err)
+	tip := k.GetTipInfo(ctx)
+	randomChainTipInfo := randomChain.GetTipInfo()
+	require.True(t, tip.Eq(randomChainTipInfo))
+	return genesisHeaderInfo, randomChain
 }
 
 func ChainToInfoChain(

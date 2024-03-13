@@ -17,7 +17,7 @@ func (k Keeper) SetEvidence(ctx context.Context, evidence *types.Evidence) {
 
 func (k Keeper) HasEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
 	store := k.evidenceFpStore(ctx, fpBtcPK)
-	return store.Has(fpBtcPK.MustMarshal())
+	return store.Has(sdk.Uint64ToBigEndian(height))
 }
 
 func (k Keeper) GetEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.Evidence, error) {
