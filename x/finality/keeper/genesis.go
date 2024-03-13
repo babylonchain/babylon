@@ -41,10 +41,15 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	voteSigs, err := k.voteSigs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
 		Params:        k.GetParams(ctx),
 		IndexedBlocks: blocks,
 		Evidences:     evidences,
-		// VoteSigs: ,
+		VoteSigs:      voteSigs,
 	}, nil
 }
