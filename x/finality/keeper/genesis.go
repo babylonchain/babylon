@@ -27,3 +27,24 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 
 	return k.SetParams(ctx, gs.Params)
 }
+
+// ExportGenesis returns the keeper state into a exported genesis state.
+func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) {
+	// TODO: get VoteSigs, CommitedRandoms
+	blocks, err := k.blocks(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	evidences, err := k.evidences(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.GenesisState{
+		Params:        k.GetParams(ctx),
+		IndexedBlocks: blocks,
+		Evidences:     evidences,
+		// VoteSigs: ,
+	}, nil
+}

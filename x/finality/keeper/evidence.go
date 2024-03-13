@@ -34,8 +34,8 @@ func (k Keeper) GetEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, heig
 	return &evidence, nil
 }
 
-// GetEvidences loads all evidences stored.
-func (k Keeper) GetEvidences(ctx context.Context) (evidences []*types.Evidence, err error) {
+// evidences loads all evidences stored.
+func (k Keeper) evidences(ctx context.Context) (evidences []*types.Evidence, err error) {
 	evidences = make([]*types.Evidence, 0)
 
 	iter := k.evidenceStore(ctx).Iterator(nil, nil)
