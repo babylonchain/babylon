@@ -249,17 +249,35 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
 
 func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	fpSK *btcec.PrivateKey,
+	fpIdx int,
+	numRestakedFPs int,
 	fundingMsgTx *wire.MsgTx,
 	outputIdx uint32,
 	delegatorSig *bbn.BIP340Signature,
 	covenantSigs []*asig.AdaptorSignature,
 	slashingPathSpendInfo *btcstaking.SpendInfo,
 ) (*wire.MsgTx, error) {
-	fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
+	/*
+		construct finality providers' part of witness, i.e.,
+		1 out of numRestakedFPs signature
+	*/
+	fpSigs := make([]*schnorr.Signature, numRestakedFPs)
+	for i := 0; i < numRestakedFPs; i++ {
+		if i == fpIdx {
+			fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
+			if err != nil {
+				return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
+			}
+			fpSigs[i] = fpSig.MustToBTCSig()
+		} else {
+			fpSigs[i] = nil
+		}
 	}
 
+	/*
+		construct covenant committee's part of witness, i.e.,
+		a quorum number of covenant Schnorr signatures
+	*/
 	// decrypt covenant adaptor signature to Schnorr signature using finality provider's SK,
 	// then marshal
 	decKey, err := asig.NewDecyptionKeyFromBTCSK(fpSK)
@@ -279,7 +297,7 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	// construct witness
 	witness, err := slashingPathSpendInfo.CreateSlashingPathWitness(
 		covSigs,
-		[]*schnorr.Signature{fpSig.MustToBTCSig()}, // TODO: work with restaking
+		fpSigs,
 		delegatorSig.MustToBTCSig(),
 	)
 	if err != nil {

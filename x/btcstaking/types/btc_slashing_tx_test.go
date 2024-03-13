@@ -38,6 +38,8 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// TODO: test restaking
 		fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
+		numRestakedFPs := 1
+		fpIdx := 0
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
@@ -57,7 +59,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			t,
 			net,
 			delSK,
-			[]*btcec.PublicKey{fpPK},
+			[]*btcec.PublicKey{fpPK}, // restaking
 			covenantPKs,
 			covenantQuorum,
 			stakingTimeBlocks,
@@ -80,7 +82,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
 			covenantSKs,
-			[]*btcec.PublicKey{fpPK},
+			[]*btcec.PublicKey{fpPK}, // restaking
 			stakingMsgTx,
 			slashingPkScriptPath,
 			slashingTx,
@@ -91,7 +93,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 
 		// create slashing tx with witness
-		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
+		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, fpIdx, numRestakedFPs, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
 		require.NoError(t, err)
 
 		// verify slashing tx with witness
