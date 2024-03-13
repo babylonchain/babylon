@@ -53,6 +53,5 @@ func TestExportGenesisCheckEvidences(t *testing.T) {
 
 	gs, err := k.ExportGenesis(ctx)
 	require.NoError(t, err)
-
 	require.Equal(t, allEvidences, gs.Evidences)
 }
