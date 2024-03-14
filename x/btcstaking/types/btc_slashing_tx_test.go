@@ -98,7 +98,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			slashingTx,
 		)
 		require.NoError(t, err)
-		covSigs, err := types.GetOrderedCovenantSignatures(fpIdx, covenantSigs, &bsParams)
+		covSigsForFP, err := types.GetOrderedCovenantSignatures(fpIdx, covenantSigs, &bsParams)
 		require.NoError(t, err)
 
 		// ensure all covenant signatures encrypted by the slashed
@@ -107,20 +107,32 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		fpPK := fpPKs[fpIdx]
 		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)
-		for i := range covSigs {
+		decKey, err := asig.NewDecyptionKeyFromBTCSK(fpSK)
+		require.NoError(t, err)
+		for i := range covSigsForFP {
 			err := slashingTx.EncVerifyAdaptorSignature(
 				testStakingInfo.StakingInfo.StakingOutput.PkScript,
 				testStakingInfo.StakingInfo.StakingOutput.Value,
 				slashingPkScriptPath,
 				orderedCovenantPKs[i].MustToBTCPK(),
 				encKey,
-				covSigs[i],
+				covSigsForFP[i],
 			)
-			require.NoError(t, err, "verifying covSig at %d", i)
+			require.NoError(t, err, "verifying covenant adaptor sig at %d", i)
+
+			covSchnorrSig := covSigsForFP[i].Decrypt(decKey)
+			err = slashingTx.VerifySignature(
+				testStakingInfo.StakingInfo.StakingOutput.PkScript,
+				testStakingInfo.StakingInfo.StakingOutput.Value,
+				slashingPkScriptPath,
+				orderedCovenantPKs[i].MustToBTCPK(),
+				bbn.NewBIP340SignatureFromBTCSig(covSchnorrSig),
+			)
+			require.NoError(t, err, "verifying covenant Schnorr sig at %d", i)
 		}
 
 		// create slashing tx with witness
-		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, fpBTCPKs, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
+		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, fpBTCPKs, stakingMsgTx, 0, delSig, covSigsForFP, slashingSpendInfo)
 		require.NoError(t, err)
 
 		// verify slashing tx with witness
