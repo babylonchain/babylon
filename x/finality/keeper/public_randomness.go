@@ -70,35 +70,6 @@ func (k Keeper) GetLastPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) (
 	return height, pubRand, nil
 }
 
-// commitedRandoms iterates over all commited randoms on the store, parses the finality provider public key
-// and the height from the iterator key and the commited random from the iterator value.
-func (k Keeper) commitedRandoms(ctx context.Context) ([]*types.PublicRandomness, error) {
-	store := k.pubRandStore(ctx)
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-
-	commtRandoms := make([]*types.PublicRandomness, 0)
-	for ; iter.Valid(); iter.Next() {
-		// key contains the fp and the block height
-		fpBTCPK, blkHeight, err := parsePubKeyAndBlkHeightFromStoreKey(iter.Key())
-		if err != nil {
-			return nil, err
-		}
-		pubRand, err := bbn.NewSchnorrPubRand(iter.Value())
-		if err != nil {
-			return nil, err
-		}
-
-		commtRandoms = append(commtRandoms, &types.PublicRandomness{
-			BlockHeight: blkHeight,
-			FpBtcPk:     fpBTCPK,
-			PubRand:     pubRand,
-		})
-	}
-
-	return commtRandoms, nil
-}
-
 // pubRandFpStore returns the KVStore of the public randomness
 // prefix: PubRandKey
 // key: (finality provider || PK block height)
@@ -115,23 +86,4 @@ func (k Keeper) pubRandFpStore(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) p
 func (k Keeper) pubRandStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.PubRandKey)
-}
-
-// parsePubKeyAndBlkHeightFromStoreKey expects to receive a key with
-// BIP340PubKey(fpBTCPK) || BigEndianUint64(blkHeight)
-func parsePubKeyAndBlkHeightFromStoreKey(key []byte) (fpBTCPK *bbn.BIP340PubKey, blkHeight uint64, err error) {
-	sizeBigEndian := 8
-	keyLen := len(key)
-	if keyLen < sizeBigEndian+1 {
-		return nil, 0, fmt.Errorf("key not long enough to parse BIP340PubKey and block height: %s", key)
-	}
-
-	startKeyHeight := keyLen - sizeBigEndian
-	fpBTCPK, err = bbn.NewBIP340PubKey(key[:startKeyHeight])
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
-	}
-
-	blkHeight = sdk.BigEndianToUint64(key[startKeyHeight:])
-	return fpBTCPK, blkHeight, nil
 }

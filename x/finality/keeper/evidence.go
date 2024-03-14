@@ -34,24 +34,6 @@ func (k Keeper) GetEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, heig
 	return &evidence, nil
 }
 
-// evidences loads all evidences stored.
-func (k Keeper) evidences(ctx context.Context) (evidences []*types.Evidence, err error) {
-	evidences = make([]*types.Evidence, 0)
-
-	iter := k.evidenceStore(ctx).Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var evd types.Evidence
-		if err := k.cdc.Unmarshal(iter.Value(), &evd); err != nil {
-			return nil, err
-		}
-		evidences = append(evidences, &evd)
-	}
-
-	return evidences, nil
-}
-
 // GetFirstSlashableEvidence gets the first evidence that is slashable,
 // i.e., it contains all fields.
 // NOTE: it's possible that the CanonicalFinalitySig field is empty for

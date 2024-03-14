@@ -90,35 +90,6 @@ func (k Keeper) GetVoters(ctx context.Context, height uint64) map[string]struct{
 	return voterBTCPKs
 }
 
-// voteSigs iterates over all votes on the store, parses the height and the finality provider
-// public key from the iterator key and the finality signature from the iterator value.
-func (k Keeper) voteSigs(ctx context.Context) ([]*types.VoteSig, error) {
-	store := k.voteStore(ctx)
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-
-	voteSigs := make([]*types.VoteSig, 0)
-	for ; iter.Valid(); iter.Next() {
-		// key contains the height and the fp
-		blkHeight, fpBTCPK, err := parseBlkHeightAndPubKeyFromStoreKey(iter.Key())
-		if err != nil {
-			return nil, err
-		}
-		finalitySig, err := bbn.NewSchnorrEOTSSig(iter.Value())
-		if err != nil {
-			return nil, err
-		}
-
-		voteSigs = append(voteSigs, &types.VoteSig{
-			BlockHeight: blkHeight,
-			FpBtcPk:     fpBTCPK,
-			FinalitySig: finalitySig,
-		})
-	}
-
-	return voteSigs, nil
-}
-
 // voteHeightStore returns the KVStore of the votes
 // prefix: VoteKey
 // key: (block height || finality provider PK)
@@ -135,21 +106,4 @@ func (k Keeper) voteHeightStore(ctx context.Context, height uint64) prefix.Store
 func (k Keeper) voteStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.VoteKey)
-}
-
-// parseBlkHeightAndPubKeyFromStoreKey expects to receive a key with
-// BigEndianUint64(blkHeight) || BIP340PubKey(fpBTCPK)
-func parseBlkHeightAndPubKeyFromStoreKey(key []byte) (blkHeight uint64, fpBTCPK *bbn.BIP340PubKey, err error) {
-	sizeBigEndian := 8
-	if len(key) < sizeBigEndian+1 {
-		return 0, nil, fmt.Errorf("key not long enough to parse block height and BIP340PubKey: %s", key)
-	}
-
-	fpBTCPK, err = bbn.NewBIP340PubKey(key[sizeBigEndian:])
-	if err != nil {
-		return 0, nil, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
-	}
-
-	blkHeight = sdk.BigEndianToUint64(key[:sizeBigEndian])
-	return blkHeight, fpBTCPK, nil
 }
