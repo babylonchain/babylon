@@ -309,7 +309,7 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 	return unbondingInfo, nil
 }
 
-// FindFPIdx returns the index of the given finality provider
+// findFPIdx returns the index of the given finality provider
 // among all restaked finality providers
 func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
 	for i, pk := range d.FpBtcPkList {

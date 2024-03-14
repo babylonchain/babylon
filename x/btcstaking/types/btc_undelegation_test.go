@@ -31,7 +31,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		require.NoError(t, err)
 		// a random finality provider gets slashed
 		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
-		fpSK := fpSKs[slashedFPIdx]
+		fpSK, fpPK := fpSKs[slashedFPIdx], fpPKs[slashedFPIdx]
 
 		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
@@ -75,7 +75,6 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
 		covSigsForFP, err := types.GetOrderedCovenantSignatures(slashedFPIdx, btcDel.BtcUndelegation.CovenantSlashingSigs, bsParams)
 		require.NoError(t, err)
-		fpPK := fpSK.PubKey()
 		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)
 		slashingSpendInfo, err := unbondingInfo.SlashingPathSpendInfo()

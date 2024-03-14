@@ -304,7 +304,7 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 		slashingAddrBtc,
 		stakerSK.PubKey(),
 		slashingChangeLockTime,
-		UnbondingTxFee,
+		2000,
 		slashingRate,
 		btcNet)
 	require.NoError(t, err)

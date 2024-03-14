@@ -297,23 +297,16 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 		construct finality providers' part of witness, i.e.,
 		1 out of numRestakedFPs signature
 	*/
-	numRestakedFPs := len(fpBTCPKs)
 	fpIdxInWitness, err := findFPIdxInWitness(fpSK, fpBTCPKs)
 	if err != nil {
 		return nil, err
 	}
 	fpSigs := make([]*schnorr.Signature, len(fpBTCPKs))
-	for i := 0; i < numRestakedFPs; i++ {
-		if i == fpIdxInWitness {
-			fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
-			if err != nil {
-				return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
-			}
-			fpSigs[i] = fpSig.MustToBTCSig()
-		} else {
-			fpSigs[i] = nil
-		}
+	fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
 	}
+	fpSigs[fpIdxInWitness] = fpSig.MustToBTCSig()
 
 	// construct witness
 	witness, err := slashingPathSpendInfo.CreateSlashingPathWitness(
