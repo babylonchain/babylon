@@ -17,8 +17,8 @@ message GenesisState {
   repeated Evidence evidences = 3;
   // votes_sigs contains all the votes of finality providers ever registered.
   repeated VoteSig vote_sigs = 4;
-  // commited_randoms contains all the public randomness ever commited from the finality providers.
-  repeated PublicRandomness commited_randoms = 5;
+  // public_randomness contains all the public randomness ever commited from the finality providers.
+  repeated PublicRandomness public_randomness = 5;
 }
 
 // VoteSig the vote of an finality provider

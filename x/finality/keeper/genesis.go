@@ -23,8 +23,8 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.SetSig(ctx, voteSig.BlockHeight, voteSig.FpBtcPk, voteSig.FinalitySig)
 	}
 
-	for _, commitRand := range gs.CommitedRandoms {
-		k.SetPubRandList(ctx, commitRand.FpBtcPk, commitRand.BlockHeight, []bbn.SchnorrPubRand{*commitRand.PubRand})
+	for _, pubRand := range gs.PublicRandomness {
+		k.SetPubRandList(ctx, pubRand.FpBtcPk, pubRand.BlockHeight, []bbn.SchnorrPubRand{*pubRand.PubRand})
 	}
 
 	return k.SetParams(ctx, gs.Params)
@@ -47,17 +47,17 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	commitedRandoms, err := k.commitedRandoms(ctx)
+	pubRandomness, err := k.publicRandomness(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.GenesisState{
-		Params:          k.GetParams(ctx),
-		IndexedBlocks:   blocks,
-		Evidences:       evidences,
-		VoteSigs:        voteSigs,
-		CommitedRandoms: commitedRandoms,
+		Params:           k.GetParams(ctx),
+		IndexedBlocks:    blocks,
+		Evidences:        evidences,
+		VoteSigs:         voteSigs,
+		PublicRandomness: pubRandomness,
 	}, nil
 }
 
@@ -129,10 +129,10 @@ func (k Keeper) voteSigs(ctx context.Context) ([]*types.VoteSig, error) {
 	return voteSigs, nil
 }
 
-// commitedRandoms iterates over all commited randoms on the store, parses the finality provider public key
+// publicRandomness iterates over all commited randoms on the store, parses the finality provider public key
 // and the height from the iterator key and the commited random from the iterator value.
 // This function has high resource consumption and should be only used on export genesis.
-func (k Keeper) commitedRandoms(ctx context.Context) ([]*types.PublicRandomness, error) {
+func (k Keeper) publicRandomness(ctx context.Context) ([]*types.PublicRandomness, error) {
 	store := k.pubRandStore(ctx)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()

@@ -10,6 +10,6 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	// TODO: add validate to IndexedBlocks, Evidences, VoteSigs, CommitedRandoms
+	// TODO: add validate to IndexedBlocks, Evidences, VoteSigs, PublicRandomness
 	return gs.Params.Validate()
 }

@@ -33,7 +33,7 @@ func TestExportGenesis(t *testing.T) {
 	allVotes := make([]*types.VoteSig, numPubRand)
 	allBlocks := make([]*types.IndexedBlock, numPubRand)
 	allEvidences := make([]*types.Evidence, numPubRand)
-	allCommitedRandoms := make([]*types.PublicRandomness, numPubRand)
+	allPublicRandomness := make([]*types.PublicRandomness, numPubRand)
 	for i := 0; i < int(numPubRand); i++ {
 		// Votes
 		vt := &types.VoteSig{
@@ -74,7 +74,7 @@ func TestExportGenesis(t *testing.T) {
 			FpBtcPk:     fpBTCPK,
 			PubRand:     &pubRand,
 		}
-		allCommitedRandoms[i] = randomness
+		allPublicRandomness[i] = randomness
 
 		// updates the block everytime to make sure something is different.
 		blkHeight++
@@ -82,7 +82,7 @@ func TestExportGenesis(t *testing.T) {
 	require.Equal(t, len(allVotes), int(numPubRand))
 	require.Equal(t, len(allBlocks), int(numPubRand))
 	require.Equal(t, len(allEvidences), int(numPubRand))
-	require.Equal(t, len(allCommitedRandoms), int(numPubRand))
+	require.Equal(t, len(allPublicRandomness), int(numPubRand))
 
 	gs, err := k.ExportGenesis(ctx)
 	require.NoError(t, err)
@@ -91,5 +91,5 @@ func TestExportGenesis(t *testing.T) {
 	require.Equal(t, allVotes, gs.VoteSigs)
 	require.Equal(t, allBlocks, gs.IndexedBlocks)
 	require.Equal(t, allEvidences, gs.Evidences)
-	require.Equal(t, allCommitedRandoms, gs.CommitedRandoms)
+	require.Equal(t, allPublicRandomness, gs.PublicRandomness)
 }
