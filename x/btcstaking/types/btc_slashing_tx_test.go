@@ -44,6 +44,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 
+		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 		require.NoError(t, err)
 		covenantQuorum := uint32(3)
@@ -52,6 +53,10 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			CovenantQuorum: covenantQuorum,
 		}
 		slashingChangeLockTime := uint16(101)
+		bsParams := types.Params{
+			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+			CovenantQuorum: covenantQuorum,
+		}
 
 		// generate staking/slashing tx
 		testStakingInfo := datagen.GenBTCStakingSlashingInfo(
