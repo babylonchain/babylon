@@ -96,12 +96,12 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 
 	// get ordered list of covenant signatures w.r.t. the order of sorted covenant PKs
 	// Note that only a quorum number of covenant signatures needs to be provided
-	orderedCovSigs := make([]*asig.AdaptorSignature, len(params.CovenantPks))
-	for i, covPK := range orderedCovenantPKs {
+	orderedCovSigs := []*asig.AdaptorSignature{}
+	for _, covPK := range orderedCovenantPKs {
 		if covSig, ok := covSigsMap[covPK.MarshalHex()]; ok {
-			orderedCovSigs[i] = covSig
+			orderedCovSigs = append(orderedCovSigs, covSig)
 		} else {
-			orderedCovSigs[i] = nil
+			orderedCovSigs = append(orderedCovSigs, nil)
 		}
 	}
 

@@ -10,7 +10,6 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,6 +33,10 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 		require.NoError(t, err)
 		covenantQuorum := uint32(3)
+		bsParams := &types.Params{
+			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+			CovenantQuorum: covenantQuorum,
+		}
 
 		stakingTimeBlocks := uint16(5)
 		stakingValue := int64(2 * 10e8)
@@ -42,7 +45,6 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 		unbondingTime := uint16(100) + 1
-		unbondingValue := stakingValue - 1000
 		slashingChangeLockTime := unbondingTime
 
 		// construct the BTC delegation with everything
@@ -62,57 +64,8 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		)
 		require.NoError(t, err)
 
-		stakingTxHash := btcDel.MustGetStakingTxHash()
-
-		testInfo := datagen.GenBTCUnbondingSlashingInfo(
-			r,
-			t,
-			net,
-			delSK,
-			fpPKs,
-			covenantPKs,
-			covenantQuorum,
-			wire.NewOutPoint(&stakingTxHash, 0),
-			unbondingTime,
-			unbondingValue,
-			slashingAddress.EncodeAddress(),
-			slashingRate,
-			slashingChangeLockTime,
-		)
+		unbondingInfo, err := btcDel.GetUnbondingInfo(bsParams, net)
 		require.NoError(t, err)
-
-		// delegator signs the unbonding slashing tx
-		delSlashingTxSig, err := testInfo.GenDelSlashingTxSig(delSK)
-		require.NoError(t, err)
-
-		unbondingTxBytes, err := bbn.SerializeBTCTx(testInfo.UnbondingTx)
-		require.NoError(t, err)
-
-		// spend info of the unbonding slashing tx
-		unbondingSlashingSpendInfo, err := testInfo.UnbondingInfo.SlashingPathSpendInfo()
-		require.NoError(t, err)
-		// covenant signs (using adaptor signature) the slashing tx
-		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
-			covenantSKs,
-			fpPKs,
-			testInfo.UnbondingTx,
-			unbondingSlashingSpendInfo.GetPkScriptPath(),
-			testInfo.SlashingTx,
-		)
-		require.NoError(t, err)
-		btcDel.BtcUndelegation = &types.BTCUndelegation{
-			UnbondingTx:              unbondingTxBytes,
-			SlashingTx:               testInfo.SlashingTx,
-			DelegatorUnbondingSig:    nil, // not relevant here
-			DelegatorSlashingSig:     delSlashingTxSig,
-			CovenantSlashingSigs:     covenantSigs,
-			CovenantUnbondingSigList: nil, // not relevant here
-		}
-
-		bsParams := &types.Params{
-			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-			CovenantQuorum: covenantQuorum,
-		}
 
 		// build slashing tx with witness for spending the unbonding tx
 		// a random finality provider gets slashed
@@ -122,6 +75,6 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		require.NoError(t, err)
 
 		// assert the execution
-		btctest.AssertSlashingTxExecution(t, testInfo.UnbondingInfo.UnbondingOutput, unbondingSlashingTxWithWitness)
+		btctest.AssertSlashingTxExecution(t, unbondingInfo.UnbondingOutput, unbondingSlashingTxWithWitness)
 	})
 }

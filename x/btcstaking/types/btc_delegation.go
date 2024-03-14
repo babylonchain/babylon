@@ -351,6 +351,30 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 		return nil, fmt.Errorf("failed to get ordered covenant adaptor signatures: %w", err)
 	}
 
+	// TESTING
+	orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
+	fpPK := fpSK.PubKey()
+	encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
+	if err != nil {
+		return nil, err
+	}
+	for i := range covAdaptorSigs {
+		if covAdaptorSigs[i] == nil {
+			continue
+		}
+		err := d.SlashingTx.EncVerifyAdaptorSignature(
+			stakingInfo.StakingOutput.PkScript,
+			stakingInfo.StakingOutput.Value,
+			slashingSpendInfo.GetPkScriptPath(),
+			orderedCovenantPKs[i].MustToBTCPK(),
+			encKey,
+			covAdaptorSigs[i],
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to verify the %d-th covenant adaptor sig", i)
+		}
+	}
+
 	// assemble witness for slashing tx
 	slashingMsgTxWithWitness, err := d.SlashingTx.BuildSlashingTxWithWitness(
 		fpSK,
@@ -390,7 +414,8 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	}
 
 	// get the list of covenant signatures encrypted by the given finality provider's PK
-	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey())
+	fpPK := fpSK.PubKey()
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	fpIdx, err := d.findFPIdx(fpBTCPK)
 	if err != nil {
 		return nil, err
@@ -398,6 +423,29 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	covAdaptorSigs, err := GetOrderedCovenantSignatures(fpIdx, d.BtcUndelegation.CovenantSlashingSigs, bsParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ordered covenant adaptor signatures: %w", err)
+	}
+
+	// TESTING
+	orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
+	encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
+	if err != nil {
+		return nil, err
+	}
+	for i := range covAdaptorSigs {
+		if covAdaptorSigs[i] == nil {
+			continue
+		}
+		err := d.BtcUndelegation.SlashingTx.EncVerifyAdaptorSignature(
+			unbondingInfo.UnbondingOutput.PkScript,
+			unbondingInfo.UnbondingOutput.Value,
+			slashingSpendInfo.GetPkScriptPath(),
+			orderedCovenantPKs[i].MustToBTCPK(),
+			encKey,
+			covAdaptorSigs[i],
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to verify the %d-th covenant adaptor sig: %v", i, err)
+		}
 	}
 
 	// assemble witness for unbonding slashing tx
