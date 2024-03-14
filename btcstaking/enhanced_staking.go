@@ -32,7 +32,7 @@ type EnhancedStakingInfo struct {
 }
 
 // XonlyPubKey is a wrapper around btcec.PublicKey that represents BTC public
-// key deserialized from a 32-byte array i.e with implicit assumption thah Y coordinate
+// key deserialized from a 32-byte array i.e with implicit assumption that Y coordinate
 // is even.
 type XonlyPubKey struct {
 	PubKey *btcec.PublicKey
@@ -158,7 +158,7 @@ func NewV0OpReturnDataFromBytes(b []byte) (*V0OpReturnData, error) {
 	return NewV0OpReturnData(magicBytes, stakerPublicKey, finalityProviderPublicKey, stakingTime)
 }
 
-func NewV0OpReturnDataFromTxOutput(out *wire.TxOut) (*V0OpReturnData, error) {
+func getV0OpReturnBytes(out *wire.TxOut) ([]byte, error) {
 	if out == nil {
 		return nil, fmt.Errorf("nil tx output")
 	}
@@ -174,7 +174,17 @@ func NewV0OpReturnDataFromTxOutput(out *wire.TxOut) (*V0OpReturnData, error) {
 		return nil, fmt.Errorf("invalid op return script")
 	}
 
-	return NewV0OpReturnDataFromBytes(out.PkScript[2:])
+	return out.PkScript[2:], nil
+}
+
+func NewV0OpReturnDataFromTxOutput(out *wire.TxOut) (*V0OpReturnData, error) {
+	data, err := getV0OpReturnBytes(out)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse op return data: %w", err)
+	}
+
+	return NewV0OpReturnDataFromBytes(data)
 }
 
 func (d *V0OpReturnData) Marshall() []byte {
@@ -293,7 +303,70 @@ type ParsedV0StakingTx struct {
 	OpReturnData      *V0OpReturnData
 }
 
-// ParseV0StakingTx takes btc transaction checks whether it is a staking transaction and if so, it parses it.
+func tryToGetOpReturnDataFromOutputs(outputs []*wire.TxOut) (*V0OpReturnData, int, error) {
+	// lack of outputs is not an error
+	if len(outputs) == 0 {
+		return nil, -1, nil
+	}
+
+	var opReturnData *V0OpReturnData
+	var opReturnOutputIdx int
+
+	for i, o := range outputs {
+		output := o
+		d, err := NewV0OpReturnDataFromTxOutput(output)
+
+		if err != nil {
+			// this is not an op return output recognized by Babylon, move forward
+			continue
+		}
+		// this case should not happen as standard bitcoin node propagation rules
+		// disallow multiple op return outputs in a single transaction. However, miner could
+		// include multiple op return outputs in a single transaction. In such case, we should
+		// return an error.
+		if opReturnData != nil {
+			return nil, -1, fmt.Errorf("multiple op return outputs found")
+		}
+
+		opReturnData = d
+		opReturnOutputIdx = i
+	}
+
+	return opReturnData, opReturnOutputIdx, nil
+}
+
+func tryToGetStakingOutput(outputs []*wire.TxOut, stakingOutputPkScript []byte) (*wire.TxOut, int, error) {
+	// lack of outputs is not an error
+	if len(outputs) == 0 {
+		return nil, -1, nil
+	}
+
+	var stakingOutput *wire.TxOut
+	var stakingOutputIdx int
+
+	for i, o := range outputs {
+		output := o
+
+		if !bytes.Equal(output.PkScript, stakingOutputPkScript) {
+			// this is not the staking output we are looking for
+			continue
+		}
+
+		if stakingOutput != nil {
+			// we only allow for on staking output per transaction
+			return nil, -1, fmt.Errorf("multiple staking outputs found")
+		}
+
+		stakingOutput = output
+		stakingOutputIdx = i
+	}
+
+	return stakingOutput, stakingOutputIdx, nil
+}
+
+// ParseV0StakingTx takes btc transaction checks whether it is a staking transaction and if so parses it
+// for easy data retrieval.
+// It does all necessary checks to ensure that the transaction is valid staking transaction.
 func ParseV0StakingTx(
 	tx *wire.MsgTx,
 	expectedMagicBytes []byte,
@@ -323,36 +396,20 @@ func ParseV0StakingTx(
 		return nil, fmt.Errorf("staking tx must have at least 2 outputs")
 	}
 
-	var opReturnData *V0OpReturnData
-	var opReturnOutputIdx int
-	for i, o := range tx.TxOut {
-		output := o
-		d, err := NewV0OpReturnDataFromTxOutput(output)
+	opReturnData, opReturnOutputIdx, err := tryToGetOpReturnDataFromOutputs(tx.TxOut)
 
-		if err != nil {
-			// this is not an op return output recognized by Babylon, move forward
-			continue
-		}
-		// this case should not happen as standard bitcoin node propagation rules
-		// disallow multiple op return outputs in a single transaction. However, miner could
-		// include multiple op return outputs in a single transaction. In such case, we should
-		// return an error.
-		if opReturnData != nil {
-			return nil, fmt.Errorf("multiple op return outputs found")
-		}
-
-		opReturnData = d
-		opReturnOutputIdx = i
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse staking transaction: %w", err)
 	}
 
 	if opReturnData == nil {
-		return nil, fmt.Errorf("tansaction does not have expected op return output")
+		return nil, fmt.Errorf("transaction does not have expected op return output")
 	}
 
-	// at this point we know that transaction has op return output which seems to matches
+	// at this point we know that transaction has op return output which seems to match
 	// the expected shape. Check the magic bytes and version.
 	if !bytes.Equal(opReturnData.MagicBytes, expectedMagicBytes) {
-		return nil, fmt.Errorf("unexpcted magic bytes: %s, expected: %s",
+		return nil, fmt.Errorf("unexpected magic bytes: %s, expected: %s",
 			hex.EncodeToString(opReturnData.MagicBytes),
 			hex.EncodeToString(expectedMagicBytes),
 		)
@@ -362,7 +419,7 @@ func ParseV0StakingTx(
 		return nil, fmt.Errorf("unexpcted version: %d, expected: %d", opReturnData.Version, 0)
 	}
 
-	// Op return seems to be valid V0 op return output. Now, we need to check whether
+	// 3: Op return seems to be valid V0 op return output. Now, we need to check whether
 	// the staking output exists and is valid.
 	stakingInfo, err := BuildStakingInfo(
 		opReturnData.StakerPublicKey.PubKey,
@@ -379,24 +436,10 @@ func ParseV0StakingTx(
 		return nil, fmt.Errorf("cannot build staking info: %w", err)
 	}
 
-	var stakingOutput *wire.TxOut
-	var stakingOutputIdx int
-	// go through all transaction outputs and try to find expected staking output
-	for i, o := range tx.TxOut {
-		output := o
+	stakingOutput, stakingOutputIdx, err := tryToGetStakingOutput(tx.TxOut, stakingInfo.StakingOutput.PkScript)
 
-		if !bytes.Equal(output.PkScript, stakingInfo.StakingOutput.PkScript) {
-			// this is not the staking output we are looking for
-			continue
-		}
-
-		if stakingOutput != nil {
-			// we only allow for on staking output per transaction
-			return nil, fmt.Errorf("multiple staking outputs found in staking transaction")
-		}
-
-		stakingOutput = output
-		stakingOutputIdx = i
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse staking transaction: %w", err)
 	}
 
 	if stakingOutput == nil {
@@ -410,4 +453,48 @@ func ParseV0StakingTx(
 		OpReturnOutputIdx: opReturnOutputIdx,
 		OpReturnData:      opReturnData,
 	}, nil
+}
+
+// IsV0StakingTx checks whether transaction maybe a valid staking transaction. It
+// checks:
+// 1. Whether the transaction has at least 2 outputs
+// 2. have an op return output
+// 3. op return output has expected magic bytes
+// This function is much faster than ParseV0StakingTx, as it does not perform
+// all necessary checks.
+func IsPossibleV0StakingTx(tx *wire.MsgTx, expectedMagicBytes []byte) bool {
+	if len(expectedMagicBytes) != MagicBytesLen {
+		return false
+	}
+
+	if len(tx.TxOut) < 2 {
+		return false
+	}
+
+	var possibleStakingTx = false
+	for _, o := range tx.TxOut {
+		output := o
+
+		data, err := getV0OpReturnBytes(output)
+
+		if err != nil {
+			// this is not an op return output recognized by Babylon, move forward
+			continue
+		}
+
+		if !bytes.Equal(data[:MagicBytesLen], expectedMagicBytes) {
+			// this is not the op return output we are looking for as magic bytes do not match
+			continue
+		}
+
+		if possibleStakingTx {
+			// this is second output that matches the magic bytes, we do not allow for multiple op return outputs
+			// so this is not a valid staking transaction
+			continue
+		}
+
+		possibleStakingTx = true
+	}
+
+	return possibleStakingTx
 }
