@@ -41,12 +41,14 @@ func assembleMultiSigScript(
 // a copy of the keys sorted in lexicographical order bytes on the x-only
 // pubkey serialization.
 func sortKeys(keys []*btcec.PublicKey) []*btcec.PublicKey {
-	sort.SliceStable(keys, func(i, j int) bool {
+	sortedKeys := make([]*btcec.PublicKey, len(keys))
+	copy(sortedKeys, keys)
+	sort.SliceStable(sortedKeys, func(i, j int) bool {
 		keyIBytes := schnorr.SerializePubKey(keys[i])
 		keyJBytes := schnorr.SerializePubKey(keys[j])
 		return bytes.Compare(keyIBytes, keyJBytes) == -1
 	})
-	return keys
+	return sortedKeys
 }
 
 // prepareKeys prepares keys to be used in multisig script
