@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
@@ -94,6 +95,24 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 		covSigs, err := types.GetOrderedCovenantSignatures(fpIdx, covenantSigs, &bsParams)
 		require.NoError(t, err)
+
+		// ensure all covenant signatures encrypted by the slashed
+		// finality provider's PK are verified
+		orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
+		fpPK := fpPKs[fpIdx]
+		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
+		require.NoError(t, err)
+		for i := range covSigs {
+			err := slashingTx.EncVerifyAdaptorSignature(
+				testStakingInfo.StakingInfo.StakingOutput.PkScript,
+				testStakingInfo.StakingInfo.StakingOutput.Value,
+				slashingPkScriptPath,
+				orderedCovenantPKs[i].MustToBTCPK(),
+				encKey,
+				covSigs[i],
+			)
+			require.NoError(t, err, "verifying covSig at %d", i)
+		}
 
 		// create slashing tx with witness
 		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(fpSK, fpBTCPKs, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
