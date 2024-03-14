@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -30,7 +31,7 @@ func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPu
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	store := k.pubRandStore(sdkCtx, fpBTCPK)
+	store := k.pubRandFpStore(sdkCtx, fpBTCPK)
 	pubRandMap := map[uint64]*bbn.SchnorrPubRand{}
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
 		height := sdk.BigEndianToUint64(key)

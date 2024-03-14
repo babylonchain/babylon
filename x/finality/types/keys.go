@@ -22,7 +22,3 @@ var (
 	EvidenceKey             = []byte{0x05} // key prefix for evidences
 	NextHeightToFinalizeKey = []byte{0x06} // key prefix for next height to finalise
 )
-
-func KeyPrefix(p string) []byte {
-	return []byte(p)
-}

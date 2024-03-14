@@ -19,7 +19,7 @@ func (k Keeper) SetPubRandList(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, s
 	cacheCtx, writeCache := sdkCtx.CacheContext()
 
 	// write to a KV store cache
-	store := k.pubRandStore(cacheCtx, fpBtcPK)
+	store := k.pubRandFpStore(cacheCtx, fpBtcPK)
 	for i, pr := range pubRandList {
 		height := startHeight + uint64(i)
 		store.Set(sdk.Uint64ToBigEndian(height), pr)
@@ -30,12 +30,12 @@ func (k Keeper) SetPubRandList(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, s
 }
 
 func (k Keeper) HasPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
-	store := k.pubRandStore(ctx, fpBtcPK)
+	store := k.pubRandFpStore(ctx, fpBtcPK)
 	return store.Has(sdk.Uint64ToBigEndian(height))
 }
 
 func (k Keeper) GetPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*bbn.SchnorrPubRand, error) {
-	store := k.pubRandStore(ctx, fpBtcPK)
+	store := k.pubRandFpStore(ctx, fpBtcPK)
 	prBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if len(prBytes) == 0 {
 		return nil, types.ErrPubRandNotFound
@@ -44,7 +44,7 @@ func (k Keeper) GetPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, heigh
 }
 
 func (k Keeper) IsFirstPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) bool {
-	store := k.pubRandStore(ctx, fpBtcPK)
+	store := k.pubRandFpStore(ctx, fpBtcPK)
 	iter := store.ReverseIterator(nil, nil)
 
 	// if the iterator is not valid, then this finality provider does not commit any randomness
@@ -53,7 +53,7 @@ func (k Keeper) IsFirstPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) b
 
 // GetLastPubRand retrieves the last public randomness committed by the given finality provider
 func (k Keeper) GetLastPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) (uint64, *bbn.SchnorrPubRand, error) {
-	store := k.pubRandStore(ctx, fpBtcPK)
+	store := k.pubRandFpStore(ctx, fpBtcPK)
 	iter := store.ReverseIterator(nil, nil)
 
 	if !iter.Valid() {
@@ -70,12 +70,20 @@ func (k Keeper) GetLastPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) (
 	return height, pubRand, nil
 }
 
-// pubRandStore returns the KVStore of the public randomness
+// pubRandFpStore returns the KVStore of the public randomness
 // prefix: PubRandKey
 // key: (finality provider || PK block height)
 // value: PublicRandomness
-func (k Keeper) pubRandStore(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	prefixedStore := prefix.NewStore(storeAdapter, types.PubRandKey)
+func (k Keeper) pubRandFpStore(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) prefix.Store {
+	prefixedStore := k.pubRandStore(ctx)
 	return prefix.NewStore(prefixedStore, fpBtcPK.MustMarshal())
+}
+
+// pubRandStore returns the KVStore of the public randomness
+// prefix: PubRandKey
+// key: (prefix)
+// value: PublicRandomness
+func (k Keeper) pubRandStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.PubRandKey)
 }

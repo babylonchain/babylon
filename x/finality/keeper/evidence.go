@@ -11,12 +11,12 @@ import (
 )
 
 func (k Keeper) SetEvidence(ctx context.Context, evidence *types.Evidence) {
-	store := k.evidenceStore(ctx, evidence.FpBtcPk)
+	store := k.evidenceFpStore(ctx, evidence.FpBtcPk)
 	store.Set(sdk.Uint64ToBigEndian(evidence.BlockHeight), k.cdc.MustMarshal(evidence))
 }
 
 func (k Keeper) HasEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
-	store := k.evidenceStore(ctx, fpBtcPK)
+	store := k.evidenceFpStore(ctx, fpBtcPK)
 	return store.Has(sdk.Uint64ToBigEndian(height))
 }
 
@@ -24,7 +24,7 @@ func (k Keeper) GetEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, heig
 	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < height {
 		return nil, types.ErrHeightTooHigh
 	}
-	store := k.evidenceStore(ctx, fpBtcPK)
+	store := k.evidenceFpStore(ctx, fpBtcPK)
 	evidenceBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if len(evidenceBytes) == 0 {
 		return nil, types.ErrEvidenceNotFound
@@ -40,7 +40,7 @@ func (k Keeper) GetEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, heig
 // an evidence, which happens when the finality provider signed a fork block
 // but hasn't signed the canonical block yet.
 func (k Keeper) GetFirstSlashableEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) *types.Evidence {
-	store := k.evidenceStore(ctx, fpBtcPK)
+	store := k.evidenceFpStore(ctx, fpBtcPK)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -54,12 +54,20 @@ func (k Keeper) GetFirstSlashableEvidence(ctx context.Context, fpBtcPK *bbn.BIP3
 	return nil
 }
 
-// evidenceStore returns the KVStore of the evidences
+// evidenceFpStore returns the KVStore of the evidences
 // prefix: EvidenceKey
 // key: (finality provider PK || height)
 // value: Evidence
-func (k Keeper) evidenceStore(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	eStore := prefix.NewStore(storeAdapter, types.EvidenceKey)
+func (k Keeper) evidenceFpStore(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) prefix.Store {
+	eStore := k.evidenceStore(ctx)
 	return prefix.NewStore(eStore, fpBTCPK.MustMarshal())
+}
+
+// evidenceStore returns the KVStore of the evidences
+// prefix: EvidenceKey
+// key: (prefix)
+// value: Evidence
+func (k Keeper) evidenceStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.EvidenceKey)
 }
