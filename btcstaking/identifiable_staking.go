@@ -20,36 +20,17 @@ const (
 	MagicBytesLen = 4
 	// 4 bytes magic bytes + 1 byte version + 32 bytes staker public key + 32 bytes finality provider public key + 2 bytes staking time
 	V0OpReturnDataSize = 71
+
+	v0OpReturnCreationErrMsg = "cannot create V0 op_return data"
 )
 
-type EnhancedStakingInfo struct {
+type IdentifiableStakingInfo struct {
 	StakingOutput         *wire.TxOut
 	scriptHolder          *taprootScriptHolder
 	timeLockPathLeafHash  chainhash.Hash
 	unbondingPathLeafHash chainhash.Hash
 	slashingPathLeafHash  chainhash.Hash
 	OpReturnOutput        *wire.TxOut
-}
-
-// XonlyPubKey is a wrapper around btcec.PublicKey that represents BTC public
-// key deserialized from a 32-byte array i.e with implicit assumption that Y coordinate
-// is even.
-type XonlyPubKey struct {
-	PubKey *btcec.PublicKey
-}
-
-func XOnlyPublicKeyFromBytes(pkBytes []byte) (*XonlyPubKey, error) {
-	pk, err := schnorr.ParsePubKey(pkBytes)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &XonlyPubKey{pk}, nil
-}
-
-func (p *XonlyPubKey) Marshall() []byte {
-	return schnorr.SerializePubKey(p.PubKey)
 }
 
 func uint16ToBytes(v uint16) []byte {
@@ -83,34 +64,28 @@ func NewV0OpReturnData(
 	stakingTime []byte,
 ) (*V0OpReturnData, error) {
 	if len(magicBytes) != MagicBytesLen {
-		return nil, fmt.Errorf("cannot create op_return data: invalid magic bytes length: %d, expected: %d", len(magicBytes), MagicBytesLen)
+		return nil, fmt.Errorf("%s: invalid magic bytes length: %d, expected: %d", v0OpReturnCreationErrMsg, len(magicBytes), MagicBytesLen)
 	}
 
 	stakerKey, err := XOnlyPublicKeyFromBytes(stakerPublicKey)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create op_return data: %w", err)
+		return nil, fmt.Errorf("%s:invalid staker public key:%w", v0OpReturnCreationErrMsg, err)
 	}
 
 	fpKey, err := XOnlyPublicKeyFromBytes(finalityProviderPublicKey)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create op_return data: %w", err)
+		return nil, fmt.Errorf("%s:invalid finality provider public key:%w", v0OpReturnCreationErrMsg, err)
 	}
 
 	stakingTimeValue, err := uint16FromBytes(stakingTime)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create op_return data: %w", err)
+		return nil, fmt.Errorf("%s:invalid staking time:%w", v0OpReturnCreationErrMsg, err)
 	}
 
-	return &V0OpReturnData{
-		MagicBytes:                magicBytes,
-		Version:                   0,
-		StakerPublicKey:           stakerKey,
-		FinalityProviderPublicKey: fpKey,
-		StakingTime:               stakingTimeValue,
-	}, nil
+	return NewV0OpReturnDataFromParsed(magicBytes, stakerKey.PubKey, fpKey.PubKey, stakingTimeValue)
 }
 
 func NewV0OpReturnDataFromParsed(
@@ -120,15 +95,15 @@ func NewV0OpReturnDataFromParsed(
 	stakingTime uint16,
 ) (*V0OpReturnData, error) {
 	if len(magicBytes) != MagicBytesLen {
-		return nil, fmt.Errorf("cannot create op_return data: invalid magic bytes length: %d, expected: %d", len(magicBytes), MagicBytesLen)
+		return nil, fmt.Errorf("%s:invalid magic bytes length: %d, expected: %d", v0OpReturnCreationErrMsg, len(magicBytes), MagicBytesLen)
 	}
 
 	if stakerPublicKey == nil {
-		return nil, fmt.Errorf("cannot create op_return data: nil staker public key")
+		return nil, fmt.Errorf("%s:nil staker public key", v0OpReturnCreationErrMsg)
 	}
 
 	if finalityProviderPublicKey == nil {
-		return nil, fmt.Errorf("cannot create op_return data: nil finality provider public key")
+		return nil, fmt.Errorf("%s: nil finality provider public key", v0OpReturnCreationErrMsg)
 	}
 
 	return &V0OpReturnData{
@@ -197,16 +172,16 @@ func (d *V0OpReturnData) Marshall() []byte {
 	return data
 }
 
-func (d *V0OpReturnData) ToTxOutput(v int64) (*wire.TxOut, error) {
+func (d *V0OpReturnData) ToTxOutput() (*wire.TxOut, error) {
 	dataScript, err := txscript.NullDataScript(d.Marshall())
 	if err != nil {
 		return nil, err
 	}
-	return wire.NewTxOut(v, dataScript), nil
+	return wire.NewTxOut(0, dataScript), nil
 }
 
-// BuildV0EnhancedStakingOutputs crates outputs which every staking transaction must have
-func BuildV0EnhancedStakingOutputs(
+// BuildV0IdentifiableStakingOutputs creates outputs which every staking transaction must have
+func BuildV0IdentifiableStakingOutputs(
 	magicBytes []byte,
 	stakerKey *btcec.PublicKey,
 	fpKey *btcec.PublicKey,
@@ -215,7 +190,7 @@ func BuildV0EnhancedStakingOutputs(
 	stakingTime uint16,
 	stakingAmount btcutil.Amount,
 	net *chaincfg.Params,
-) (*EnhancedStakingInfo, error) {
+) (*IdentifiableStakingInfo, error) {
 	info, err := BuildStakingInfo(
 		stakerKey,
 		[]*btcec.PublicKey{fpKey},
@@ -235,13 +210,13 @@ func BuildV0EnhancedStakingOutputs(
 		return nil, err
 	}
 
-	dataOutput, err := opReturnData.ToTxOutput(0)
+	dataOutput, err := opReturnData.ToTxOutput()
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &EnhancedStakingInfo{
+	return &IdentifiableStakingInfo{
 		StakingOutput:         info.StakingOutput,
 		scriptHolder:          info.scriptHolder,
 		timeLockPathLeafHash:  info.timeLockPathLeafHash,
@@ -251,9 +226,9 @@ func BuildV0EnhancedStakingOutputs(
 	}, nil
 }
 
-// BuildV0EnhancedStakingOutputs crates outputs which every staking transaction must have and
+// BuildV0IdentifiableStakingOutputsAndTx creates outputs which every staking transaction must have and
 // returns the not-funded transaction with these outputs
-func BuildV0EnhancedStakingOutputsAndTx(
+func BuildV0IdentifiableStakingOutputsAndTx(
 	magicBytes []byte,
 	stakerKey *btcec.PublicKey,
 	fpKey *btcec.PublicKey,
@@ -262,8 +237,8 @@ func BuildV0EnhancedStakingOutputsAndTx(
 	stakingTime uint16,
 	stakingAmount btcutil.Amount,
 	net *chaincfg.Params,
-) (*EnhancedStakingInfo, *wire.MsgTx, error) {
-	info, err := BuildV0EnhancedStakingOutputs(
+) (*IdentifiableStakingInfo, *wire.MsgTx, error) {
+	info, err := BuildV0IdentifiableStakingOutputs(
 		magicBytes,
 		stakerKey,
 		fpKey,
@@ -283,15 +258,15 @@ func BuildV0EnhancedStakingOutputsAndTx(
 	return info, tx, nil
 }
 
-func (i *EnhancedStakingInfo) TimeLockPathSpendInfo() (*SpendInfo, error) {
+func (i *IdentifiableStakingInfo) TimeLockPathSpendInfo() (*SpendInfo, error) {
 	return i.scriptHolder.scriptSpendInfoByName(i.timeLockPathLeafHash)
 }
 
-func (i *EnhancedStakingInfo) UnbondingPathSpendInfo() (*SpendInfo, error) {
+func (i *IdentifiableStakingInfo) UnbondingPathSpendInfo() (*SpendInfo, error) {
 	return i.scriptHolder.scriptSpendInfoByName(i.unbondingPathLeafHash)
 }
 
-func (i *EnhancedStakingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
+func (i *IdentifiableStakingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
 	return i.scriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
 }
 
@@ -353,7 +328,7 @@ func tryToGetStakingOutput(outputs []*wire.TxOut, stakingOutputPkScript []byte) 
 		}
 
 		if stakingOutput != nil {
-			// we only allow for on staking output per transaction
+			// we only allow for one staking output per transaction
 			return nil, -1, fmt.Errorf("multiple staking outputs found")
 		}
 
@@ -364,7 +339,7 @@ func tryToGetStakingOutput(outputs []*wire.TxOut, stakingOutputPkScript []byte) 
 	return stakingOutput, stakingOutputIdx, nil
 }
 
-// ParseV0StakingTx takes btc transaction checks whether it is a staking transaction and if so parses it
+// ParseV0StakingTx takes a btc transaction and checks whether it is a staking transaction and if so parses it
 // for easy data retrieval.
 // It does all necessary checks to ensure that the transaction is valid staking transaction.
 func ParseV0StakingTx(
@@ -391,7 +366,7 @@ func ParseV0StakingTx(
 		return nil, fmt.Errorf("covenant quorum is greater than the number of covenant keys")
 	}
 
-	// 2 Identify whether the transaction has expected shape
+	// 2. Identify whether the transaction has expected shape
 	if len(tx.TxOut) < 2 {
 		return nil, fmt.Errorf("staking tx must have at least 2 outputs")
 	}
@@ -419,7 +394,7 @@ func ParseV0StakingTx(
 		return nil, fmt.Errorf("unexpcted version: %d, expected: %d", opReturnData.Version, 0)
 	}
 
-	// 3: Op return seems to be valid V0 op return output. Now, we need to check whether
+	// 3. Op return seems to be valid V0 op return output. Now, we need to check whether
 	// the staking output exists and is valid.
 	stakingInfo, err := BuildStakingInfo(
 		opReturnData.StakerPublicKey.PubKey,
@@ -455,7 +430,7 @@ func ParseV0StakingTx(
 	}, nil
 }
 
-// IsV0StakingTx checks whether transaction maybe a valid staking transaction. It
+// IsPossibleV0StakingTx checks whether transaction may be a valid staking transaction
 // checks:
 // 1. Whether the transaction has at least 2 outputs
 // 2. have an op return output
@@ -487,10 +462,15 @@ func IsPossibleV0StakingTx(tx *wire.MsgTx, expectedMagicBytes []byte) bool {
 			continue
 		}
 
+		if data[MagicBytesLen] != 0 {
+			// this is not the v0 op return output
+			continue
+		}
+
 		if possibleStakingTx {
 			// this is second output that matches the magic bytes, we do not allow for multiple op return outputs
 			// so this is not a valid staking transaction
-			continue
+			return false
 		}
 
 		possibleStakingTx = true

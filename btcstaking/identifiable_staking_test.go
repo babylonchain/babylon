@@ -15,23 +15,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func generateTxFromOutputs(r *rand.Rand, info *btcstaking.EnhancedStakingInfo) (*wire.MsgTx, int, int) {
-	numOutputs := 20
+func generateTxFromOutputs(r *rand.Rand, info *btcstaking.IdentifiableStakingInfo) (*wire.MsgTx, int, int) {
+	numOutputs := r.Int31n(18) + 2
 
-	stakingOutputIdx := r.Intn(numOutputs - 1)
-	opReturnOutputIdx := r.Intn(numOutputs - 1)
+	stakingOutputIdx := int(r.Int31n(numOutputs))
+	opReturnOutputIdx := int(datagen.RandomIntOtherThan(r, int(stakingOutputIdx), int(numOutputs)))
 
-	if stakingOutputIdx == opReturnOutputIdx {
-		opReturnOutputIdx = stakingOutputIdx + 1
-	}
 	tx := wire.NewMsgTx(2)
-	for i := 0; i < numOutputs; i++ {
+	for i := 0; i < int(numOutputs); i++ {
 		if i == stakingOutputIdx {
 			tx.AddTxOut(info.StakingOutput)
 		} else if i == opReturnOutputIdx {
 			tx.AddTxOut(info.OpReturnOutput)
 		} else {
-			tx.AddTxOut(wire.NewTxOut(int64(r.Int63n(1000000000)+10000), datagen.GenRandomByteArray(r, 32)))
+			tx.AddTxOut(wire.NewTxOut((r.Int63n(1000000000) + 10000), datagen.GenRandomByteArray(r, 32)))
 		}
 	}
 
@@ -42,12 +39,12 @@ func generateTxFromOutputs(r *rand.Rand, info *btcstaking.EnhancedStakingInfo) (
 // our parser
 func FuzzGenerateAndParseValidV0StakingTransaction(f *testing.F) {
 	// lot of seeds as test is pretty fast and we want to test a lot of different values
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 1000)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		// 3 - 10 covenants
 		numCovenantKeys := uint32(r.Int31n(7) + 3)
-		quroum := uint32(numCovenantKeys - 2)
+		quroum := uint32(r.Intn(int(numCovenantKeys)) + 1)
 		stakingAmount := btcutil.Amount(r.Int63n(1000000000) + 10000)
 		stakingTime := uint16(r.Int31n(math.MaxUint16-1) + 1)
 		magicBytes := datagen.GenRandomByteArray(r, btcstaking.MagicBytesLen)
@@ -55,7 +52,7 @@ func FuzzGenerateAndParseValidV0StakingTransaction(f *testing.F) {
 
 		sc := GenerateTestScenario(r, t, 1, numCovenantKeys, quroum, stakingAmount, stakingTime)
 
-		outputs, err := btcstaking.BuildV0EnhancedStakingOutputs(
+		outputs, err := btcstaking.BuildV0IdentifiableStakingOutputs(
 			magicBytes,
 			sc.StakerKey.PubKey(),
 			sc.FinalityProviderKeys[0].PubKey(),
