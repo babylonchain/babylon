@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
@@ -28,6 +29,9 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
 		fpBTCPKs := bbn.NewBIP340PKsFromBTCPKs(fpPKs)
 		require.NoError(t, err)
+		// a random finality provider gets slashed
+		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		fpSK := fpSKs[slashedFPIdx]
 
 		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
@@ -67,10 +71,31 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		unbondingInfo, err := btcDel.GetUnbondingInfo(bsParams, net)
 		require.NoError(t, err)
 
+		// TESTING
+		orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
+		covSigsForFP, err := types.GetOrderedCovenantSignatures(slashedFPIdx, btcDel.BtcUndelegation.CovenantSlashingSigs, bsParams)
+		require.NoError(t, err)
+		fpPK := fpSK.PubKey()
+		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
+		require.NoError(t, err)
+		slashingSpendInfo, err := unbondingInfo.SlashingPathSpendInfo()
+		require.NoError(t, err)
+		for i := range covSigsForFP {
+			if covSigsForFP[i] == nil {
+				continue
+			}
+			err := btcDel.SlashingTx.EncVerifyAdaptorSignature(
+				unbondingInfo.UnbondingOutput.PkScript,
+				unbondingInfo.UnbondingOutput.Value,
+				slashingSpendInfo.GetPkScriptPath(),
+				orderedCovenantPKs[i].MustToBTCPK(),
+				encKey,
+				covSigsForFP[i],
+			)
+			require.NoError(t, err)
+		}
+
 		// build slashing tx with witness for spending the unbonding tx
-		// a random finality provider gets slashed
-		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
-		fpSK := fpSKs[slashedFPIdx]
 		unbondingSlashingTxWithWitness, err := btcDel.BuildUnbondingSlashingTxWithWitness(bsParams, net, fpSK)
 		require.NoError(t, err)
 

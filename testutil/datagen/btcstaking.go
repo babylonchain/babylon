@@ -149,22 +149,20 @@ func GenRandomBTCDelegation(
 	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
 	require.NoError(t, err)
 
-	stakingMsgTx := stakingSlashingInfo.StakingTx
-
-	// delegator sig
+	// delegator pre-signs slashing tx
 	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
-		stakingMsgTx,
+		stakingSlashingInfo.StakingTx,
 		StakingOutIdx,
 		slashingPathSpendInfo.GetPkScriptPath(),
 		delSK,
 	)
 	require.NoError(t, err)
 
-	// covenant sigs
+	// covenant pre-signs slashing tx
 	covenantSigs, err := GenCovenantAdaptorSigs(
 		covenantSKs,
 		fpPKs,
-		stakingMsgTx,
+		stakingSlashingInfo.StakingTx,
 		slashingPathSpendInfo.GetPkScriptPath(),
 		stakingSlashingInfo.SlashingTx,
 	)
@@ -233,7 +231,7 @@ func GenRandomBTCDelegation(
 	covUnbondingSlashingSigs, covUnbondingSigs, err := unbondingSlashingInfo.GenCovenantSigs(
 		covenantSKs,
 		fpPKs,
-		stakingMsgTx,
+		stakingSlashingInfo.StakingTx,
 		unbondingPathSpendInfo.GetPkScriptPath(),
 	)
 	require.NoError(t, err)
