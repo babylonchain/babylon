@@ -161,10 +161,6 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			CovenantQuorum: covenantQuorum,
 		}
 		slashingChangeLockTime := uint16(101)
-		bsParams := types.Params{
-			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-			CovenantQuorum: covenantQuorum,
-		}
 
 		// generate staking/slashing tx
 		testStakingInfo := datagen.GenBTCStakingSlashingInfo(
