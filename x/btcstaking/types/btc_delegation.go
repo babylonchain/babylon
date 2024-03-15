@@ -309,6 +309,7 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 	return unbondingInfo, nil
 }
 
+// TODO: verify to remove, not used in babylon, only for tests
 func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
 	if err != nil {
@@ -352,6 +353,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	return slashingMsgTxWithWitness, nil
 }
 
+// TODO: verify to remove, func not used by babylon, used in side car processes.
 func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	unbondingMsgTx, err := bbn.NewBTCTxFromBytes(d.BtcUndelegation.UnbondingTx)
 	if err != nil {
