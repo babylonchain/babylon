@@ -462,10 +462,8 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return &types.MsgAddCovenantSigsResponse{}, nil
 	}
 
-	// Note: we assume the order of adaptor sigs is matched to the
-	// order of finality providers in the delegation
-	// TODO: ensure the order for restaking, currently, we only have one finality provider
-	//  one covenant emulator
+	// Check that the number of covenant sigs and number of the
+	// finality providers are matched
 	if len(req.SlashingTxSigs) != len(btcDel.FpBtcPkList) {
 		return nil, types.ErrInvalidCovenantSig.Wrapf(
 			"number of covenant signatures: %d, number of finality providers being staked to: %d",
@@ -498,10 +496,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	// Check that the number of covenant sigs and number of the
 	// finality providers are matched
-	// Note: we assume the order of adaptor sigs is matched to the
-	// order of finality providers in the delegation
-	// TODO: ensure the order for restaking, currently, we only have one finality provider
-	//  one covenant emulator
 	if len(req.SlashingUnbondingTxSigs) != len(btcDel.FpBtcPkList) {
 		return nil, types.ErrInvalidCovenantSig.Wrapf(
 			"number of covenant signatures: %d, number of finality providers being staked to: %d",
