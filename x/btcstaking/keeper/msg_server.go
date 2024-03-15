@@ -389,9 +389,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
 	}
 
-	// Check unbonding tx against staking tx.
-	// - that input points to the staking tx, staking output
+	// Check unbonding tx fees against staking tx.
 	// - fee is larger than 0
+	// - ubonding output value is is at leat `MinUnbondingValue` percent of staking output value
 	if unbondingMsgTx.TxOut[0].Value >= stakingMsgTx.TxOut[newBTCDel.StakingOutputIdx].Value {
 		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
 		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
@@ -399,6 +399,15 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
 		// allow staker to spam the network with unbonding txs, which would force covenant and finality provider to send signatures.
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
+	}
+
+	// this conversions must always succeed, as it is part of our params
+	minUnbondingRate := params.MinUnbondingValue.MustFloat64()
+	// Caluclate min unbonding output value based on staking output, use btc native multiplication
+	minUnbondingOutputValue := btcutil.Amount(stakingMsgTx.TxOut[newBTCDel.StakingOutputIdx].Value).MulF64(minUnbondingRate)
+
+	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingOutputValue {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingOutputValue)
 	}
 
 	// all good, add BTC undelegation

@@ -649,6 +649,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 				changeAddress.EncodeAddress(),
 				stakingValue,
 				1000,
+				stakingValue-1000,
 				tt.unbondingTimeInDelegation,
 			)
 			if tt.err != nil {
@@ -660,6 +661,77 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 				delegation, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 				require.NoError(t, err)
 				require.Equal(t, tt.unbondingTimeInDelegation, uint16(delegation.UnbondingTime))
+			}
+		})
+	}
+}
+
+func TestMinimalUnbondingValue(t *testing.T) {
+	tests := []struct {
+		name                       string
+		stakingValue               int64
+		unbondingValueInDelegation int64
+		err                        error
+	}{
+		{
+			name:                       "successful delegation when unbonding value is >=80% of staking value",
+			stakingValue:               10000,
+			unbondingValueInDelegation: 8000,
+			err:                        nil,
+		},
+		{
+			name:                       "failed delegation when unbonding value is <80% of staking value",
+			stakingValue:               10000,
+			unbondingValueInDelegation: 7999,
+			err:                        types.ErrInvalidUnbondingTx,
+		},
+		{
+			name:                       "failed delegation when unbonding value >= stake value",
+			stakingValue:               10000,
+			unbondingValueInDelegation: 10000,
+			err:                        types.ErrInvalidUnbondingTx,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := rand.New(rand.NewSource(time.Now().Unix()))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			// mock BTC light client and BTC checkpoint modules
+			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+			h := NewHelper(t, btclcKeeper, btccKeeper)
+
+			// set all parameters, by default minimal unbonding value is 80% of staking value
+			_, _ = h.GenAndApplyParams(r)
+
+			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+			require.NoError(t, err)
+
+			// generate and insert new finality provider
+			_, fpPK, _ := h.CreateFinalityProvider(r)
+
+			// generate and insert new BTC delegation
+			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(
+				r,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				tt.stakingValue,
+				1000,
+				tt.unbondingValueInDelegation,
+				1000,
+			)
+			if tt.err != nil {
+				require.Error(t, err)
+				require.True(t, errors.Is(err, tt.err))
+			} else {
+				require.NoError(t, err)
+				// Retrieve delegation from keeper
+				delegation, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+				require.NoError(t, err)
+				require.NotNil(t, delegation)
 			}
 		})
 	}

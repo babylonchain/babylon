@@ -44,7 +44,7 @@ func buildSlashingTxFromOutpoint(
 	}
 
 	// Validate slashing rate
-	if !IsSlashingRateValid(slashingRate) {
+	if !IsRateValid(slashingRate) {
 		return nil, ErrInvalidSlashingRate
 	}
 
@@ -350,7 +350,7 @@ func CheckTransactions(
 	}
 
 	// Check if slashing rate is in the valid range (0,1)
-	if !IsSlashingRateValid(slashingRate) {
+	if !IsRateValid(slashingRate) {
 		return ErrInvalidSlashingRate
 	}
 
