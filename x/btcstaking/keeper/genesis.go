@@ -98,7 +98,7 @@ func (k Keeper) finalityProviders(ctx context.Context) ([]*types.FinalityProvide
 
 	for ; iter.Valid(); iter.Next() {
 		var fp types.FinalityProvider
-		if err := fp.Unmarshal(iter.Key()); err != nil {
+		if err := fp.Unmarshal(iter.Value()); err != nil {
 			return nil, err
 		}
 		fps = append(fps, &fp)
@@ -114,7 +114,7 @@ func (k Keeper) getBTCDelegations(ctx context.Context) ([]*types.BTCDelegation, 
 
 	for ; iter.Valid(); iter.Next() {
 		var del types.BTCDelegation
-		if err := del.Unmarshal(iter.Key()); err != nil {
+		if err := del.Unmarshal(iter.Value()); err != nil {
 			return nil, err
 		}
 		dels = append(dels, &del)
@@ -163,7 +163,7 @@ func (k Keeper) blockHeightChains(ctx context.Context) []*types.BlockHeightBbnTo
 }
 
 func (k Keeper) getBTCDelegators(ctx context.Context) ([]*types.BTCDelegator, error) {
-	iter := k.btcDelegationStore(ctx).Iterator(nil, nil)
+	iter := k.btcDelegatorStore(ctx).Iterator(nil, nil)
 	defer iter.Close()
 
 	dels := make([]*types.BTCDelegator, 0)
@@ -223,7 +223,7 @@ func (k Keeper) votingPowersDistCacheBlkHeight(ctx context.Context) ([]*types.Vo
 
 	for ; iter.Valid(); iter.Next() {
 		var dc types.VotingPowerDistCache
-		if err := dc.Unmarshal(iter.Key()); err != nil {
+		if err := dc.Unmarshal(iter.Value()); err != nil {
 			return nil, err
 		}
 		vps = append(vps, &types.VotingPowerDistCacheBlkHeight{
