@@ -296,7 +296,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 
 		// case where the voting power store is not updated in
 		// the given height
-		requestHeight := datagen.RandomIntOtherThan(r, int(randomHeight), 100) + 1
+		requestHeight := randomHeight + datagen.RandomInt(r, 10) + 1
 		req2 := &types.QueryFinalityProviderPowerAtHeightRequest{
 			FpBtcPkHex: fp.BtcPk.MarshalHex(),
 			Height:     requestHeight,
