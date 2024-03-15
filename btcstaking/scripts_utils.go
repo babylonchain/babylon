@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/txscript"
@@ -37,15 +38,15 @@ func assembleMultiSigScript(
 	return builder.Script()
 }
 
-// sortKeys takes a set of schnorr public keys and returns a new slice that is
+// SortKeys takes a set of schnorr public keys and returns a new slice that is
 // a copy of the keys sorted in lexicographical order bytes on the x-only
 // pubkey serialization.
-func sortKeys(keys []*btcec.PublicKey) []*btcec.PublicKey {
+func SortKeys(keys []*btcec.PublicKey) []*btcec.PublicKey {
 	sortedKeys := make([]*btcec.PublicKey, len(keys))
 	copy(sortedKeys, keys)
 	sort.SliceStable(sortedKeys, func(i, j int) bool {
-		keyIBytes := schnorr.SerializePubKey(keys[i])
-		keyJBytes := schnorr.SerializePubKey(keys[j])
+		keyIBytes := schnorr.SerializePubKey(sortedKeys[i])
+		keyJBytes := schnorr.SerializePubKey(sortedKeys[j])
 		return bytes.Compare(keyIBytes, keyJBytes) == -1
 	})
 	return sortedKeys
@@ -61,7 +62,7 @@ func prepareKeysForMultisigScript(keys []*btcec.PublicKey) ([]*btcec.PublicKey, 
 		return nil, fmt.Errorf("cannot create multisig script with less than 2 keys")
 	}
 
-	sortedKeys := sortKeys(keys)
+	sortedKeys := SortKeys(keys)
 
 	for i := 0; i < len(sortedKeys)-1; i++ {
 		if bytes.Equal(schnorr.SerializePubKey(sortedKeys[i]), schnorr.SerializePubKey(sortedKeys[i+1])) {
@@ -99,6 +100,9 @@ func buildMultiSigScript(
 	if err != nil {
 		return nil, err
 	}
+
+	bip340Keys := bbn.NewBIP340PKsFromBTCPKs(sortedKeys)
+	fmt.Print(bip340Keys)
 
 	return assembleMultiSigScript(sortedKeys, threshold, withVerify)
 }

@@ -56,8 +56,8 @@ func AssertEngineExecution(t *testing.T, testNum int, valid bool,
 				"should be invalid: %v", testNum, dis, err)
 		}
 
-		debugBuf.WriteString(fmt.Sprintf("Stack: %v\n", vm.GetStack()))
-		debugBuf.WriteString(fmt.Sprintf("AltStack: %v\n\n", vm.GetAltStack()))
+		// debugBuf.WriteString(fmt.Sprintf("Stack: %v\n", vm.GetStack()))
+		// debugBuf.WriteString(fmt.Sprintf("AltStack: %v\n\n", vm.GetAltStack()))
 	}
 
 	// If we get to this point the unexpected case was not reached
