@@ -249,6 +249,9 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
 
 // findFPIdxInWitness returns the index of the finality provider's signature
 // in the witness stack of 1-out-of-n multisig from finality providers
+// Note: the signatures are sorted in reverse lexical order since the PKs
+// in the staking script are sorted in lexical order and BTC script execution
+// is stack based
 func findFPIdxInWitness(fpSK *btcec.PrivateKey, fpBTCPKs []bbn.BIP340PubKey) (int, error) {
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey())
 	sortedFPBTCPKList := bbn.SortBIP340PKs(fpBTCPKs)
