@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/txscript"
@@ -99,6 +100,9 @@ func buildMultiSigScript(
 	if err != nil {
 		return nil, err
 	}
+
+	bip340Keys := bbn.NewBIP340PKsFromBTCPKs(sortedKeys)
+	fmt.Print(bip340Keys)
 
 	return assembleMultiSigScript(sortedKeys, threshold, withVerify)
 }
