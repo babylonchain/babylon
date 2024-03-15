@@ -16,7 +16,7 @@ import (
 func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) *types.BTCDelegatorDelegationIndex {
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
 	delBTCPKBytes := delBTCPK.MustMarshal()
-	store := k.btcDelegatorStore(ctx, fpBTCPK)
+	store := k.btcDelegatorFpStore(ctx, fpBTCPK)
 
 	// ensure the finality provider exists
 	if !k.HasFinalityProvider(ctx, fpBTCPKBytes) {
@@ -34,8 +34,8 @@ func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn
 	return &btcDelIndex
 }
 
-func (k Keeper) setBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, btcDelIndex *types.BTCDelegatorDelegationIndex) {
-	store := k.btcDelegatorStore(ctx, fpBTCPK)
+func (k Keeper) setBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK, delBTCPK *bbn.BIP340PubKey, btcDelIndex *types.BTCDelegatorDelegationIndex) {
+	store := k.btcDelegatorFpStore(ctx, fpBTCPK)
 	btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
 	store.Set(*delBTCPK, btcDelIndexBytes)
 }
@@ -60,12 +60,20 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 	return &types.BTCDelegatorDelegations{Dels: btcDels}
 }
 
-// btcDelegatorStore returns the KVStore of the BTC delegators
+// btcDelegatorFpStore returns the KVStore of the BTC delegators
 // prefix: BTCDelegatorKey || finality provider's Bitcoin secp256k1 PK
 // key: delegator's Bitcoin secp256k1 PK
 // value: BTCDelegatorDelegationIndex (a list of BTCDelegations' staking tx hashes)
-func (k Keeper) btcDelegatorStore(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	delegationStore := prefix.NewStore(storeAdapter, types.BTCDelegatorKey)
+func (k Keeper) btcDelegatorFpStore(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) prefix.Store {
+	delegationStore := k.btcDelegatorStore(ctx)
 	return prefix.NewStore(delegationStore, fpBTCPK.MustMarshal())
+}
+
+// btcDelegatorFpStore returns the KVStore of the BTC delegators
+// prefix: BTCDelegatorKey
+// key: finality provider's Bitcoin secp256k1 PK || delegator's Bitcoin secp256k1 PK
+// value: BTCDelegatorDelegationIndex (a list of BTCDelegations' staking tx hashes)
+func (k Keeper) btcDelegatorStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.BTCDelegatorKey)
 }

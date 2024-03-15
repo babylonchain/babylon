@@ -231,7 +231,7 @@ func (k Keeper) addPowerDistUpdateEvent(
 	btcHeight uint64,
 	event *types.EventPowerDistUpdate,
 ) {
-	store := k.powerDistUpdateEventStore(ctx, btcHeight)
+	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
 
 	// get event index
 	eventIdx := uint64(0) // event index starts from 0
@@ -251,7 +251,7 @@ func (k Keeper) setEventIdx(
 	ctx context.Context,
 	evt *types.EventIndex,
 ) error {
-	store := k.powerDistUpdateEventStore(ctx, evt.BlockHeightBtc)
+	store := k.powerDistUpdateEventBtcHeightStore(ctx, evt.BlockHeightBtc)
 
 	bz, err := evt.Event.Marshal()
 	if err != nil {
@@ -267,7 +267,7 @@ func (k Keeper) setEventIdx(
 // This is called after processing all BTC delegation events in `BeginBlocker`
 // nolint:unused
 func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint64) {
-	store := k.powerDistUpdateEventStore(ctx, btcHeight)
+	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
 	keys := [][]byte{}
 
 	// get all keys
@@ -307,7 +307,7 @@ func (k Keeper) IteratePowerDistUpdateEvents(
 	btcHeight uint64,
 	handleFunc func(event *types.EventPowerDistUpdate) bool,
 ) {
-	store := k.powerDistUpdateEventStore(ctx, btcHeight)
+	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -320,13 +320,22 @@ func (k Keeper) IteratePowerDistUpdateEvents(
 	}
 }
 
+// powerDistUpdateEventBtcHeightStore returns the KVStore of events that affect
+// voting power distribution
+// prefix: PowerDistUpdateKey || BTC height
+// key: event index)
+// value: BTCDelegationStatus
+func (k Keeper) powerDistUpdateEventBtcHeightStore(ctx context.Context, btcHeight uint64) prefix.Store {
+	store := k.powerDistUpdateEventStore(ctx)
+	return prefix.NewStore(store, sdk.Uint64ToBigEndian(btcHeight))
+}
+
 // powerDistUpdateEventStore returns the KVStore of events that affect
 // voting power distribution
 // prefix: PowerDistUpdateKey
 // key: (BTC height || event index)
 // value: BTCDelegationStatus
-func (k Keeper) powerDistUpdateEventStore(ctx context.Context, btcHeight uint64) prefix.Store {
+func (k Keeper) powerDistUpdateEventStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	store := prefix.NewStore(storeAdapter, types.PowerDistUpdateKey)
-	return prefix.NewStore(store, sdk.Uint64ToBigEndian(btcHeight))
+	return prefix.NewStore(storeAdapter, types.PowerDistUpdateKey)
 }

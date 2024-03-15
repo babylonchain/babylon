@@ -19,8 +19,9 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, gs types.GenesisState) {
 
 // ExportGenesis returns the module's exported genesis
 func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
-	genesis := types.DefaultGenesis()
-	genesis.Params = k.GetParams(ctx)
-
-	return genesis
+	gs, err := k.ExportGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return gs
 }

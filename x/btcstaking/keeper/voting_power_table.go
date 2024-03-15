@@ -13,18 +13,25 @@ import (
 )
 
 // IterateActiveFPs iterates over all finality providers that are not slashed
-func (k Keeper) IterateActiveFPs(ctx context.Context, handler func(fp *types.FinalityProvider) bool) {
+func (k Keeper) IterateActiveFPs(ctx context.Context, handler func(fp *types.FinalityProvider) (shouldContinue bool)) {
+	k.IterateFPs(ctx, func(fp *types.FinalityProvider) (shouldContinue bool) {
+		if fp.IsSlashed() {
+			// slashed finality provider is removed from finality provider set
+			return true
+		}
+
+		return handler(fp)
+	})
+}
+
+// IterateFPs iterates over all finality providers.
+func (k Keeper) IterateFPs(ctx context.Context, handler func(fp *types.FinalityProvider) (shouldContinue bool)) {
 	// filter out all finality providers with positive voting power
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
 	defer fpIter.Close()
 	for ; fpIter.Valid(); fpIter.Next() {
 		var fp types.FinalityProvider
 		k.cdc.MustUnmarshal(fpIter.Value(), &fp)
-		if fp.IsSlashed() {
-			// slashed finality provider is removed from finality provider set
-			continue
-		}
-
 		shouldContinue := handler(&fp)
 		if !shouldContinue {
 			return
@@ -32,9 +39,8 @@ func (k Keeper) IterateActiveFPs(ctx context.Context, handler func(fp *types.Fin
 	}
 }
 
-// SetVotingPower sets the voting power of a given finality provider at a given Babylon height
 func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64, power uint64) {
-	store := k.votingPowerStore(ctx, height)
+	store := k.votingPowerBbnBlockHeightStore(ctx, height)
 	store.Set(fpBTCPK, sdk.Uint64ToBigEndian(power))
 }
 
@@ -43,7 +49,7 @@ func (k Keeper) GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint6
 	if !k.HasFinalityProvider(ctx, fpBTCPK) {
 		return 0
 	}
-	store := k.votingPowerStore(ctx, height)
+	store := k.votingPowerBbnBlockHeightStore(ctx, height)
 	powerBytes := store.Get(fpBTCPK)
 	if len(powerBytes) == 0 {
 		return 0
@@ -86,7 +92,7 @@ func (k Keeper) GetCurrentVotingPower(ctx context.Context, fpBTCPK []byte) (uint
 
 // HasVotingPowerTable checks if the voting power table exists at a given height
 func (k Keeper) HasVotingPowerTable(ctx context.Context, height uint64) bool {
-	store := k.votingPowerStore(ctx, height)
+	store := k.votingPowerBbnBlockHeightStore(ctx, height)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 	return iter.Valid()
@@ -94,7 +100,7 @@ func (k Keeper) HasVotingPowerTable(ctx context.Context, height uint64) bool {
 
 // GetVotingPowerTable gets the voting power table, i.e., finality provider set at a given height
 func (k Keeper) GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64 {
-	store := k.votingPowerStore(ctx, height)
+	store := k.votingPowerBbnBlockHeightStore(ctx, height)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
@@ -142,12 +148,20 @@ func (k Keeper) IsBTCStakingActivated(ctx context.Context) bool {
 	return iter.Valid()
 }
 
-// votingPowerStore returns the KVStore of the finality providers' voting power
+// votingPowerBbnBlockHeightStore returns the KVStore of the finality providers' voting power
 // prefix: (VotingPowerKey || Babylon block height)
 // key: Bitcoin secp256k1 PK
 // value: voting power quantified in Satoshi
-func (k Keeper) votingPowerStore(ctx context.Context, height uint64) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	votingPowerStore := prefix.NewStore(storeAdapter, types.VotingPowerKey)
+func (k Keeper) votingPowerBbnBlockHeightStore(ctx context.Context, height uint64) prefix.Store {
+	votingPowerStore := k.votingPowerStore(ctx)
 	return prefix.NewStore(votingPowerStore, sdk.Uint64ToBigEndian(height))
+}
+
+// votingPowerStore returns the KVStore of the finality providers' voting power
+// prefix: (VotingPowerKey)
+// key: Babylon block height || Bitcoin secp256k1 PK
+// value: voting power quantified in Satoshi
+func (k Keeper) votingPowerStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.VotingPowerKey)
 }
