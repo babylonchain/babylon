@@ -246,6 +246,22 @@ func (k Keeper) addPowerDistUpdateEvent(
 	store.Set(sdk.Uint64ToBigEndian(eventIdx), k.cdc.MustMarshal(event))
 }
 
+// setEventIdx sets an event into the store.
+func (k Keeper) setEventIdx(
+	ctx context.Context,
+	evt *types.EventIndex,
+) error {
+	store := k.powerDistUpdateEventStore(ctx, evt.BlockHeightBtc)
+
+	bz, err := evt.Event.Marshal()
+	if err != nil {
+		return err
+	}
+	store.Set(sdk.Uint64ToBigEndian(evt.Idx), bz)
+
+	return nil
+}
+
 // ClearPowerDistUpdateEvents removes all BTC delegation state update events
 // at a given BTC height
 // This is called after processing all BTC delegation events in `BeginBlocker`

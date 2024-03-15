@@ -21,6 +21,11 @@ func (k Keeper) IndexBTCHeight(ctx context.Context) {
 	store.Set(sdk.Uint64ToBigEndian(babylonHeight), sdk.Uint64ToBigEndian(btcHeight))
 }
 
+func (k Keeper) setBlockHeightChains(ctx context.Context, blocks *types.BlockHeightBbnToBtc) {
+	store := k.btcHeightStore(ctx)
+	store.Set(sdk.Uint64ToBigEndian(blocks.BlockHeightBbn), sdk.Uint64ToBigEndian(blocks.BlockHeightBtc))
+}
+
 func (k Keeper) GetBTCHeightAtBabylonHeight(ctx context.Context, babylonHeight uint64) uint64 {
 	store := k.btcHeightStore(ctx)
 	btcHeightBytes := store.Get(sdk.Uint64ToBigEndian(babylonHeight))

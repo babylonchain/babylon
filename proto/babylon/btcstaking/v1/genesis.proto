@@ -70,6 +70,8 @@ message BTCDelegator {
 message EventIndex {
   // idx is the index the event was stored.
   uint64 idx = 1;
+  // block_height_btc is the height of the block in the BTC chain.
+  uint64 block_height_btc = 2;
   // event the event stored.
-  EventPowerDistUpdate event = 2;
+  EventPowerDistUpdate event = 3;
 }
