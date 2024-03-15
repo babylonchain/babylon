@@ -96,7 +96,7 @@ func (h *Helper) GenAndApplyCustomParams(
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveFinalityProviders: 100,
 		MinUnbondingTime:           minUnbondingTime,
-		MinUnbondingValue:          sdkmath.LegacyMustNewDecFromStr("0.8"),
+		MinUnbondingRate:          sdkmath.LegacyMustNewDecFromStr("0.8"),
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs

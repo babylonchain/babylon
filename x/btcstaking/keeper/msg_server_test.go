@@ -666,7 +666,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 	}
 }
 
-func TestMinimalUnbondingValue(t *testing.T) {
+func TestMinimalUnbondingRate(t *testing.T) {
 	tests := []struct {
 		name                       string
 		stakingValue               int64

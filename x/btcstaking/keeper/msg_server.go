@@ -402,7 +402,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// this conversions must always succeed, as it is part of our params
-	minUnbondingRate := params.MinUnbondingValue.MustFloat64()
+	minUnbondingRate := params.MinUnbondingRate.MustFloat64()
 	// Caluclate min unbonding output value based on staking output, use btc native multiplication
 	minUnbondingOutputValue := btcutil.Amount(stakingMsgTx.TxOut[newBTCDel.StakingOutputIdx].Value).MulF64(minUnbondingRate)
 
