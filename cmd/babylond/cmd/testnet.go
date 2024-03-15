@@ -97,7 +97,7 @@ Example:
 				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex, genesisCliArgs.BaseBtcHeaderHeight,
 				genesisCliArgs.AllowedReporterAddresses, genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
 				genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat, genesisCliArgs.MinCommissionRate,
-				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinUnbondingTime,
+				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinUnbondingTime, genesisCliArgs.MinUnbondingRate,
 				genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
 				genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded, genesisCliArgs.BlocksPerYear,
 				genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit, genesisCliArgs.VoteExtensionEnableHeight)

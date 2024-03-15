@@ -37,6 +37,7 @@ const (
 	flagCovenantQuorum             = "covenant-quorum"
 	flagMaxActiveFinalityProviders = "max-active-finality-providers"
 	flagMinUnbondingTime           = "min-unbonding-time"
+	flagMinUnbondingRate           = "min-unbonding-rate"
 	flagSlashingAddress            = "slashing-address"
 	flagMinSlashingFee             = "min-slashing-fee-sat"
 	flagSlashingRate               = "slashing-rate"
@@ -69,6 +70,7 @@ type GenesisCLIArgs struct {
 	SlashingRate                 math.LegacyDec
 	MaxActiveFinalityProviders   uint32
 	MinUnbondingTime             uint16
+	MinUnbondingRate             math.LegacyDec
 	MinPubRand                   uint64
 	MinCommissionRate            math.LegacyDec
 }
@@ -97,6 +99,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagSlashingRate, "0.1", "Bitcoin staking slashing rate")
 	cmd.Flags().Uint32(flagMaxActiveFinalityProviders, 100, "Bitcoin staking maximum active finality providers")
 	cmd.Flags().Uint16(flagMinUnbondingTime, 0, "Min timelock on unbonding transaction in btc blocks")
+	cmd.Flags().String(flagMinUnbondingRate, "0.8", "Min amount of btc required in unbonding output expressed as a fraction of staking output")
 	// finality args
 	cmd.Flags().Uint64(flagMinPubRand, 100, "Bitcoin staking minimum public randomness commit")
 	// inflation args
@@ -130,6 +133,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	slashingRate, _ := cmd.Flags().GetString(flagSlashingRate)
 	maxActiveFinalityProviders, _ := cmd.Flags().GetUint32(flagMaxActiveFinalityProviders)
 	minUnbondingTime, _ := cmd.Flags().GetUint16(flagMinUnbondingTime)
+	minUnbondingRate, _ := cmd.Flags().GetString(flagMinUnbondingRate)
 	minPubRand, _ := cmd.Flags().GetUint64(flagMinPubRand)
 	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
@@ -169,6 +173,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		SlashingRate:                 math.LegacyMustNewDecFromStr(slashingRate),
 		MaxActiveFinalityProviders:   maxActiveFinalityProviders,
 		MinUnbondingTime:             minUnbondingTime,
+		MinUnbondingRate:             math.LegacyMustNewDecFromStr(minUnbondingRate),
 		MinPubRand:                   minPubRand,
 		GenesisTime:                  genesisTime,
 		InflationRateChange:          inflationRateChange,
