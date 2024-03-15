@@ -325,6 +325,7 @@ func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
 // the signatures on the slashing tx, such that the slashing tx obtains full
 // witness and can be submitted to Bitcoin.
 // This happens after the finality provider is slashed and its SK is extracted.
+// TODO: verify not used
 func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
 	if err != nil {
