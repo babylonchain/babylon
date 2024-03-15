@@ -12,7 +12,7 @@ import (
 
 func GenCovenantAdaptorSigs(
 	covenantSKs []*btcec.PrivateKey,
-	valPKs []*btcec.PublicKey,
+	fpPKs []*btcec.PublicKey,
 	fundingTx *wire.MsgTx,
 	pkScriptPath []byte,
 	slashingTx *bstypes.BTCSlashingTx,
@@ -23,8 +23,8 @@ func GenCovenantAdaptorSigs(
 			CovPk:       bbn.NewBIP340PubKeyFromBTCPK(covenantSK.PubKey()),
 			AdaptorSigs: [][]byte{},
 		}
-		for _, valPK := range valPKs {
-			encKey, err := asig.NewEncryptionKeyFromBTCPK(valPK)
+		for _, fpPK := range fpPKs {
+			encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 			if err != nil {
 				return nil, err
 			}

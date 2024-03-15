@@ -247,44 +247,80 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
 
 }
 
+// findFPIdxInWitness returns the index of the finality provider's signature
+// in the witness stack of 1-out-of-n multisig from finality providers
+// Note: the signatures are sorted in reverse lexical order since the PKs
+// in the staking script are sorted in lexical order and BTC script execution
+// is stack based
+func findFPIdxInWitness(fpSK *btcec.PrivateKey, fpBTCPKs []bbn.BIP340PubKey) (int, error) {
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey())
+	sortedFPBTCPKList := bbn.SortBIP340PKs(fpBTCPKs)
+	for i, pk := range sortedFPBTCPKList {
+		if pk.Equals(fpBTCPK) {
+			return i, nil
+		}
+	}
+	return 0, fmt.Errorf("the given finality provider's PK is not found in the BTC delegation")
+}
+
+// BuildSlashingTxWithWitness builds the witness for the slashing tx, including
+// - a (covenant_quorum, covenant_committee_size) multisig from covenant committee
+// - a (1, num_restaked_finality_providers) multisig from the slashed finality provider
+// - 1 Schnorr signature from the staker
 func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	fpSK *btcec.PrivateKey,
+	fpBTCPKs []bbn.BIP340PubKey,
 	fundingMsgTx *wire.MsgTx,
 	outputIdx uint32,
 	delegatorSig *bbn.BIP340Signature,
 	covenantSigs []*asig.AdaptorSignature,
 	slashingPathSpendInfo *btcstaking.SpendInfo,
 ) (*wire.MsgTx, error) {
-	fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
-	}
-
+	/*
+		construct covenant committee's part of witness, i.e.,
+		a quorum number of covenant Schnorr signatures
+	*/
 	// decrypt covenant adaptor signature to Schnorr signature using finality provider's SK,
 	// then marshal
 	decKey, err := asig.NewDecyptionKeyFromBTCSK(fpSK)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get decryption key from BTC SK: %w", err)
 	}
-
-	var covSigs []*schnorr.Signature
-	for _, covenantSig := range covenantSigs {
+	// decrypt each covenant adaptor signature to Schnorr signature
+	covSigs := make([]*schnorr.Signature, len(covenantSigs))
+	for i, covenantSig := range covenantSigs {
 		if covenantSig != nil {
-			covSigs = append(covSigs, covenantSig.Decrypt(decKey))
+			covSigs[i] = covenantSig.Decrypt(decKey)
 		} else {
-			covSigs = append(covSigs, nil)
+			covSigs[i] = nil
 		}
 	}
+
+	/*
+		construct finality providers' part of witness, i.e.,
+		1 out of numRestakedFPs signature
+	*/
+	fpIdxInWitness, err := findFPIdxInWitness(fpSK, fpBTCPKs)
+	if err != nil {
+		return nil, err
+	}
+	fpSigs := make([]*schnorr.Signature, len(fpBTCPKs))
+	fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
+	}
+	fpSigs[fpIdxInWitness] = fpSig.MustToBTCSig()
 
 	// construct witness
 	witness, err := slashingPathSpendInfo.CreateSlashingPathWitness(
 		covSigs,
-		[]*schnorr.Signature{fpSig.MustToBTCSig()}, // TODO: work with restaking
+		fpSigs,
 		delegatorSig.MustToBTCSig(),
 	)
 	if err != nil {
 		return nil, err
 	}
+
 	// add witness to slashing tx
 	slashingMsgTxWithWitness, err := tx.ToMsgTx()
 	if err != nil {

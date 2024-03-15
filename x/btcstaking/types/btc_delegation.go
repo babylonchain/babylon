@@ -310,6 +310,21 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 }
 
 // TODO: verify to remove, not used in babylon, only for tests
+// findFPIdx returns the index of the given finality provider
+// among all restaked finality providers
+func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
+	for i, pk := range d.FpBtcPkList {
+		if pk.Equals(fpBTCPK) {
+			return i, nil
+		}
+	}
+	return 0, fmt.Errorf("the given finality provider's PK is not found in the BTC delegation")
+}
+
+// BuildSlashingTxWithWitness uses the given finality provider's SK to complete
+// the signatures on the slashing tx, such that the slashing tx obtains full
+// witness and can be submitted to Bitcoin.
+// This happens after the finality provider is slashed and its SK is extracted.
 func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
 	if err != nil {
@@ -326,8 +341,13 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 		return nil, fmt.Errorf("could not get slashing spend info: %v", err)
 	}
 
-	// TODO: work with restaking
-	covAdaptorSigs, err := GetOrderedCovenantSignatures(0, d.CovenantSigs, bsParams)
+	// get the list of covenant signatures encrypted by the given finality provider's PK
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey())
+	fpIdx, err := d.findFPIdx(fpBTCPK)
+	if err != nil {
+		return nil, err
+	}
+	covAdaptorSigs, err := GetOrderedCovenantSignatures(fpIdx, d.CovenantSigs, bsParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ordered covenant adaptor signatures: %w", err)
 	}
@@ -335,6 +355,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	// assemble witness for slashing tx
 	slashingMsgTxWithWitness, err := d.SlashingTx.BuildSlashingTxWithWitness(
 		fpSK,
+		d.FpBtcPkList,
 		stakingMsgTx,
 		d.StakingOutputIdx,
 		d.DelegatorSig,
@@ -370,8 +391,14 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 		return nil, fmt.Errorf("could not get unbonding slashing spend info: %v", err)
 	}
 
-	// TODO: work with restaking
-	covAdaptorSigs, err := GetOrderedCovenantSignatures(0, d.BtcUndelegation.CovenantSlashingSigs, bsParams)
+	// get the list of covenant signatures encrypted by the given finality provider's PK
+	fpPK := fpSK.PubKey()
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
+	fpIdx, err := d.findFPIdx(fpBTCPK)
+	if err != nil {
+		return nil, err
+	}
+	covAdaptorSigs, err := GetOrderedCovenantSignatures(fpIdx, d.BtcUndelegation.CovenantSlashingSigs, bsParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ordered covenant adaptor signatures: %w", err)
 	}
@@ -379,6 +406,7 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	// assemble witness for unbonding slashing tx
 	slashingMsgTxWithWitness, err := d.BtcUndelegation.SlashingTx.BuildSlashingTxWithWitness(
 		fpSK,
+		d.FpBtcPkList,
 		unbondingMsgTx,
 		0,
 		d.BtcUndelegation.DelegatorSlashingSig,

@@ -300,7 +300,7 @@ func newBabylonScriptPaths(
 		return nil, err
 	}
 
-	fpSigScript, err := buildMultiSigScript(
+	fpMultisigScript, err := buildMultiSigScript(
 		fpKeys,
 		// we always require only one finality provider to sign
 		1,
@@ -319,7 +319,7 @@ func newBabylonScriptPaths(
 
 	slashingPathScript := aggregateScripts(
 		stakerSigScript,
-		fpSigScript,
+		fpMultisigScript,
 		covenantMultisigScript,
 	)
 

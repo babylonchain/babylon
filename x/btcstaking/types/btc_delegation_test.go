@@ -74,89 +74,86 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		net := &chaincfg.SimNetParams
 
-		delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
 
-		fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+		// restaked to a random number of finality providers
+		numRestakedFPs := int(datagen.RandomInt(r, 10) + 1)
+		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
 		require.NoError(t, err)
-		fpPKList := []*btcec.PublicKey{fpPK}
+		fpBTCPKs := bbn.NewBIP340PKsFromBTCPKs(fpPKs)
+
+		// a random finality provider gets slashed
+		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		fpSK := fpSKs[slashedFPIdx]
 
 		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 		require.NoError(t, err)
 		covenantQuorum := uint32(3)
+		bsParams := &types.Params{
+			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+			CovenantQuorum: covenantQuorum,
+		}
 
 		stakingTimeBlocks := uint16(5)
 		stakingValue := int64(2 * 10e8)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 
-		slashingChangeLockTime := uint16(101)
-
-		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
-		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
-		// with value below the dust threshold, causing test failure.
-		// Our goal is not to test failure due to such extreme cases here;
-		// this is already covered in FuzzGeneratingValidStakingSlashingTx
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
-		testInfo := datagen.GenBTCStakingSlashingInfo(
+		unbondingTime := uint16(100) + 1
+		slashingChangeLockTime := unbondingTime
+
+		// construct the BTC delegation with everything
+		btcDel, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
-			net,
+			fpBTCPKs,
 			delSK,
-			fpPKList,
-			covenantPKs,
+			covenantSKs,
 			covenantQuorum,
-			stakingTimeBlocks,
-			stakingValue,
 			slashingAddress.EncodeAddress(),
+			1000,
+			uint64(1000+stakingTimeBlocks),
+			uint64(stakingValue),
 			slashingRate,
 			slashingChangeLockTime,
 		)
 		require.NoError(t, err)
 
-		stakingTxBytes, err := bbn.SerializeBTCTx(testInfo.StakingTx)
+		stakingInfo, err := btcDel.GetStakingInfo(bsParams, net)
 		require.NoError(t, err)
 
-		// spend info of the slashing tx
-		slashingSpendInfo, err := testInfo.StakingInfo.SlashingPathSpendInfo()
+		// TESTING
+		orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
+		covSigsForFP, err := types.GetOrderedCovenantSignatures(slashedFPIdx, btcDel.CovenantSigs, bsParams)
 		require.NoError(t, err)
-		// delegator signs the slashing tx
-		delSig, err := testInfo.SlashingTx.Sign(testInfo.StakingTx, 0, slashingSpendInfo.GetPkScriptPath(), delSK)
+		fpPK := fpSK.PubKey()
+		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)
-		// covenant signs (using adaptor signature) the slashing tx
-		covenantSigs, err := datagen.GenCovenantAdaptorSigs(covenantSKs, []*btcec.PublicKey{fpPK}, testInfo.StakingTx, slashingSpendInfo.GetPkScriptPath(), testInfo.SlashingTx)
+		slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
 		require.NoError(t, err)
-		covenantSigs = covenantSigs[2:] // discard 2 out of 5 signatures
-
-		// construct the BTC delegation with everything
-		btcDel := &types.BTCDelegation{
-			BabylonPk:        nil, // not relevant here
-			BtcPk:            delBTCPK,
-			Pop:              nil, // not relevant here
-			FpBtcPkList:      bbn.NewBIP340PKsFromBTCPKs(fpPKList),
-			StartHeight:      1000, // not relevant here
-			EndHeight:        uint64(1000 + stakingTimeBlocks),
-			TotalSat:         uint64(stakingValue),
-			StakingTx:        stakingTxBytes,
-			StakingOutputIdx: 0,
-			SlashingTx:       testInfo.SlashingTx,
-			DelegatorSig:     delSig,
-			CovenantSigs:     covenantSigs,
+		for i := range covSigsForFP {
+			if covSigsForFP[i] == nil {
+				continue
+			}
+			err := btcDel.SlashingTx.EncVerifyAdaptorSignature(
+				stakingInfo.StakingOutput.PkScript,
+				stakingInfo.StakingOutput.Value,
+				slashingSpendInfo.GetPkScriptPath(),
+				orderedCovenantPKs[i].MustToBTCPK(),
+				encKey,
+				covSigsForFP[i],
+			)
+			require.NoError(t, err)
 		}
-
-		bsParams := &types.Params{
-			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-			CovenantQuorum: covenantQuorum,
-		}
-		btcNet := &chaincfg.SimNetParams
 
 		// build slashing tx with witness for spending the staking tx
-		slashingTxWithWitness, err := btcDel.BuildSlashingTxWithWitness(bsParams, btcNet, fpSK)
+		slashingTxWithWitness, err := btcDel.BuildSlashingTxWithWitness(bsParams, net, fpSK)
 		require.NoError(t, err)
 
 		// assert execution
-		btctest.AssertSlashingTxExecution(t, testInfo.StakingInfo.StakingOutput, slashingTxWithWitness)
+		btctest.AssertSlashingTxExecution(t, stakingInfo.StakingOutput, slashingTxWithWitness)
 	})
 }
