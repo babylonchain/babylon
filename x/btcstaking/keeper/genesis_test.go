@@ -2,17 +2,19 @@ package keeper_test
 
 import (
 	"bytes"
+	"math"
 	"math/rand"
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/testutil/helper"
+	btclightclientt "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestExportGenesis(t *testing.T) {
-	r, h := rand.New(rand.NewSource(10)), helper.NewHelper(t)
+	r, h := rand.New(rand.NewSource(11)), helper.NewHelper(t)
 	k, btclcK, btcCheckK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.App.BtcCheckpointKeeper, h.Ctx
 	numFps := 3
 
@@ -31,11 +33,16 @@ func TestExportGenesis(t *testing.T) {
 	eventsIdx := make(map[uint64]*types.EventIndex, 0)
 	btcDelegatorIndex := make(map[string]*types.BTCDelegator, 0)
 
-	blkHeight := uint64(r.Int63n(1000))
-	btcHead := btclcK.GetTipInfo(ctx)
+	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
 	totalDelegations := 0
 
 	for _, fp := range fps {
+		btcHead := btclcK.GetTipInfo(ctx)
+		btcHead.Height = blkHeight + 100
+		btclcK.InsertHeaderInfos(ctx, []*btclightclientt.BTCHeaderInfo{
+			btcHead,
+		})
+
 		// set finality
 		h.AddFinalityProvider(fp)
 
@@ -49,7 +56,6 @@ func TestExportGenesis(t *testing.T) {
 			int(numDelegations),
 			params.CovenantQuorum,
 		)
-		blkHeight++
 		vp := uint64(stakingValue)
 
 		// sets voting power
@@ -101,12 +107,16 @@ func TestExportGenesis(t *testing.T) {
 		// sets chain heights
 		header := ctx.HeaderInfo()
 		header.Height = int64(blkHeight)
-		k.IndexBTCHeight(ctx.WithHeaderInfo(header))
+		ctx = ctx.WithHeaderInfo(header)
+		h.Ctx = ctx
+
+		k.IndexBTCHeight(ctx)
 		chainsHeight = append(chainsHeight, &types.BlockHeightBbnToBtc{
 			BlockHeightBbn: blkHeight,
 			BlockHeightBtc: btcHead.Height,
 		})
 
+		blkHeight++ // each fp increase blk height to modify data in state.
 	}
 
 	gs, err := k.ExportGenesis(ctx)
@@ -162,5 +172,5 @@ func TestExportGenesis(t *testing.T) {
 		require.Equal(t, evt, evtIdx)
 	}
 
-	// vp dst cache
+	// TODO: vp dst cache
 }
