@@ -12,15 +12,12 @@ import (
 )
 
 func TestExportGenesis(t *testing.T) {
-	r := rand.New(rand.NewSource(10))
-	h := helper.NewHelper(t)
-
+	r, h := rand.New(rand.NewSource(10)), helper.NewHelper(t)
 	k, ctx := h.App.BTCStakingKeeper, h.Ctx
-
 	numFps := 3
 
 	fps := datagen.CreateNFinalityProviders(r, t, numFps)
-	covQuorum := k.GetParams(h.Ctx).CovenantQuorum
+	params := k.GetParams(ctx)
 
 	vpFps := make(map[string]*types.VotingPowerFP, 0)
 	btcDelegations := make([]*types.BTCDelegation, 0)
@@ -34,7 +31,7 @@ func TestExportGenesis(t *testing.T) {
 			fp.BtcPk.MustToBTCPK(),
 			int64(stakingValue),
 			int(numDelegations),
-			covQuorum,
+			params.CovenantQuorum,
 		)
 		blkHeight := r.Uint64()
 		vp := uint64(stakingValue)
@@ -81,6 +78,7 @@ func TestExportGenesis(t *testing.T) {
 	}
 	require.Equal(t, correctDels, len(btcDelegations))
 
+	// voting powers
 	for _, gsFpVp := range gs.VotingPowers {
 		vp := vpFps[gsFpVp.FpBtcPk.MarshalHex()]
 		require.Equal(t, gsFpVp, vp)
