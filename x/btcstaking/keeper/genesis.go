@@ -34,6 +34,11 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.setBTCDelegatorDelegationIndex(ctx, del.FpBtcPk, del.DelBtcPk, del.Idx)
 	}
 
+	// Events are generated on block `N` to be processed at block `N+1`
+	// When ExportGenesis is called the node already stopped at block N.
+	// In this case the events on the state would refer to the block `N+1`
+	// Since InitGenesis occurs before BeginBlock, the genesis state would be properly
+	// stored in the KV store for when BeginBlock process the events.
 	for _, evt := range gs.Events {
 		if err := k.setEventIdx(ctx, evt); err != nil {
 			return err
