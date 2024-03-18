@@ -96,6 +96,7 @@ func (h *Helper) GenAndApplyCustomParams(
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveFinalityProviders: 100,
 		MinUnbondingTime:           minUnbondingTime,
+		MinUnbondingRate:          sdkmath.LegacyMustNewDecFromStr("0.8"),
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
@@ -140,6 +141,7 @@ func (h *Helper) CreateDelegationCustom(
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
+	unbondingValue int64,
 	unbondingTime uint16,
 ) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, error) {
 	delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -208,7 +210,6 @@ func (h *Helper) CreateDelegationCustom(
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
 	stkOutputIdx := uint32(0)
 
-	unbondingValue := stakingValue - 1000
 	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
 		r,
 		h.t,
@@ -281,6 +282,7 @@ func (h *Helper) CreateDelegation(
 		changeAddress,
 		stakingValue,
 		stakingTime,
+		stakingValue-1000,
 		uint16(minUnbondingTime)+1,
 	)
 
