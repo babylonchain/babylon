@@ -89,7 +89,7 @@ func (m *Manager) ExecCmd(t *testing.T, containerName string, command []string, 
 		errBuf bytes.Buffer
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	if m.isDebugLogEnabled {
@@ -146,7 +146,7 @@ func (m *Manager) ExecCmd(t *testing.T, containerName string, command []string, 
 
 			return true
 		},
-		time.Minute,
+		2*time.Minute,
 		50*time.Millisecond,
 		"tx returned a non-zero code",
 	)

@@ -14,11 +14,11 @@ const (
 
 	hermesRelayerRepository = "informalsystems/hermes"
 	// TODO: Replace with version tag once we have a working version
-	hermesRelayerTag = "master"
+	hermesRelayerTag        = "master"
 	// Built using the `build-cosmos-relayer-docker` target on an Intel (amd64) machine and pushed to ECR
 	cosmosRelayerRepository = "public.ecr.aws/t9e9i3h0/cosmos-relayer"
 	// TODO: Replace with version tag once we have a working version
-	cosmosRelayerTag = "main"
+	cosmosRelayerTag        = "main"
 )
 
 // NewImageConfig returns ImageConfig needed for running e2e test.
