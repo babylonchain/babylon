@@ -234,3 +234,24 @@ func (k Keeper) votingPowersDistCacheBlkHeight(ctx context.Context) ([]*types.Vo
 
 	return vps, nil
 }
+
+func (k Keeper) setBlockHeightChains(ctx context.Context, blocks *types.BlockHeightBbnToBtc) {
+	store := k.btcHeightStore(ctx)
+	store.Set(sdk.Uint64ToBigEndian(blocks.BlockHeightBbn), sdk.Uint64ToBigEndian(blocks.BlockHeightBtc))
+}
+
+// setEventIdx sets an event into the store.
+func (k Keeper) setEventIdx(
+	ctx context.Context,
+	evt *types.EventIndex,
+) error {
+	store := k.powerDistUpdateEventBtcHeightStore(ctx, evt.BlockHeightBtc)
+
+	bz, err := evt.Event.Marshal()
+	if err != nil {
+		return err
+	}
+	store.Set(sdk.Uint64ToBigEndian(evt.Idx), bz)
+
+	return nil
+}
