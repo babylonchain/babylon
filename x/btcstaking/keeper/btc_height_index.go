@@ -11,7 +11,7 @@ import (
 
 // IndexBTCHeight indexes the current BTC height, and saves it to KVStore
 func (k Keeper) IndexBTCHeight(ctx context.Context) {
-	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
+	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
 		return
