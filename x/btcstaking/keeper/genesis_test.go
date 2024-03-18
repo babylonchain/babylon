@@ -13,11 +13,12 @@ import (
 
 func TestExportGenesis(t *testing.T) {
 	r, h := rand.New(rand.NewSource(10)), helper.NewHelper(t)
-	k, btclcK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.Ctx
+	k, btclcK, btcCheckK, ctx := h.App.BTCStakingKeeper, h.App.BTCLightClientKeeper, h.App.BtcCheckpointKeeper, h.Ctx
 	numFps := 3
 
 	fps := datagen.CreateNFinalityProviders(r, t, numFps)
 	params := k.GetParams(ctx)
+	wValue := btcCheckK.GetParams(ctx).CheckpointFinalizationTimeout
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
 	// creates the first as it starts already with an chain height from the helper.
@@ -27,6 +28,7 @@ func TestExportGenesis(t *testing.T) {
 	})
 	vpFps := make(map[string]*types.VotingPowerFP, 0)
 	btcDelegations := make([]*types.BTCDelegation, 0)
+	eventsIdx := make(map[uint64]*types.EventIndex, 0)
 	btcDelegatorIndex := make(map[string]*types.BTCDelegator, 0)
 
 	blkHeight := uint64(r.Int63n(1000))
@@ -39,7 +41,6 @@ func TestExportGenesis(t *testing.T) {
 
 		stakingValue := r.Int31n(200000) + 10000
 		numDelegations := r.Int31n(10)
-		totalDelegations += int(numDelegations)
 		delegations := createNDelegationsForFinalityProvider(
 			r,
 			t,
@@ -60,12 +61,13 @@ func TestExportGenesis(t *testing.T) {
 		}
 
 		for _, del := range delegations {
+			totalDelegations++
+
 			// sets delegations
 			h.AddDelegation(del)
 			btcDelegations = append(btcDelegations, del)
 
-			// delegators
-
+			// BTC delegators idx
 			stakingTxHash, err := del.GetStakingTxHash()
 			h.NoError(err)
 
@@ -81,10 +83,25 @@ func TestExportGenesis(t *testing.T) {
 				DelBtcPk: del.BtcPk,
 			}
 
+			// record event that the BTC delegation will become unbonded at endHeight-w
+			unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+				StakingTxHash: stakingTxHash.String(),
+				NewState:      types.BTCDelegationStatus_UNBONDED,
+			})
+
+			// events
+			idxEvent := uint64(totalDelegations - 1)
+			eventsIdx[idxEvent] = &types.EventIndex{
+				Idx:            idxEvent,
+				BlockHeightBtc: del.EndHeight - wValue,
+				Event:          unbondedEvent,
+			}
 		}
 
 		// sets chain heights
-		k.IndexBTCHeight(ctx.WithBlockHeight(int64(blkHeight)))
+		header := ctx.HeaderInfo()
+		header.Height = int64(blkHeight)
+		k.IndexBTCHeight(ctx.WithHeaderInfo(header))
 		chainsHeight = append(chainsHeight, &types.BlockHeightBbnToBtc{
 			BlockHeightBbn: blkHeight,
 			BlockHeightBtc: btcHead.Height,
@@ -139,5 +156,11 @@ func TestExportGenesis(t *testing.T) {
 	}
 
 	// events
+	require.Equal(t, totalDelegations, len(gs.Events))
+	for _, evt := range gs.Events {
+		evtIdx := eventsIdx[evt.Idx]
+		require.Equal(t, evt, evtIdx)
+	}
+
 	// vp dst cache
 }
