@@ -172,5 +172,25 @@ func TestExportGenesis(t *testing.T) {
 		require.Equal(t, evt, evtIdx)
 	}
 
-	// TODO: vp dst cache
+	// since events are needed to test and I cant update the power dist, the check for
+	// power distribution will be done in another gen export
+	// TODO: vp dst cache, comes with empty dst cache :/
+	header := ctx.HeaderInfo()
+	fakeHeightForPowerDist := uint64(btcDelegations[len(btcDelegations)-1].EndHeight - wValue)
+	header.Height = int64(fakeHeightForPowerDist)
+	btcHead := btclcK.GetTipInfo(ctx)
+
+	btcHead.Height = fakeHeightForPowerDist
+	btclcK.InsertHeaderInfos(ctx, []*btclightclientt.BTCHeaderInfo{
+		btcHead,
+	})
+
+	ctx2 := ctx.WithHeaderInfo(header)
+	k.IndexBTCHeight(ctx2)
+	k.UpdatePowerDist(ctx2)
+
+	// export it again, to check the power distribution
+	gs, err = k.ExportGenesis(ctx)
+	h.NoError(err)
+	require.NotNil(t, gs.VpDstCache)
 }
