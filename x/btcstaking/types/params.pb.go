@@ -52,7 +52,7 @@ type Params struct {
 	MinUnbondingTime uint32 `protobuf:"varint,8,opt,name=min_unbonding_time,json=minUnbondingTime,proto3" json:"min_unbonding_time,omitempty"`
 	// min_unbonding_rate is the minimum amount of BTC that are required in unbonding
 	// output, expressed as a fraction of staking output
-	// example: if min_unbonding_rate=0.9, than unbonding output value
+	// example: if min_unbonding_rate=0.9, then the unbonding output value
 	// must be at least 90% of staking output, for staking request to be considered
 	// valid
 	MinUnbondingRate cosmossdk_io_math.LegacyDec `protobuf:"bytes,9,opt,name=min_unbonding_rate,json=minUnbondingRate,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_unbonding_rate"`

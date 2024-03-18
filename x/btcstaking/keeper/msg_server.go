@@ -12,6 +12,7 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -133,6 +134,19 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 	ms.SetFinalityProvider(ctx, fp)
 
 	return &types.MsgEditFinalityProviderResponse{}, nil
+}
+
+// caluculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
+// and params.MinUnbondingRate
+func caluculateMinimumUnbondingValue(
+	stakingOutput *wire.TxOut,
+	params *types.Params,
+) btcutil.Amount {
+	// this conversions must always succeed, as it is part of our params
+	minUnbondingRate := params.MinUnbondingRate.MustFloat64()
+	// Caluclate min unbonding output value based on staking output, use btc native multiplication
+	minUnbondingOutputValue := btcutil.Amount(stakingOutput.Value).MulF64(minUnbondingRate)
+	return minUnbondingOutputValue
 }
 
 // CreateBTCDelegation creates a BTC delegation
@@ -401,13 +415,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
 	}
 
-	// this conversions must always succeed, as it is part of our params
-	minUnbondingRate := params.MinUnbondingRate.MustFloat64()
-	// Caluclate min unbonding output value based on staking output, use btc native multiplication
-	minUnbondingOutputValue := btcutil.Amount(stakingMsgTx.TxOut[newBTCDel.StakingOutputIdx].Value).MulF64(minUnbondingRate)
-
-	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingOutputValue {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingOutputValue)
+	minUnbondingValue := caluculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &params)
+	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingValue {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
 	}
 
 	// all good, add BTC undelegation

@@ -42,7 +42,7 @@ message Params {
 
   // min_unbonding_rate is the minimum amount of BTC that are required in unbonding
   // output, expressed as a fraction of staking output
-  // example: if min_unbonding_rate=0.9, than unbonding output value
+  // example: if min_unbonding_rate=0.9, then the unbonding output value
   // must be at least 90% of staking output, for staking request to be considered
   // valid
   string min_unbonding_rate = 9 [
