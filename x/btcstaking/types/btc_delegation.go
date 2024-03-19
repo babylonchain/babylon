@@ -309,6 +309,7 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 	return unbondingInfo, nil
 }
 
+// TODO: verify to remove, not used in babylon, only for tests
 // findFPIdx returns the index of the given finality provider
 // among all restaked finality providers
 func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
@@ -324,6 +325,7 @@ func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
 // the signatures on the slashing tx, such that the slashing tx obtains full
 // witness and can be submitted to Bitcoin.
 // This happens after the finality provider is slashed and its SK is extracted.
+// TODO: verify not used
 func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
 	if err != nil {
@@ -373,6 +375,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	return slashingMsgTxWithWitness, nil
 }
 
+// TODO: verify to remove, func not used by babylon, used in side car processes.
 func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	unbondingMsgTx, err := bbn.NewBTCTxFromBytes(d.BtcUndelegation.UnbondingTx)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	btcstk "github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -110,7 +111,7 @@ func (k Keeper) voteSigs(ctx context.Context) ([]*types.VoteSig, error) {
 	voteSigs := make([]*types.VoteSig, 0)
 	for ; iter.Valid(); iter.Next() {
 		// key contains the height and the fp
-		blkHeight, fpBTCPK, err := parseBlkHeightAndPubKeyFromStoreKey(iter.Key())
+		blkHeight, fpBTCPK, err := btcstk.ParseBlkHeightAndPubKeyFromStoreKey(iter.Key())
 		if err != nil {
 			return nil, err
 		}
@@ -157,23 +158,6 @@ func (k Keeper) publicRandomness(ctx context.Context) ([]*types.PublicRandomness
 	}
 
 	return commtRandoms, nil
-}
-
-// parseBlkHeightAndPubKeyFromStoreKey expects to receive a key with
-// BigEndianUint64(blkHeight) || BIP340PubKey(fpBTCPK)
-func parseBlkHeightAndPubKeyFromStoreKey(key []byte) (blkHeight uint64, fpBTCPK *bbn.BIP340PubKey, err error) {
-	sizeBigEndian := 8
-	if len(key) < sizeBigEndian+1 {
-		return 0, nil, fmt.Errorf("key not long enough to parse block height and BIP340PubKey: %s", key)
-	}
-
-	fpBTCPK, err = bbn.NewBIP340PubKey(key[sizeBigEndian:])
-	if err != nil {
-		return 0, nil, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
-	}
-
-	blkHeight = sdk.BigEndianToUint64(key[:sizeBigEndian])
-	return blkHeight, fpBTCPK, nil
 }
 
 // parsePubKeyAndBlkHeightFromStoreKey expects to receive a key with

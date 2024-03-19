@@ -136,7 +136,7 @@ func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.Qu
 		return nil, types.ErrFpNotFound
 	}
 
-	store := k.votingPowerStore(ctx, req.Height)
+	store := k.votingPowerBbnBlockHeightStore(ctx, req.Height)
 	iter := store.ReverseIterator(nil, nil)
 	defer iter.Close()
 
@@ -174,7 +174,7 @@ func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	store := k.votingPowerStore(sdkCtx, req.Height)
+	store := k.votingPowerBbnBlockHeightStore(sdkCtx, req.Height)
 
 	var finalityProvidersWithMeta []*types.FinalityProviderWithMeta
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
@@ -236,7 +236,7 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	btcDelStore := k.btcDelegatorStore(sdkCtx, fpPK)
+	btcDelStore := k.btcDelegatorFpStore(sdkCtx, fpPK)
 
 	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	btcHeight := k.btclcKeeper.GetTipInfo(ctx).Height
