@@ -113,19 +113,19 @@ func (pk *BIP340PubKey) Equals(pk2 *BIP340PubKey) bool {
 }
 
 func NewBTCPKsFromBIP340PKs(pks []BIP340PubKey) ([]*btcec.PublicKey, error) {
-	btcPks := make([]*btcec.PublicKey, 0, len(pks))
-	for _, pk := range pks {
+	btcPks := make([]*btcec.PublicKey, len(pks))
+	for i, pk := range pks {
 		btcPK, err := pk.ToBTCPK()
 		if err != nil {
 			return nil, err
 		}
-		btcPks = append(btcPks, btcPK)
+		btcPks[i] = btcPK
 	}
 	return btcPks, nil
 }
 
 func NewBIP340PKsFromBTCPKs(btcPKs []*btcec.PublicKey) []BIP340PubKey {
-	pks := make([]BIP340PubKey, 0, len(btcPKs))
+	pks := []BIP340PubKey{}
 	for _, btcPK := range btcPKs {
 		pks = append(pks, *NewBIP340PubKeyFromBTCPK(btcPK))
 	}

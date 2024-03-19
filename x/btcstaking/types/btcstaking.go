@@ -71,8 +71,10 @@ func NewSignatureInfo(pk *bbn.BIP340PubKey, sig *bbn.BIP340Signature) *Signature
 // the order of covenant adaptor signatures will follow the reverse lexicographical order
 // of signing public keys, in order to be used as tx witness
 func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSignatures, params *Params) ([]*asig.AdaptorSignature, error) {
-	// construct the map where key is the covenant PK and value is this
-	// covenant member's adaptor signature encrypted by the given finality provider's PK
+	// construct the map where
+	// - key is the covenant PK, and
+	// - value is this covenant member's adaptor signature encrypted
+	//   by the given finality provider's PK
 	covSigsMap := map[string]*asig.AdaptorSignature{}
 	for _, covSigs := range covSigsList {
 		// find the adaptor signature at the corresponding finality provider's index

@@ -906,8 +906,8 @@ func NewBabylonApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName, circuittypes.ModuleName,
 		// Babylon modules
-		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
+		epochingtypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
 		monitortypes.ModuleName,

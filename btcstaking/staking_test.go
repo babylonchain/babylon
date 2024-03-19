@@ -155,7 +155,7 @@ func testSlashingTx(
 		&chaincfg.MainNetParams,
 	)
 
-	if btcstaking.IsSlashingRateValid(slashingRate) {
+	if btcstaking.IsRateValid(slashingRate) {
 		// If the slashing rate is valid i.e., in the range (0,1) with at most 2 decimal places,
 		// it is still possible that the slashing transaction is invalid. The following checks will confirm that
 		// slashing tx is not constructed if

@@ -12,6 +12,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+
+	bbn "github.com/babylonchain/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -300,7 +303,7 @@ func newBabylonScriptPaths(
 		return nil, err
 	}
 
-	fpSigScript, err := buildMultiSigScript(
+	fpMultisigScript, err := buildMultiSigScript(
 		fpKeys,
 		// we always require only one finality provider to sign
 		1,
@@ -319,7 +322,7 @@ func newBabylonScriptPaths(
 
 	slashingPathScript := aggregateScripts(
 		stakerSigScript,
-		fpSigScript,
+		fpMultisigScript,
 		covenantMultisigScript,
 	)
 
@@ -473,15 +476,15 @@ func (i *UnbondingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
 	return i.scriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
 }
 
-// IsSlashingRateValid checks if the given slashing rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
-func IsSlashingRateValid(slashingRate sdkmath.LegacyDec) bool {
+// IsRateValid checks if the given rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
+func IsRateValid(rate sdkmath.LegacyDec) bool {
 	// Check if the slashing rate is between 0 and 1
-	if slashingRate.LTE(sdkmath.LegacyZeroDec()) || slashingRate.GTE(sdkmath.LegacyOneDec()) {
+	if rate.LTE(sdkmath.LegacyZeroDec()) || rate.GTE(sdkmath.LegacyOneDec()) {
 		return false
 	}
 
 	// Multiply by 100 to move the decimal places and check if precision is at most 2 decimal places
-	multipliedRate := slashingRate.Mul(sdkmath.LegacyNewDec(100))
+	multipliedRate := rate.Mul(sdkmath.LegacyNewDec(100))
 
 	// Truncate the rate to remove decimal places
 	truncatedRate := multipliedRate.TruncateDec()
@@ -554,4 +557,21 @@ func BuildRelativeTimelockTaprootScript(
 		TapAddress: taprootAddress,
 		PkScript:   taprootPkScript,
 	}, nil
+}
+
+// ParseBlkHeightAndPubKeyFromStoreKey expects to receive a key with
+// BigEndianUint64(blkHeight) || BIP340PubKey(fpBTCPK)
+func ParseBlkHeightAndPubKeyFromStoreKey(key []byte) (blkHeight uint64, fpBTCPK *bbn.BIP340PubKey, err error) {
+	sizeBigEndian := 8
+	if len(key) < sizeBigEndian+1 {
+		return 0, nil, fmt.Errorf("key not long enough to parse block height and BIP340PubKey: %s", key)
+	}
+
+	fpBTCPK, err = bbn.NewBIP340PubKey(key[sizeBigEndian:])
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
+	}
+
+	blkHeight = sdk.BigEndianToUint64(key[:sizeBigEndian])
+	return blkHeight, fpBTCPK, nil
 }

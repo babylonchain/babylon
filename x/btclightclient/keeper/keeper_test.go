@@ -11,7 +11,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +32,7 @@ func FuzzKeeperMainChainDepth(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
 		// Test nil input
 		depth, err := blcKeeper.MainChainDepth(ctx, nil)
@@ -53,7 +53,7 @@ func FuzzKeeperMainChainDepth(f *testing.F) {
 			t.Errorf("Non existing header led to a result that is not -1")
 		}
 
-		_, chain := genRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -85,7 +85,7 @@ func FuzzKeeperBlockHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
 		// Test nil input
 		height, err := blcKeeper.BlockHeight(ctx, nil)
@@ -106,7 +106,7 @@ func FuzzKeeperBlockHeight(f *testing.F) {
 			t.Errorf("Non existing header led to a result that is not -1")
 		}
 
-		_, chain := genRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -130,9 +130,9 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
-		_, chain := genRandomChain(
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -160,7 +160,7 @@ func FuzzKeeperInsertValidChainExtension(f *testing.F) {
 		extendedChainWork := oldTip.Work.Add(*chainExtensionWork)
 		extendedChainHeight := uint64(uint32(oldTip.Height) + newChainLength)
 
-		err := blcKeeper.InsertHeaders(ctx, chainToChainBytes(chainToInsert))
+		err := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.NoError(t, err)
 
 		// updated tip
@@ -213,8 +213,8 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		_, chain := genRandomChain(
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
+		_, chain := datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -247,7 +247,7 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 
 		require.True(t, len(removedBranch) > 0)
 
-		err := blcKeeper.InsertHeaders(ctx, chainToChainBytes(chainToInsert))
+		err := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.NoError(t, err)
 
 		// updated tip
@@ -319,8 +319,8 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		_, _ = genRandomChain(
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
+		_, _ = datagen.GenRandBtcChainInsertingInKeeper(
 			t,
 			r,
 			blcKeeper,
@@ -358,7 +358,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 
 		// bump the nonce, it should fail validation and tip should not change
 		chainToInsert[3].Nonce = chainToInsert[3].Nonce + 1
-		errInvalidHeader := blcKeeper.InsertHeaders(ctx, chainToChainBytes(chainToInsert))
+		errInvalidHeader := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(chainToInsert))
 		require.Error(t, errInvalidHeader)
 		newTip := blcKeeper.GetTipInfo(ctx)
 		// tip did not change
@@ -374,7 +374,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 			nil,
 			1,
 		)
-		errWorseChain := blcKeeper.InsertHeaders(ctx, chainToChainBytes(worseChain))
+		errWorseChain := blcKeeper.InsertHeaders(ctx, keepertest.NewBTCHeaderBytesList(worseChain))
 		require.Error(t, errWorseChain)
 		require.True(t, errors.Is(errWorseChain, types.ErrChainWithNotEnoughWork))
 	})
@@ -386,7 +386,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		numBlockPerRetarget := types.BlocksPerRetarget(&chaincfg.SimNetParams)
-		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := keepertest.BTCLightClientKeeper(t)
 
 		genesisHeader := bbn.NewBTCHeaderBytesFromBlockHeader(&chaincfg.SimNetParams.GenesisBlock.Header)
 		genesisHash := bbn.NewBTCHeaderHashBytesFromChainhash(chaincfg.SimNetParams.GenesisHash)
@@ -413,7 +413,7 @@ func FuzzKeeperValdateHeaderAtDifficultyAdjustmentBoundaries(f *testing.F) {
 		require.Error(t, err)
 
 		randomChainWithoutLastHeader := randomChain.Headers[:len(randomChain.Headers)-1]
-		chain := chainToChainBytes(randomChainWithoutLastHeader)
+		chain := keepertest.NewBTCHeaderBytesList(randomChainWithoutLastHeader)
 		// now all headers are valid, and we are below adjustment boundary
 		err = blcKeeper.InsertHeaders(ctx, chain)
 		require.NoError(t, err)

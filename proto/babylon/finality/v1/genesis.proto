@@ -3,10 +3,42 @@ package babylon.finality.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/finality/v1/params.proto";
+import "babylon/finality/v1/finality.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
 // GenesisState defines the finality module's genesis state.
 message GenesisState {
+  // params the current params of the state.
   Params params = 1 [(gogoproto.nullable) = false];
+  // indexed_blocks all the btc blocks and if their status are finalized.
+  repeated IndexedBlock indexed_blocks = 2;
+  // evidences all the evidences ever registered.
+  repeated Evidence evidences = 3;
+  // votes_sigs contains all the votes of finality providers ever registered.
+  repeated VoteSig vote_sigs = 4;
+  // public_randomness contains all the public randomness ever commited from the finality providers.
+  repeated PublicRandomness public_randomness = 5;
+}
+
+// VoteSig the vote of an finality provider
+// with the block of the vote, the finality provider btc public key and the vote signature.
+message VoteSig {
+  // block_height is the height of the voted block.
+  uint64 block_height = 1;
+	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+	// finality_sig is the finality signature to this block
+	// where finality signature is an EOTS signature, i.e.
+  bytes finality_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+}
+
+// PublicRandomness the block height and public randomness that the finality provider has submitted.
+message PublicRandomness {
+  // block_height is the height of block which the finality provider submited public randomness.
+  uint64 block_height = 1;
+  // fp_btc_pk is the BTC PK of the finality provider that casts this vote.
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // pub_rand is the public randomness the finality provider has committed to.
+  bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -133,6 +134,19 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 	ms.SetFinalityProvider(ctx, fp)
 
 	return &types.MsgEditFinalityProviderResponse{}, nil
+}
+
+// caluculateMinimumUnbondingValue calculates minimum unbonding value basend on current staking output value
+// and params.MinUnbondingRate
+func caluculateMinimumUnbondingValue(
+	stakingOutput *wire.TxOut,
+	params *types.Params,
+) btcutil.Amount {
+	// this conversions must always succeed, as it is part of our params
+	minUnbondingRate := params.MinUnbondingRate.MustFloat64()
+	// Caluclate min unbonding output value based on staking output, use btc native multiplication
+	minUnbondingOutputValue := btcutil.Amount(stakingOutput.Value).MulF64(minUnbondingRate)
+	return minUnbondingOutputValue
 }
 
 // CreateBTCDelegation creates a BTC delegation
@@ -389,9 +403,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
 	}
 
-	// Check unbonding tx against staking tx.
-	// - that input points to the staking tx, staking output
+	// Check unbonding tx fees against staking tx.
 	// - fee is larger than 0
+	// - ubonding output value is is at leat `MinUnbondingValue` percent of staking output value
 	if unbondingMsgTx.TxOut[0].Value >= stakingMsgTx.TxOut[newBTCDel.StakingOutputIdx].Value {
 		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
 		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
@@ -399,6 +413,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
 		// allow staker to spam the network with unbonding txs, which would force covenant and finality provider to send signatures.
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
+	}
+
+	minUnbondingValue := caluculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &params)
+	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingValue {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
 	}
 
 	// all good, add BTC undelegation
@@ -462,10 +481,8 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return &types.MsgAddCovenantSigsResponse{}, nil
 	}
 
-	// Note: we assume the order of adaptor sigs is matched to the
-	// order of finality providers in the delegation
-	// TODO: ensure the order for restaking, currently, we only have one finality provider
-	//  one covenant emulator
+	// Check that the number of covenant sigs and number of the
+	// finality providers are matched
 	if len(req.SlashingTxSigs) != len(btcDel.FpBtcPkList) {
 		return nil, types.ErrInvalidCovenantSig.Wrapf(
 			"number of covenant signatures: %d, number of finality providers being staked to: %d",
@@ -498,10 +515,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	// Check that the number of covenant sigs and number of the
 	// finality providers are matched
-	// Note: we assume the order of adaptor sigs is matched to the
-	// order of finality providers in the delegation
-	// TODO: ensure the order for restaking, currently, we only have one finality provider
-	//  one covenant emulator
 	if len(req.SlashingUnbondingTxSigs) != len(btcDel.FpBtcPkList) {
 		return nil, types.ErrInvalidCovenantSig.Wrapf(
 			"number of covenant signatures: %d, number of finality providers being staked to: %d",

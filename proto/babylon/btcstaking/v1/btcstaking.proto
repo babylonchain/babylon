@@ -126,7 +126,7 @@ message BTCUndelegation {
     repeated CovenantAdaptorSignatures covenant_slashing_sigs = 5;
     // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
     // by covenant members
-    // It must be provided after processing undelagate message by Babylon
+    // It must be provided after processing undelegate message by Babylon
     repeated SignatureInfo covenant_unbonding_sig_list = 6;
 }
 

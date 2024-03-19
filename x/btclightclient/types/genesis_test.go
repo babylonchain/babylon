@@ -19,18 +19,27 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid:    true,
 		},
 		{
-			desc:     "valid genesis state",
+			desc:     "invalid genesis state, no btc header",
 			genState: &types.GenesisState{},
-			valid:    true,
+			valid:    false,
+		},
+		{
+			desc: "invalid genesis state",
+			genState: &types.GenesisState{
+				BtcHeaders: []*types.BTCHeaderInfo{&types.BTCHeaderInfo{
+					Height: 1,
+				}},
+			},
+			valid: false,
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tc.genState.Validate()
 			if tc.valid {
 				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
+				return
 			}
+			require.Error(t, err)
 		})
 	}
 }

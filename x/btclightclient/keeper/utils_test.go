@@ -3,12 +3,9 @@ package keeper_test
 import (
 	"context"
 	"math/big"
-	"math/rand"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
@@ -54,32 +51,6 @@ func allFieldsEqual(a *types.BTCHeaderInfo, b *types.BTCHeaderInfo) bool {
 	return a.Height == b.Height && a.Hash.Eq(b.Hash) && a.Header.Eq(b.Header) && a.Work.Equal(*b.Work)
 }
 
-// this function must not be used at difficulty adjustment boundaries, as then
-// difficulty adjustment calculation will fail
-func genRandomChain(
-	t *testing.T,
-	r *rand.Rand,
-	k *keeper.Keeper,
-	ctx context.Context,
-	initialHeight uint64,
-	chainLength uint64,
-) (*types.BTCHeaderInfo, *datagen.BTCHeaderPartialChain) {
-	genesisHeader := datagen.NewBTCHeaderChainWithLength(r, initialHeight, 0, 1)
-	genesisHeaderInfo := genesisHeader.GetChainInfo()[0]
-	k.SetBaseBTCHeader(ctx, *genesisHeaderInfo)
-	randomChain := datagen.NewBTCHeaderChainFromParentInfo(
-		r,
-		genesisHeaderInfo,
-		uint32(chainLength),
-	)
-	err := k.InsertHeaders(ctx, randomChain.ChainToBytes())
-	require.NoError(t, err)
-	tip := k.GetTipInfo(ctx)
-	randomChainTipInfo := randomChain.GetTipInfo()
-	require.True(t, allFieldsEqual(tip, randomChainTipInfo))
-	return genesisHeaderInfo, randomChain
-}
-
 func checkTip(
 	t *testing.T,
 	ctx context.Context,
@@ -105,14 +76,6 @@ func checkTip(
 	expectedTipHeaderHash := expectedTipHeader.BlockHash()
 	require.True(t, currentTip.Hash.ToChainhash().IsEqual(&expectedTipHeaderHash))
 	require.True(t, currentTip.Header.Hash().ToChainhash().IsEqual(&expectedTipHeaderHash))
-}
-
-func chainToChainBytes(chain []*wire.BlockHeader) []bbn.BTCHeaderBytes {
-	chainBytes := make([]bbn.BTCHeaderBytes, len(chain))
-	for i, header := range chain {
-		chainBytes[i] = bbn.NewBTCHeaderBytesFromBlockHeader(header)
-	}
-	return chainBytes
 }
 
 func chainWork(chain []*wire.BlockHeader) *sdkmath.Uint {

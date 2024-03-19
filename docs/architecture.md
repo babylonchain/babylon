@@ -108,7 +108,7 @@ an alarm will be raised by the monitor program.
 A standalone program that submits
 Babylon checkpoints to Bitcoin as
 Bitcoin transactions embedding data
-utilising the `OP_RETURN` Bitcoin script code.
+utilizing the `OP_RETURN` Bitcoin script code.
 
 ### [Vigilante Reporter](https://github.com/babylonchain/vigilante)
 
@@ -187,7 +187,7 @@ finality provider's private keys.
 
 ### [Covenant Emulator](https://github.com/babylonchain/covenant-emulator)
 
-A standalone program utilised by the covenant emulation committee members.
+A standalone program utilized by the covenant emulation committee members.
 It emulates [covenant](https://covenants.info) functionality by monitoring
 for pending staking requests,
 verifying their contents, and

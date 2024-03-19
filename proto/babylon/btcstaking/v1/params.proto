@@ -39,4 +39,15 @@ message Params {
   uint32 max_active_finality_providers = 7;
   // min_unbonding_time is the minimum time for unbonding transaction timelock in BTC blocks
   uint32 min_unbonding_time = 8;
+
+  // min_unbonding_rate is the minimum amount of BTC that are required in unbonding
+  // output, expressed as a fraction of staking output
+  // example: if min_unbonding_rate=0.9, then the unbonding output value
+  // must be at least 90% of staking output, for staking request to be considered
+  // valid
+  string min_unbonding_rate = 9 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
 }

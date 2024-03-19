@@ -64,6 +64,8 @@ func DefaultParams() Params {
 		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
 		// finalization timeout.
 		MinUnbondingTime: 0,
+		// By default unbonding value is 0.8
+		MinUnbondingRate: sdkmath.LegacyNewDecWithPrec(8, 1), // 8 * 10^{-1} = 0.8
 	}
 }
 
@@ -138,8 +140,12 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	if !btcstaking.IsSlashingRateValid(p.SlashingRate) {
+	if !btcstaking.IsRateValid(p.SlashingRate) {
 		return btcstaking.ErrInvalidSlashingRate
+	}
+
+	if !btcstaking.IsRateValid(p.MinUnbondingRate) {
+		return fmt.Errorf("minimum unbonding value is invalid. it should be fraction in range (0, 1) with at 2 decimal places precision")
 	}
 
 	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {

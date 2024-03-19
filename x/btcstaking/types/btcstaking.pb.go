@@ -415,7 +415,7 @@ type BTCUndelegation struct {
 	CovenantSlashingSigs []*CovenantAdaptorSignatures `protobuf:"bytes,5,rep,name=covenant_slashing_sigs,json=covenantSlashingSigs,proto3" json:"covenant_slashing_sigs,omitempty"`
 	// covenant_unbonding_sig_list is the list of signatures on the unbonding tx
 	// by covenant members
-	// It must be provided after processing undelagate message by Babylon
+	// It must be provided after processing undelegate message by Babylon
 	CovenantUnbondingSigList []*SignatureInfo `protobuf:"bytes,6,rep,name=covenant_unbonding_sig_list,json=covenantUnbondingSigList,proto3" json:"covenant_unbonding_sig_list,omitempty"`
 }
 
