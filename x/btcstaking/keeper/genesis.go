@@ -61,7 +61,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	dels, err := k.getBTCDelegations(ctx)
+	dels, err := k.btcDelegations(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -71,12 +71,12 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	btcDels, err := k.getBTCDelegators(ctx)
+	btcDels, err := k.btcDelegators(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	evts, err := k.getEventIdxs(ctx)
+	evts, err := k.eventIdxs(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (k Keeper) finalityProviders(ctx context.Context) ([]*types.FinalityProvide
 	return fps, nil
 }
 
-func (k Keeper) getBTCDelegations(ctx context.Context) ([]*types.BTCDelegation, error) {
+func (k Keeper) btcDelegations(ctx context.Context) ([]*types.BTCDelegation, error) {
 	dels := make([]*types.BTCDelegation, 0)
 	iter := k.btcDelegationStore(ctx).Iterator(nil, nil)
 	defer iter.Close()
@@ -169,7 +169,7 @@ func (k Keeper) blockHeightChains(ctx context.Context) []*types.BlockHeightBbnTo
 	return blocks
 }
 
-func (k Keeper) getBTCDelegators(ctx context.Context) ([]*types.BTCDelegator, error) {
+func (k Keeper) btcDelegators(ctx context.Context) ([]*types.BTCDelegator, error) {
 	iter := k.btcDelegatorStore(ctx).Iterator(nil, nil)
 	defer iter.Close()
 
@@ -194,8 +194,8 @@ func (k Keeper) getBTCDelegators(ctx context.Context) ([]*types.BTCDelegator, er
 	return dels, nil
 }
 
-// getEventIdxs sets an event into the store.
-func (k Keeper) getEventIdxs(
+// eventIdxs sets an event into the store.
+func (k Keeper) eventIdxs(
 	ctx context.Context,
 ) ([]*types.EventIndex, error) {
 	iter := k.powerDistUpdateEventStore(ctx).Iterator(nil, nil)
