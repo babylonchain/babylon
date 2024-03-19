@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	btcstk "github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -110,7 +111,7 @@ func (k Keeper) voteSigs(ctx context.Context) ([]*types.VoteSig, error) {
 	voteSigs := make([]*types.VoteSig, 0)
 	for ; iter.Valid(); iter.Next() {
 		// key contains the height and the fp
-		blkHeight, fpBTCPK, err := bbn.ParseBlkHeightAndPubKeyFromStoreKey(iter.Key())
+		blkHeight, fpBTCPK, err := btcstk.ParseBlkHeightAndPubKeyFromStoreKey(iter.Key())
 		if err != nil {
 			return nil, err
 		}

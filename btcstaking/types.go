@@ -12,6 +12,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+
+	bbn "github.com/babylonchain/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -554,4 +557,21 @@ func BuildRelativeTimelockTaprootScript(
 		TapAddress: taprootAddress,
 		PkScript:   taprootPkScript,
 	}, nil
+}
+
+// ParseBlkHeightAndPubKeyFromStoreKey expects to receive a key with
+// BigEndianUint64(blkHeight) || BIP340PubKey(fpBTCPK)
+func ParseBlkHeightAndPubKeyFromStoreKey(key []byte) (blkHeight uint64, fpBTCPK *bbn.BIP340PubKey, err error) {
+	sizeBigEndian := 8
+	if len(key) < sizeBigEndian+1 {
+		return 0, nil, fmt.Errorf("key not long enough to parse block height and BIP340PubKey: %s", key)
+	}
+
+	fpBTCPK, err = bbn.NewBIP340PubKey(key[sizeBigEndian:])
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
+	}
+
+	blkHeight = sdk.BigEndianToUint64(key[:sizeBigEndian])
+	return blkHeight, fpBTCPK, nil
 }

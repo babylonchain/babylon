@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
+	btcstk "github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -136,7 +138,7 @@ func (k Keeper) fpVotingPowers(ctx context.Context) ([]*types.VotingPowerFP, err
 	vpFps := make([]*types.VotingPowerFP, 0)
 
 	for ; iter.Valid(); iter.Next() {
-		blkHeight, fpBTCPK, err := bbn.ParseBlkHeightAndPubKeyFromStoreKey(iter.Key())
+		blkHeight, fpBTCPK, err := btcstk.ParseBlkHeightAndPubKeyFromStoreKey(iter.Key())
 		if err != nil {
 			return nil, err
 		}
@@ -173,7 +175,7 @@ func (k Keeper) getBTCDelegators(ctx context.Context) ([]*types.BTCDelegator, er
 
 	dels := make([]*types.BTCDelegator, 0)
 	for ; iter.Valid(); iter.Next() {
-		fpBTCPK, delBTCPK, err := bbn.ParseBIP340PubKeysFromStoreKey(iter.Key())
+		fpBTCPK, delBTCPK, err := parseBIP340PubKeysFromStoreKey(iter.Key())
 		if err != nil {
 			return nil, err
 		}
@@ -201,7 +203,7 @@ func (k Keeper) getEventIdxs(
 
 	evts := make([]*types.EventIndex, 0)
 	for ; iter.Valid(); iter.Next() {
-		blkHeight, idx, err := bbn.ParseUintsFromStoreKey(iter.Key())
+		blkHeight, idx, err := parseUintsFromStoreKey(iter.Key())
 		if err != nil {
 			return nil, err
 		}
@@ -259,4 +261,35 @@ func (k Keeper) setEventIdx(
 	store.Set(sdk.Uint64ToBigEndian(evt.Idx), bz)
 
 	return nil
+}
+
+// parseUintsFromStoreKey expects to receive a key with
+// BigEndianUint64(blkHeight) || BigEndianUint64(Idx)
+func parseUintsFromStoreKey(key []byte) (blkHeight, idx uint64, err error) {
+	sizeBigEndian := 8
+	if len(key) < sizeBigEndian*2 {
+		return 0, 0, fmt.Errorf("key not long enough to parse two uint64: %s", key)
+	}
+
+	return sdk.BigEndianToUint64(key[:sizeBigEndian]), sdk.BigEndianToUint64(key[sizeBigEndian:]), nil
+}
+
+// parseBIP340PubKeysFromStoreKey expects to receive a key with
+// BIP340PubKey(fpBTCPK) || BIP340PubKey(delBTCPK)
+func parseBIP340PubKeysFromStoreKey(key []byte) (fpBTCPK, delBTCPK *bbn.BIP340PubKey, err error) {
+	if len(key) < bbn.BIP340PubKeyLen*2 {
+		return nil, nil, fmt.Errorf("key not long enough to parse two BIP340PubKey: %s", key)
+	}
+
+	fpBTCPK, err = bbn.NewBIP340PubKey(key[:bbn.BIP340PubKeyLen])
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
+	}
+
+	delBTCPK, err = bbn.NewBIP340PubKey(key[bbn.BIP340PubKeyLen:])
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
+	}
+
+	return fpBTCPK, delBTCPK, nil
 }
