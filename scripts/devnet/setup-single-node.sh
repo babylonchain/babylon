@@ -22,6 +22,7 @@ EXPEDITED_VOTING_PERIOD="${EXPEDITED_VOTING_PERIOD:-10s}"
 VAL0_KEY="val"
 VAL0_MNEMONIC="copper push brief egg scan entry inform record adjust fossil boss egg comic alien upon aspect dry avoid interest fury window hint race symptom"
 # VAL0_ADDR="xxx"
+# bbnvaloper1y6xz2ggfc0pcsmyjlekh0j9pxh6hk87yrjr7tn
 
 USER_KEY="user"
 USER_MNEMONIC="pony glide frown crisp unfold lawn cup loan trial govern usual matrix theory wash fresh address pioneer between meadow visa buffalo keep gallery swear"
@@ -108,11 +109,13 @@ yes "$USER_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $USER_KEY $kbt --recove
 echo "--- Adding addresses..."
 $NODE_BIN $home0 keys show $VAL0_KEY -a $kbt
 $NODE_BIN $home0 keys show $VAL0_KEY -a --bech val $kbt
-$NODE_BIN $home0 keys show $USER_KEY -a $kbt
+$NODE_BIN $home0 keys show $USER_KEY -a $kbt # bbnvaloper1y6xz2ggfc0pcsmyjlekh0j9pxh6hk87yrjr7tn
+
+VAL0_ADDR=$($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt --bech val)
 
 $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt) $coins &>/dev/null
 $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $USER_KEY -a $kbt) $coins_user &>/dev/null
-# $NODE_BIN $home0 create-bls-key $($NODE_BIN $home0 keys show $VAL0_KEY --bech val -a $kbt)
+$NODE_BIN $home0 create-bls-key $($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt)
 
   # | .initial_height="1"
 echo "--- Patching genesis..."
@@ -128,6 +131,8 @@ jq '.consensus_params["block"]["time_iota_ms"]="5000"
 
 echo "--- Creating gentx..."
 $NODE_BIN $home0 gentx $VAL0_KEY 1000000000$DENOM $kbt $cid
+echo "--- Set POP to checkpointing module..."
+$NODE_BIN $home0 gen-helper ckpt-gen-key $VAL0_ADDR
 
 $NODE_BIN $home0 collect-gentxs > /dev/null
 
