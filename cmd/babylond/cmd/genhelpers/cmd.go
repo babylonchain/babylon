@@ -1,4 +1,4 @@
-package genhelpper
+package genhelpers
 
 import (
 	"encoding/json"
