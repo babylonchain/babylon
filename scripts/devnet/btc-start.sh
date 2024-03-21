@@ -8,7 +8,7 @@
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 # These options can be overridden by env
-CHAIN_DIR="${CHAIN_DIR:-$CWD/node-data}"
+CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 BTC_HOME="${BTC_HOME:-$CHAIN_DIR/btc}"
 CLEANUP="${CLEANUP:-1}"
 

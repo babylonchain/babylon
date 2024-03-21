@@ -215,4 +215,4 @@ docs/diagrams/plantuml.jar
 .testnet/
 mytestnet/
 output/
-scripts/devnet/node-data
+scripts/devnet/data

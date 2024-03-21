@@ -3,7 +3,7 @@
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
 
 CHAIN_ID="${CHAIN_ID:-test-1}"
-CHAIN_DIR="${CHAIN_DIR:-$CWD/node-data}"
+CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 HOME_DIR="$CHAIN_DIR/$CHAIN_ID"
 
 for dirnode in "$HOME_DIR"/n*; do

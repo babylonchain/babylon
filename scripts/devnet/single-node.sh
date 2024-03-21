@@ -11,7 +11,7 @@ NODE_BIN="${1:-$CWD/../../build/babylond}"
 
 # These options can be overridden by env
 CHAIN_ID="${CHAIN_ID:-test-1}"
-CHAIN_DIR="${CHAIN_DIR:-$CWD/node-data}"
+CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 DENOM="${DENOM:-ubbn}"
 
 echo "--- Chain ID = $CHAIN_ID"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
-CHAIN_DIR="${CHAIN_DIR:-$CWD/node-data}"
+CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 BTC_HOME="$CHAIN_DIR/btc"
 
 # btc_pid_file has both files together .-.
