@@ -21,12 +21,13 @@ EXPEDITED_VOTING_PERIOD="${EXPEDITED_VOTING_PERIOD:-10s}"
 # Default 1 account keys + 1 user key with no special grants
 VAL0_KEY="val"
 VAL0_MNEMONIC="copper push brief egg scan entry inform record adjust fossil boss egg comic alien upon aspect dry avoid interest fury window hint race symptom"
-# VAL0_ADDR="xxx"
 # bbnvaloper1y6xz2ggfc0pcsmyjlekh0j9pxh6hk87yrjr7tn
 
 USER_KEY="user"
 USER_MNEMONIC="pony glide frown crisp unfold lawn cup loan trial govern usual matrix theory wash fresh address pioneer between meadow visa buffalo keep gallery swear"
-# USER_ADDR="xx"
+
+SUBMITTER_KEY="submitter"
+SUBMITTER_MNEMONIC="catalog disagree royal alley edge negative erase clip dolphin undo pipe fire small siren bird crowd reopen wrestle stumble survey rib gospel master toilet"
 
 NEWLINE=$'\n'
 
@@ -63,11 +64,8 @@ n0cfg="$n0cfgDir/config.toml"
 # App config file for node
 n0app="$n0cfgDir/app.toml"
 
-# Process id of node 0
-n0pid="$n0dir/pid"
-
 if [[ "$CLEANUP" == 1 || "$CLEANUP" == "1" ]]; then
-  CHAIN_ID=$CHAIN_ID CHAIN_DIR=$CHAIN_DIR $CWD/kill-node-process.sh
+  PATH_OF_PIDS=$hdir/*.pid $CWD/kill-process.sh
 
   rm -rf "$CHAIN_DIR"
   echo "Removed $CHAIN_DIR"
@@ -105,6 +103,7 @@ echo "--- Importing keys..."
 echo "$VAL0_MNEMONIC$NEWLINE"
 yes "$VAL0_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $VAL0_KEY $kbt --recover
 yes "$USER_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $USER_KEY $kbt --recover
+yes "$SUBMITTER_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $SUBMITTER_KEY $kbt --recover
 
 echo "--- Adding addresses..."
 $NODE_BIN $home0 keys show $VAL0_KEY -a $kbt
@@ -115,6 +114,7 @@ VAL0_ADDR=$($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt --bech val)
 
 $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt) $coins &>/dev/null
 $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $USER_KEY -a $kbt) $coins_user &>/dev/null
+$NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $SUBMITTER_KEY -a $kbt) $coins_user &>/dev/null
 $NODE_BIN $home0 create-bls-key $($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt)
 
   # | .initial_height="1"

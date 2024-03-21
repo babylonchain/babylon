@@ -15,9 +15,8 @@ CLEANUP="${CLEANUP:-1}"
 echo "--- Chain Dir = $CHAIN_DIR"
 echo "--- BTC HOME = $BTC_HOME"
 
-
 if [[ "$CLEANUP" == 1 || "$CLEANUP" == "1" ]]; then
-  BTC_HOME=$BTC_HOME $CWD/kill-btc-process.sh
+  PATH_OF_PIDS=$BTC_HOME/pid/*.pid $CWD/kill-process.sh
 
   rm -rf $BTC_HOME
   echo "Removed $BTC_HOME"

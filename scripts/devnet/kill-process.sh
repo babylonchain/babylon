@@ -2,13 +2,12 @@
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
-BTC_HOME="$CHAIN_DIR/btc"
+PATH_OF_PIDS="$CHAIN_DIR/btc/pid/*.pid"
 
-# btc_pid_file has both files together .-.
-for btc_pid_file in $BTC_HOME/pid/*.pid; do
-  echo PID looping ${btc_pid_file}
-  if [ -f "$btc_pid_file" ]; then
-    pid_value=$(cat "$btc_pid_file")
+for pid_file in $PATH_OF_PIDS; do
+  echo PID looping ${pid_file}
+  if [ -f "$pid_file" ]; then
+    pid_value=$(cat "$pid_file")
     if ps -p "$pid_value" > /dev/null; then
       kill -s 15 "$pid_value"
       echo -e "\t$pid_value killed"

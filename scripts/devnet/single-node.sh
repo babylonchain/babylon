@@ -32,7 +32,7 @@ n0dir="$hdir/n0"
 home0="--home $n0dir"
 
 # Process id of node 0
-n0pid="$n0dir/pid"
+n0pid="$hdir/n0.pid"
 
 CHAIN_ID=$CHAIN_ID CHAIN_DIR=$CHAIN_DIR DENOM=$DENOM $CWD/setup-single-node.sh
 
