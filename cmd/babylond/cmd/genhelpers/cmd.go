@@ -21,8 +21,8 @@ import (
 // GenesisHelpers helpers for manipulating the genesis file.
 func GenesisHelpers() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                        "gen-helper",
-		Short:                      "Usefull commands for creating the genesis state",
+		Use:                        "gen-helpers",
+		Short:                      "Useful commands for creating the genesis state",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -36,7 +36,7 @@ func genHelperAddCheckpointGenesisKey() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ckpt-gen-key [val-addr]",
 		Example: "ckpt-gen-key bbnvaloper1y6xz2ggfc0pcsmyjlekh0j9pxh6hk87yrjr7tn",
-		Short:   "add the genesis key pop to checkpoint genstate",
+		Short:   "Add the genesis key pop to checkpoint genstate",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 

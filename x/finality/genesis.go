@@ -16,10 +16,6 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, gs types.GenesisState) {
 	if err := k.InitGenesis(ctx, gs); err != nil {
 		panic(err)
 	}
-	// SetVotes
-	// SetPubRand
-	// SetEvidence
-	// SetNextHeightToFinalize
 }
 
 // ExportGenesis returns the module's exported genesis

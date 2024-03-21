@@ -132,7 +132,7 @@ jq '.consensus_params["block"]["time_iota_ms"]="5000"
 echo "--- Creating gentx..."
 $NODE_BIN $home0 gentx $VAL0_KEY 1000000000$DENOM $kbt $cid
 echo "--- Set POP to checkpointing module..."
-$NODE_BIN $home0 gen-helper ckpt-gen-key $VAL0_ADDR
+$NODE_BIN $home0 gen-helpers ckpt-gen-key $VAL0_ADDR
 
 $NODE_BIN $home0 collect-gentxs > /dev/null
 
