@@ -1,18 +1,20 @@
 package btcstaking_test
 
 import (
+	"bytes"
 	"math"
 	"math/rand"
 	"testing"
 
 	"github.com/babylonchain/babylon/btcstaking"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
 )
 
 func generateTxFromOutputs(r *rand.Rand, info *btcstaking.IdentifiableStakingInfo) (*wire.MsgTx, int, int) {
@@ -67,6 +69,16 @@ func FuzzGenerateAndParseValidV0StakingTransaction(f *testing.F) {
 		require.NotNil(t, outputs)
 
 		tx, stakingOutputIdx, opReturnOutputIdx := generateTxFromOutputs(r, outputs)
+
+		var txBuf bytes.Buffer
+		err = tx.Serialize(&txBuf)
+		require.NoError(t, err)
+		expectedBytes := txBuf.Bytes()
+
+		var stakingTx wire.MsgTx
+		err = stakingTx.Deserialize(bytes.NewReader(expectedBytes))
+		require.NoError(t, err)
+		require.Equal(t, tx, stakingTx)
 
 		// ParseV0StakingTx and IsPossibleV0StakingTx should be consistent and recognize
 		// the same tx as a valid staking tx
