@@ -17,6 +17,7 @@ CLEANUP="${CLEANUP:-1}"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 VOTING_PERIOD="${VOTING_PERIOD:-20s}"
 EXPEDITED_VOTING_PERIOD="${EXPEDITED_VOTING_PERIOD:-10s}"
+BTC_BASE_HEADER_FILE="${BTC_BASE_HEADER_FILE:-""}"
 
 # Default 1 account keys + 1 user key with no special grants
 VAL0_KEY="val"
@@ -125,6 +126,7 @@ jq '.consensus_params["block"]["time_iota_ms"]="5000"
   | .app_state["mint"]["params"]["mint_denom"]="'$DENOM'"
   | .app_state["mint"]["params"]["mint_denom"]="'$DENOM'"
   | .app_state["staking"]["params"]["bond_denom"]="'$DENOM'"
+  | .app_state["consensus"]["params"]["abci"]["vote_extensions_enable_height"]="1"
   | .app_state["gov"]["params"]["expedited_voting_period"]="'$EXPEDITED_VOTING_PERIOD'"
   | .app_state["gov"]["params"]["voting_period"]="'$VOTING_PERIOD'"' \
     $n0cfgDir/genesis.json > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
@@ -140,6 +142,12 @@ $NODE_BIN $home0 gen-helpers ckpt-gen-key $VAL0_ADDR
 # $NODE_BIN $home0 add-genesis-bls $n0cfgDir/gen-bls-$VAL0_ADDR.json
 
 $NODE_BIN $home0 collect-gentxs > /dev/null
+
+
+if [[ -n "$BTC_BASE_HEADER_FILE" ]]; then
+  jq '.app_state.btclightclient.btc_headers = [input]' $n0cfgDir/genesis.json $BTC_BASE_HEADER_FILE > $n0cfgDir/tmp_genesis.json
+  mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+fi
 
 echo "--- Validating genesis..."
 # initial_height bad sdk --" https://github.com/cosmos/cosmos-sdk/issues/18477

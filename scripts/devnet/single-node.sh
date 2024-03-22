@@ -13,6 +13,7 @@ NODE_BIN="${1:-$CWD/../../build/babylond}"
 CHAIN_ID="${CHAIN_ID:-test-1}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 DENOM="${DENOM:-ubbn}"
+BTC_BASE_HEADER_FILE="${BTC_BASE_HEADER_FILE:-""}"
 
 echo "--- Chain ID = $CHAIN_ID"
 echo "--- Chain Dir = $CHAIN_DIR"
@@ -34,7 +35,7 @@ home0="--home $n0dir"
 # Process id of node 0
 n0pid="$hdir/n0.pid"
 
-CHAIN_ID=$CHAIN_ID CHAIN_DIR=$CHAIN_DIR DENOM=$DENOM $CWD/setup-single-node.sh
+BTC_BASE_HEADER_FILE=$BTC_BASE_HEADER_FILE CHAIN_ID=$CHAIN_ID CHAIN_DIR=$CHAIN_DIR DENOM=$DENOM $CWD/setup-single-node.sh
 
 log_path=$hdir/n0.log
 
