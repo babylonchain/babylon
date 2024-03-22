@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 # USAGE:
 # ./btc-start
@@ -32,6 +32,7 @@ btcRpcKey=$btcCertPath/rpc.key
 
 btcpidPath="$BTC_HOME/pid"
 btcdpid="$btcpidPath/btcd.pid"
+genblockspid="$btcpidPath/genblocks.pid"
 btcwalletpid="$btcpidPath/btcwallet.pid"
 btcLogs="$BTC_HOME/logs"
 
@@ -82,6 +83,15 @@ then
   exit 1
 fi
 
+gen_blocks () {
+  echo "1 block generated each 20s"
+
+  while true; do
+    btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1 > /dev/null 2>&1
+    sleep 20
+  done
+}
+
 gencerts -d $btcCertPath -H host.docker.internal
 
 
@@ -129,9 +139,14 @@ btcd --simnet --rpclisten 127.0.0.1:18556 --miningaddr $newMiningAddr --datadir 
 echo $! > $btcdpid
 sleep 4
 
-blockHeight=100
+blockHeight=120
 
 btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert setgenerate 0
 echo "..."
 btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate $blockHeight
 echo "generated $blockHeight blocks"
+
+# keeps mining 1 block each 10 sec.
+gen_blocks &
+
+echo $! > $genblockspid
