@@ -11,7 +11,7 @@ import (
 )
 
 func (n *NodeConfig) QueryBTCStakingGauge(height uint64) (*incentivetypes.Gauge, error) {
-	path := fmt.Sprintf("/babylonchain/babylon/incentive/btc_staking_gauge/%d", height)
+	path := fmt.Sprintf("/babylon/incentive/btc_staking_gauge/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func (n *NodeConfig) QueryBTCStakingGauge(height uint64) (*incentivetypes.Gauge,
 }
 
 func (n *NodeConfig) QueryIncentiveParams() (*incentivetypes.Params, error) {
-	path := "/babylonchain/babylon/incentive/params"
+	path := "/babylon/incentive/params"
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
@@ -39,7 +39,7 @@ func (n *NodeConfig) QueryIncentiveParams() (*incentivetypes.Params, error) {
 }
 
 func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incentivetypes.RewardGauge, error) {
-	path := fmt.Sprintf("/babylonchain/babylon/incentive/address/%s/reward_gauge", sAddr.String())
+	path := fmt.Sprintf("/babylon/incentive/address/%s/reward_gauge", sAddr.String())
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incenti
 }
 
 func (n *NodeConfig) QueryBTCTimestampingGauge(epoch uint64) (*incentivetypes.Gauge, error) {
-	path := fmt.Sprintf("/babylonchain/babylon/incentive/btc_timestamping_gauge/%d", epoch)
+	path := fmt.Sprintf("/babylon/incentive/btc_timestamping_gauge/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
 		return nil, err

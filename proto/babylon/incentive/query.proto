@@ -12,19 +12,19 @@ option go_package = "github.com/babylonchain/babylon/x/incentive/types";
 service Query {
     // Parameters queries the parameters of the module.
     rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-        option (google.api.http).get = "/babylonchain/babylon/incentive/params";
+        option (google.api.http).get = "/babylon/incentive/params";
     }
     // RewardGauge queries the reward gauge of a given stakeholder address
     rpc RewardGauges(QueryRewardGaugesRequest) returns (QueryRewardGaugesResponse) {
-        option (google.api.http).get = "/babylonchain/babylon/incentive/address/{address}/reward_gauge";
+        option (google.api.http).get = "/babylon/incentive/address/{address}/reward_gauge";
     }
     // BTCStakingGauge queries the BTC staking gauge of a given height
     rpc BTCStakingGauge(QueryBTCStakingGaugeRequest) returns (QueryBTCStakingGaugeResponse) {
-        option (google.api.http).get = "/babylonchain/babylon/incentive/btc_staking_gauge/{height}";
+        option (google.api.http).get = "/babylon/incentive/btc_staking_gauge/{height}";
     }
     // BTCTimestampingGauge queries the BTC timestamping gauge of a given epoch
     rpc BTCTimestampingGauge(QueryBTCTimestampingGaugeRequest) returns (QueryBTCTimestampingGaugeResponse) {
-        option (google.api.http).get = "/babylonchain/babylon/incentive/btc_timestamping_gauge/{epoch_num}";
+        option (google.api.http).get = "/babylon/incentive/btc_timestamping_gauge/{epoch_num}";
     }
 }
 
