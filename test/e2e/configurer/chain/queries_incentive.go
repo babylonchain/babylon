@@ -11,7 +11,7 @@ import (
 )
 
 func (n *NodeConfig) QueryBTCStakingGauge(height uint64) (*incentivetypes.Gauge, error) {
-	path := fmt.Sprintf("/babylonchain/babylon/incentive/btc_staking_gauge/%d", height)
+	path := fmt.Sprintf("/babylon/incentive/btc_staking_gauge/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
 		return nil, err
