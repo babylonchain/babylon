@@ -39,15 +39,18 @@ btcRpcCert=$btcCertPath/rpc.cert
 btcWalletRpcCert=$btcCertPath/rpc-wallet.cert
 
 vigilanteConf=$VIGILANTE_HOME/vigilante.yml
+fVigConf="--config $vigilanteConf"
+
+reporterpid="$vigilantepidPath/reporter.pid"
+submitterpid="$vigilantepidPath/submitter.pid"
 
 kbt="--keyring-backend test"
 submitterAddr=$($NODE_BIN --home $N0_HOME keys show submitter -a $kbt)
 
 CLEANUP=0 SUBMITTER_ADDR=$submitterAddr $CWD/vigilante-setup-conf.sh
 
-flagConf="--config $vigilanteConf"
-
-reporterpid="$vigilantepidPath/reporter.pid"
-
-vigilante $flagConf reporter >> $vigilanteLogs/reporter.log &
+vigilante $fVigConf reporter > $vigilanteLogs/reporter.log 2>&1 &
 echo $! > $reporterpid
+
+vigilante $fVigConf submitter > $vigilanteLogs/submitter.log 2>&1 &
+echo $! > $submitterpid

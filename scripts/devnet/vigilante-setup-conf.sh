@@ -24,7 +24,7 @@ CONF_PATH="${CONF_PATH:-$VIGILANTE_HOME/vigilante.yml}"
 CLEANUP="${CLEANUP:-1}"
 
 if [[ "$CLEANUP" == 1 || "$CLEANUP" == "1" ]]; then
-  PATH_OF_PIDS=$vigilantepidPath/*.pid $CWD/kill-process.sh
+  PATH_OF_PIDS=$VIGILANTE_HOME/pid/*.pid $CWD/kill-process.sh
 
   rm -rf $VIGILANTE_HOME
   echo "Removed $VIGILANTE_HOME"
