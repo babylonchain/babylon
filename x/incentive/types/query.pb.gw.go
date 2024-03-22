@@ -436,13 +436,13 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylonchain", "babylon", "incentive", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"babylon", "incentive", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_RewardGauges_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"babylonchain", "babylon", "incentive", "address", "reward_gauge"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_RewardGauges_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"babylon", "incentive", "address", "reward_gauge"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCStakingGauge_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylonchain", "babylon", "incentive", "btc_staking_gauge", "height"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_BTCStakingGauge_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"babylon", "incentive", "btc_staking_gauge", "height"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCTimestampingGauge_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylonchain", "babylon", "incentive", "btc_timestamping_gauge", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_BTCTimestampingGauge_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"babylon", "incentive", "btc_timestamping_gauge", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
