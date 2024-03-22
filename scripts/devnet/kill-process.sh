@@ -2,7 +2,7 @@
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
-PATH_OF_PIDS="$CHAIN_DIR/btc/pid/*.pid"
+PATH_OF_PIDS="${PATH_OF_PIDS:-$CHAIN_DIR/btc/pid/*.pid}"
 
 for pid_file in $PATH_OF_PIDS; do
   echo PID looping ${pid_file}

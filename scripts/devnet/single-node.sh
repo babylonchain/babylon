@@ -36,7 +36,7 @@ n0pid="$hdir/n0.pid"
 
 CHAIN_ID=$CHAIN_ID CHAIN_DIR=$CHAIN_DIR DENOM=$DENOM $CWD/setup-single-node.sh
 
-log_path=$hdir.n0.log
+log_path=$hdir/n0.log
 
 $NODE_BIN $home0 start --api.enable true --grpc.address="0.0.0.0:9090" --api.enabled-unsafe-cors --grpc-web.enable=true --log_level debug > $log_path 2>&1 &
 

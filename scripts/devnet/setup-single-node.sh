@@ -63,19 +63,20 @@ n0cfg="$n0cfgDir/config.toml"
 
 # App config file for node
 n0app="$n0cfgDir/app.toml"
+n0PrivKey="$n0cfgDir/priv_validator_key.json"
 
 if [[ "$CLEANUP" == 1 || "$CLEANUP" == "1" ]]; then
   PATH_OF_PIDS=$hdir/*.pid $CWD/kill-process.sh
 
-  rm -rf "$CHAIN_DIR"
-  echo "Removed $CHAIN_DIR"
+  rm -rf $hdir
+  echo "Removed $n0dir"
 fi
 
 # Common flags
 kbt="--keyring-backend test"
 cid="--chain-id $CHAIN_ID"
 
-# Check if the node-data dir has been initialized already
+# Check if the data dir has been initialized already
 if [[ -d "$hdir" ]]; then
   echo "===================================="
   echo "CONTINUING CHAIN FROM PREVIOUS STATE"
@@ -132,7 +133,11 @@ jq '.consensus_params["block"]["time_iota_ms"]="5000"
 echo "--- Creating gentx..."
 $NODE_BIN $home0 gentx $VAL0_KEY 1000000000$DENOM $kbt $cid
 echo "--- Set POP to checkpointing module..."
+
 $NODE_BIN $home0 gen-helpers ckpt-gen-key $VAL0_ADDR
+# TODO, check how to use.
+# $NODE_BIN $home0 create-genesis-bls
+# $NODE_BIN $home0 add-genesis-bls $n0cfgDir/gen-bls-$VAL0_ADDR.json
 
 $NODE_BIN $home0 collect-gentxs > /dev/null
 
