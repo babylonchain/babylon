@@ -15,11 +15,13 @@ CHAIN_HOME="$CHAIN_DIR/$CHAIN_ID"
 N0_HOME="${N0_HOME:-$CHAIN_HOME/n0}"
 BTC_HOME="${BTC_HOME:-$CHAIN_DIR/btc}"
 VIGILANTE_HOME="${VIGILANTE_HOME:-$CHAIN_DIR/vigilante}"
+LISTEN_PORT="${LISTEN_PORT:-8067}"
+SERVER_PORT="${SERVER_PORT:-2135}"
 
 BTC_RPC_CERT="${BTC_RPC_CERT:-$BTC_HOME/certs/rpc.cert}"
 BTC_WALLET_RPC_CERT="${BTC_WALLET_RPC_CERT:-$BTC_HOME/certs/rpc-wallet.cert}"
 SUBMITTER_ADDR="${SUBMITTER_ADDR:-bbn1dnug7399p0xg4x2ccduegu94gxshrrl78r8mz6}"
-CONF_PATH="${CONF_PATH:-$VIGILANTE_HOME/vigilante.yml}"
+CONF_PATH="${CONF_PATH:-$VIGILANTE_HOME/vigilante-submitter.yml}"
 
 CLEANUP="${CLEANUP:-1}"
 
@@ -79,12 +81,12 @@ grpc:
   rpc-key: \"\"
   rpc-cert: $VIGILANTE_HOME/rpc.cert
   endpoints:
-    - localhost:8080
+    - localhost:$LISTEN_PORT
 grpcweb:
   placeholder: grpcwebconfig
 metrics:
   host: 0.0.0.0
-  server-port: 2112
+  server-port: $SERVER_PORT
 submitter:
   netparams: simnet
   buffer-size: 10

@@ -38,8 +38,8 @@ btcCertPath=$BTC_HOME/certs
 btcRpcCert=$btcCertPath/rpc.cert
 btcWalletRpcCert=$btcCertPath/rpc-wallet.cert
 
-vigilanteConf=$VIGILANTE_HOME/vigilante.yml
-fVigConf="--config $vigilanteConf"
+vigilanteConfSub=$VIGILANTE_HOME/vigilante-submitter.yml
+vigilanteConfRep=$VIGILANTE_HOME/vigilante-reporter.yml
 
 reporterpid="$vigilantepidPath/reporter.pid"
 submitterpid="$vigilantepidPath/submitter.pid"
@@ -47,10 +47,11 @@ submitterpid="$vigilantepidPath/submitter.pid"
 kbt="--keyring-backend test"
 submitterAddr=$($NODE_BIN --home $N0_HOME keys show submitter -a $kbt)
 
-CLEANUP=0 SUBMITTER_ADDR=$submitterAddr $CWD/vigilante-setup-conf.sh
+CONF_PATH=$vigilanteConfSub CLEANUP=0 SUBMITTER_ADDR=$submitterAddr $CWD/vigilante-setup-conf.sh
+CONF_PATH=$vigilanteConfRep CLEANUP=0 SUBMITTER_ADDR=$submitterAddr SERVER_PORT=2134 LISTEN_PORT=8068 $CWD/vigilante-setup-conf.sh
 
-vigilante $fVigConf reporter > $vigilanteLogs/reporter.log 2>&1 &
+vigilante --config $vigilanteConfRep reporter > $vigilanteLogs/reporter.log 2>&1 &
 echo $! > $reporterpid
 
-vigilante $fVigConf submitter > $vigilanteLogs/submitter.log 2>&1 &
+vigilante --config $vigilanteConfSub submitter > $vigilanteLogs/submitter.log 2>&1 &
 echo $! > $submitterpid
