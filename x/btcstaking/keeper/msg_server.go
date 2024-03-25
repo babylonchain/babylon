@@ -160,11 +160,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	params := ms.GetParams(ctx)
+	vp := ms.GetParamsWithVersion(ctx)
 	btccParams := ms.btccKeeper.GetParams(ctx)
 	kValue, wValue := btccParams.BtcConfirmationDepth, btccParams.CheckpointFinalizationTimeout
 
-	minUnbondingTime := types.MinimumUnbondingTime(params, btccParams)
+	minUnbondingTime := types.MinimumUnbondingTime(vp.Params, btccParams)
 
 	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
 	// which is larger value from:
@@ -209,7 +209,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if err != nil {
 		return nil, types.ErrInvalidStakingTx.Wrapf("cannot parse finality provider PK list: %v", err)
 	}
-	covenantPKs, err := bbn.NewBTCPKsFromBIP340PKs(params.CovenantPks)
+	covenantPKs, err := bbn.NewBTCPKsFromBIP340PKs(vp.Params.CovenantPks)
 	if err != nil {
 		// programming error
 		panic("failed to parse covenant PKs in KVStore")
@@ -220,7 +220,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		stakerPk,
 		fpPKs,
 		covenantPKs,
-		params.CovenantQuorum,
+		vp.Params.CovenantQuorum,
 		uint16(req.StakingTime),
 		btcutil.Amount(req.StakingValue),
 		ms.btcNet,
@@ -267,7 +267,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// decode slashing address
 	// TODO: Decode slashing address only once, as it is the same for all BTC delegations
-	slashingAddr, err := btcutil.DecodeAddress(params.SlashingAddress, ms.btcNet)
+	slashingAddr, err := btcutil.DecodeAddress(vp.Params.SlashingAddress, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
 	}
@@ -277,8 +277,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		slashingMsgTx,
 		stakingMsgTx,
 		stakingOutputIdx,
-		params.MinSlashingTxFeeSat,
-		params.SlashingRate,
+		vp.Params.MinSlashingTxFeeSat,
+		vp.Params.SlashingRate,
 		slashingAddr,
 		stakerPk,
 		validatedUnbondingTime,
@@ -321,8 +321,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		SlashingTx:       req.SlashingTx,
 		DelegatorSig:     req.DelegatorSlashingSig,
 		UnbondingTime:    uint32(validatedUnbondingTime),
-		CovenantSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
-		BtcUndelegation:  nil, // this will be constructed in below code
+		CovenantSigs:     nil,        // NOTE: covenant signature will be submitted in a separate msg by covenant
+		BtcUndelegation:  nil,        // this will be constructed in below code
+		ParamsVersion:    vp.Version, // version of the params against delegations was validated
 	}
 
 	/*
@@ -353,7 +354,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		newBTCDel.BtcPk.MustToBTCPK(),
 		fpPKs,
 		covenantPKs,
-		params.CovenantQuorum,
+		vp.Params.CovenantQuorum,
 		validatedUnbondingTime,
 		btcutil.Amount(req.UnbondingValue),
 		ms.btcNet,
@@ -373,9 +374,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		unbondingSlashingMsgTx,
 		unbondingMsgTx,
 		unbondingOutputIdx,
-		params.MinSlashingTxFeeSat,
-		params.SlashingRate,
-		params.MustGetSlashingAddress(ms.btcNet),
+		vp.Params.MinSlashingTxFeeSat,
+		vp.Params.SlashingRate,
+		vp.Params.MustGetSlashingAddress(ms.btcNet),
 		stakerPk,
 		validatedUnbondingTime,
 		ms.btcNet,
@@ -415,7 +416,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
 	}
 
-	minUnbondingValue := caluculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &params)
+	minUnbondingValue := caluculateMinimumUnbondingValue(stakingMsgTx.TxOut[stakingOutputIdx], &vp.Params)
 	if btcutil.Amount(unbondingMsgTx.TxOut[0].Value) < minUnbondingValue {
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding output value must be at least %s, based on staking output", minUnbondingValue)
 	}

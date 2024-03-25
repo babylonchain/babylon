@@ -11,7 +11,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/testutil/helper"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -80,7 +79,7 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h := helper.NewHelper(t)
+		h := testhelper.NewHelper(t)
 		bsKeeper := h.App.BTCStakingKeeper
 		msgSrvr := keeper.NewMsgServerImpl(bsKeeper)
 

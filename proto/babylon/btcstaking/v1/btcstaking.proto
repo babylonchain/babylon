@@ -98,6 +98,8 @@ message BTCDelegation {
     uint32 unbonding_time = 13;
     // btc_undelegation is the information about the early unbonding path of the BTC delegation
     BTCUndelegation btc_undelegation = 14;
+    // version of the params used to validate the delegation
+    uint32 params_version = 15;
 }
 
 // BTCUndelegation contains the information about the early unbonding path of the BTC delegation
