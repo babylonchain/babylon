@@ -68,6 +68,7 @@ n0PrivKey="$n0cfgDir/priv_validator_key.json"
 
 if [[ "$CLEANUP" == 1 || "$CLEANUP" == "1" ]]; then
   PATH_OF_PIDS=$hdir/*.pid $CWD/kill-process.sh
+  sleep 1
 
   rm -rf $hdir
   echo "Removed $n0dir"
@@ -126,7 +127,8 @@ jq '.consensus_params["block"]["time_iota_ms"]="5000"
   | .app_state["mint"]["params"]["mint_denom"]="'$DENOM'"
   | .app_state["mint"]["params"]["mint_denom"]="'$DENOM'"
   | .app_state["staking"]["params"]["bond_denom"]="'$DENOM'"
-  | .app_state["consensus"]["params"]["abci"]["vote_extensions_enable_height"]="1"
+  | .app_state["consensus"]=null
+  | .consensus["params"]["abci"]["vote_extensions_enable_height"]="1"
   | .app_state["gov"]["params"]["expedited_voting_period"]="'$EXPEDITED_VOTING_PERIOD'"
   | .app_state["gov"]["params"]["voting_period"]="'$VOTING_PERIOD'"' \
     $n0cfgDir/genesis.json > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
@@ -172,5 +174,6 @@ echo "--- Modifying app..."
 perl -i -pe 's|minimum-gas-prices = ""|minimum-gas-prices = "0.05uquid"|g' $n0app
 perl -i -pe 's|enable-unsafe-cors = false|enable-unsafe-cors = true|g' $n0app
 perl -i -pe 's|enabled-unsafe-cors = false|enabled-unsafe-cors = true|g' $n0app
+perl -i -pe 's|network = "mainnet"|network = "simnet"|g' $n0app
 
 exit 0

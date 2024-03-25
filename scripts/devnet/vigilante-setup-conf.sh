@@ -60,13 +60,13 @@ btc:
   zmq-endpoint: ~  # use tcp://127.0.0.1:29000 if btc-backend is bitcoind
 babylon:
   key: submitter
-  chain-id: chain-test
+  chain-id: $CHAIN_ID
   rpc-addr: http://localhost:26657
   grpc-addr: https://localhost:9090
   account-prefix: bbn
   keyring-backend: test
   gas-adjustment: 1.2
-  gas-prices: 2ubbn
+  gas-prices: 20ubbn
   key-directory: $N0_HOME
   debug: true
   timeout: 20s

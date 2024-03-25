@@ -20,12 +20,7 @@ then
   exit 1
 fi
 
-gen_blocks () {
-  while true; do
-    btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-    sleep 10
-  done
-}
+
 
 BTC_BASE_HEADER_FILE=$VIGILANTE_HOME/btc-base-header.json
 vigilanteConf=$VIGILANTE_HOME/vigilante.yml

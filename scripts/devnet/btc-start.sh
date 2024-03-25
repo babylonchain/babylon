@@ -148,5 +148,4 @@ echo "generated $blockHeight blocks"
 
 # keeps mining 1 block each 10 sec.
 gen_blocks &
-
 echo $! > $genblockspid

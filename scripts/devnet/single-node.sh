@@ -39,7 +39,7 @@ BTC_BASE_HEADER_FILE=$BTC_BASE_HEADER_FILE CHAIN_ID=$CHAIN_ID CHAIN_DIR=$CHAIN_D
 
 log_path=$hdir/n0.log
 
-$NODE_BIN $home0 start --api.enable true --grpc.address="0.0.0.0:9090" --api.enabled-unsafe-cors --grpc-web.enable=true --log_level debug > $log_path 2>&1 &
+$NODE_BIN $home0 start --api.enable true --grpc.address="0.0.0.0:9090" --api.enabled-unsafe-cors --grpc-web.enable=true --log_level info > $log_path 2>&1 &
 
 # Gets the node pid
 echo $! > $n0pid
