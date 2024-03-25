@@ -122,7 +122,6 @@ $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $USER_KEY -a $
 $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $SUBMITTER_KEY -a $kbt) $coins_user &>/dev/null
 $NODE_BIN $home0 create-bls-key $($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt)
 
-  # | .initial_height="1"
 echo "--- Patching genesis..."
 jq '.consensus_params["block"]["time_iota_ms"]="5000"
   | .app_state["crisis"]["constant_fee"]["denom"]="'$DENOM'"

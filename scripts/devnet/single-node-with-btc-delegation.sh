@@ -40,6 +40,7 @@ echo "$baseBtcHeader" > $BTC_BASE_HEADER_FILE
 # Starts the blockchain
 covdPKs=$COVD_HOME/pks.json
 BTC_BASE_HEADER_FILE=$BTC_BASE_HEADER_FILE CHAIN_DIR=$CHAIN_DIR COVENANT_QUORUM=1 COVENANT_PK_FILE=$covdPKs $CWD/single-node.sh
+sleep 6 # wait a few seconds for the node start building blocks
 
 # Start Covenant
 CLEANUP=0 SETUP=0 $CWD/covd-start.sh
@@ -49,3 +50,6 @@ CLEANUP=1 CHAIN_DIR=$CHAIN_DIR $CWD/vigilante-start.sh
 
 # Start EOTS
 CHAIN_DIR=$CHAIN_DIR $CWD/eots-start.sh
+
+# Start FPD
+CHAIN_DIR=$CHAIN_DIR $CWD/fpd-start.sh
