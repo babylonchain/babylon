@@ -4,6 +4,7 @@ CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 VIGILANTE_HOME="${VIGILANTE_HOME:-$CHAIN_DIR/vigilante}"
 CLEANUP="${CLEANUP:-1}"
+COVD_HOME="${COVD_HOME:-$CHAIN_DIR/covd}"
 
 # Cleans everything
 if [[ "$CLEANUP" == 1 || "$CLEANUP" == "1" ]]; then
@@ -20,11 +21,12 @@ then
   exit 1
 fi
 
-
-
 BTC_BASE_HEADER_FILE=$VIGILANTE_HOME/btc-base-header.json
 vigilanteConf=$VIGILANTE_HOME/vigilante.yml
 fVigConf="--config $vigilanteConf"
+
+# setup covd
+CHAIN_DIR=$CHAIN_DIR $CWD/covd-setup.sh
 
 # Starts BTC
 CHAIN_DIR=$CHAIN_DIR $CWD/btc-start.sh
@@ -36,7 +38,11 @@ baseBtcHeader=$(vigilante helpers btc-base-header $fVigConf 0 | jq -r)
 echo "$baseBtcHeader" > $BTC_BASE_HEADER_FILE
 
 # Starts the blockchain
-BTC_BASE_HEADER_FILE=$BTC_BASE_HEADER_FILE CHAIN_DIR=$CHAIN_DIR $CWD/single-node.sh
+covdPKs=$COVD_HOME/pks.json
+BTC_BASE_HEADER_FILE=$BTC_BASE_HEADER_FILE CHAIN_DIR=$CHAIN_DIR COVENANT_QUORUM=1 COVENANT_PK_FILE=$covdPKs $CWD/single-node.sh
+
+# Start Covenant
+CLEANUP=0 SETUP=0 $CWD/covd-start.sh
 
 CLEANUP=1 CHAIN_DIR=$CHAIN_DIR $CWD/vigilante-start.sh
 
