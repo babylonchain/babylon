@@ -22,7 +22,7 @@ then
 fi
 
 BTC_BASE_HEADER_FILE=$VIGILANTE_HOME/btc-base-header.json
-vigilanteConf=$VIGILANTE_HOME/vigilante.yml
+vigilanteConf=$VIGILANTE_HOME/vigilante-submitter.yml
 fVigConf="--config $vigilanteConf"
 
 # setup covd
@@ -44,7 +44,8 @@ BTC_BASE_HEADER_FILE=$BTC_BASE_HEADER_FILE CHAIN_DIR=$CHAIN_DIR COVENANT_QUORUM=
 # Start Covenant
 CLEANUP=0 SETUP=0 $CWD/covd-start.sh
 
+# Start Vigilante
 CLEANUP=1 CHAIN_DIR=$CHAIN_DIR $CWD/vigilante-start.sh
 
-
-
+# Start EOTS
+CHAIN_DIR=$CHAIN_DIR $CWD/eots-start.sh
