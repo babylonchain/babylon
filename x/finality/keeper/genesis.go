@@ -2,12 +2,10 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	btcstk "github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
@@ -118,23 +116,4 @@ func (k Keeper) voteSigs(ctx context.Context) ([]*types.VoteSig, error) {
 	}
 
 	return voteSigs, nil
-}
-
-// parsePubKeyAndBlkHeightFromStoreKey expects to receive a key with
-// BIP340PubKey(fpBTCPK) || BigEndianUint64(blkHeight)
-func parsePubKeyAndBlkHeightFromStoreKey(key []byte) (fpBTCPK *bbn.BIP340PubKey, blkHeight uint64, err error) {
-	sizeBigEndian := 8
-	keyLen := len(key)
-	if keyLen < sizeBigEndian+1 {
-		return nil, 0, fmt.Errorf("key not long enough to parse BIP340PubKey and block height: %s", key)
-	}
-
-	startKeyHeight := keyLen - sizeBigEndian
-	fpBTCPK, err = bbn.NewBIP340PubKey(key[:startKeyHeight])
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to parse pub key from key %w: %w", bbn.ErrUnmarshal, err)
-	}
-
-	blkHeight = sdk.BigEndianToUint64(key[startKeyHeight:])
-	return fpBTCPK, blkHeight, nil
 }
