@@ -52,7 +52,6 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 // CreateFinalityProvider creates a finality provider
 func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.MsgCreateFinalityProvider) (*types.MsgCreateFinalityProviderResponse, error) {
-	// TODO: handle mpr
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateFinalityProvider)
 
 	// ensure the finality provider address does not already exist
@@ -83,7 +82,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	}
 
 	// ensure the master public randomness is valid
-	if _, err := eots.NewMasterPublicRandFromBase58(req.MasterPubrand); err != nil {
+	if _, err := eots.NewMasterPublicRandFromBase58(req.MasterPubRand); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -94,7 +93,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		BabylonPk:     req.BabylonPk,
 		BtcPk:         req.BtcPk,
 		Pop:           req.Pop,
-		MasterPubrand: req.MasterPubrand,
+		MasterPubRand: req.MasterPubRand,
 	}
 	ms.SetFinalityProvider(ctx, &fp)
 

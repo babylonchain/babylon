@@ -318,8 +318,8 @@ message FinalityProviderResponse {
   bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 5;
-  // master_pubrand is the master public randomness of the finality provider
-  string master_pubrand = 6;
+  // master_pub_rand is the master public randomness of the finality provider
+  string master_pub_rand = 6;
   // slashed_babylon_height indicates the Babylon height when
   // the finality provider is slashed.
   // if it's 0 then the finality provider is not slashed

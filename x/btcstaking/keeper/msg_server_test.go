@@ -47,7 +47,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 				BabylonPk:     fp.BabylonPk,
 				BtcPk:         fp.BtcPk,
 				Pop:           fp.Pop,
-				MasterPubrand: fp.MasterPubrand,
+				MasterPubRand: fp.MasterPubRand,
 			}
 			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.NoError(t, err)
@@ -69,7 +69,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 				BabylonPk:     fp2.BabylonPk,
 				BtcPk:         fp2.BtcPk,
 				Pop:           fp2.Pop,
-				MasterPubrand: fp2.MasterPubrand,
+				MasterPubRand: fp2.MasterPubRand,
 			}
 			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)

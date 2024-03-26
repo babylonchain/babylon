@@ -51,7 +51,7 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if err := m.Pop.ValidateBasic(); err != nil {
 		return err
 	}
-	if len(m.MasterPubrand) == 0 {
+	if len(m.MasterPubRand) == 0 {
 		return fmt.Errorf("empty master public randomness")
 	}
 

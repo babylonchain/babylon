@@ -177,8 +177,8 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 }
 
 // CommitPubRandList commits a list of EOTS public randomness
+// TODO: replace with BIP-32 randomness derivation
 func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommitPubRandList) (*types.MsgCommitPubRandListResponse, error) {
-	// TODO: remove
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
