@@ -8,6 +8,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
+	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -51,6 +52,7 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 // CreateFinalityProvider creates a finality provider
 func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.MsgCreateFinalityProvider) (*types.MsgCreateFinalityProviderResponse, error) {
+	// TODO: handle mpr
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateFinalityProvider)
 
 	// ensure the finality provider address does not already exist
@@ -80,13 +82,19 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, types.ErrFpRegistered
 	}
 
+	// ensure the master public randomness is valid
+	if _, err := eots.NewMasterPublicRandFromBase58(req.MasterPubrand); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
-		Description: req.Description,
-		Commission:  req.Commission,
-		BabylonPk:   req.BabylonPk,
-		BtcPk:       req.BtcPk,
-		Pop:         req.Pop,
+		Description:   req.Description,
+		Commission:    req.Commission,
+		BabylonPk:     req.BabylonPk,
+		BtcPk:         req.BtcPk,
+		Pop:           req.Pop,
+		MasterPubrand: req.MasterPubrand,
 	}
 	ms.SetFinalityProvider(ctx, &fp)
 

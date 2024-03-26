@@ -64,6 +64,12 @@ func FuzzBIP32RandomnessDerivation(f *testing.F) {
 		require.NoError(t, msr.Validate())
 		require.NoError(t, mpr.Validate())
 
+		// ensure msr can derive mpr
+		mpr2, err := msr.MasterPubicRand()
+		require.NoError(t, err)
+		require.NoError(t, mpr2.Validate())
+		require.Equal(t, mpr, mpr2)
+
 		height := uint32(datagen.RandomInt(r, 10000))
 
 		// derive pair of randomness via master secret randomness at this height

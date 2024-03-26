@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
+	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -96,16 +97,21 @@ func (h *Helper) GenAndApplyCustomParams(
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveFinalityProviders: 100,
 		MinUnbondingTime:           minUnbondingTime,
-		MinUnbondingRate:          sdkmath.LegacyMustNewDecFromStr("0.8"),
+		MinUnbondingRate:           sdkmath.LegacyMustNewDecFromStr("0.8"),
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
 }
 
 func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider {
-	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	fpBTCSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
+	fpBBNSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
+	require.NoError(t, err)
+	msr, _, err := eots.NewMasterRandPair(r)
+	require.NoError(t, err)
+
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr)
 	require.NoError(t, err)
 
 	return &types.FinalityProvider{
@@ -118,21 +124,28 @@ func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider 
 }
 
 func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
-	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+	fpBTCSK, fpBTCPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
+	fpBBNSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
 	h.NoError(err)
+	msr, _, err := eots.NewMasterRandPair(r)
+	h.NoError(err)
+
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr)
+	h.NoError(err)
+
 	msgNewFp := types.MsgCreateFinalityProvider{
-		Signer:      datagen.GenRandomAccount().Address,
-		Description: fp.Description,
-		Commission:  fp.Commission,
-		BabylonPk:   fp.BabylonPk,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
+		Signer:        datagen.GenRandomAccount().Address,
+		Description:   fp.Description,
+		Commission:    fp.Commission,
+		BabylonPk:     fp.BabylonPk,
+		BtcPk:         fp.BtcPk,
+		Pop:           fp.Pop,
+		MasterPubrand: fp.MasterPubrand,
 	}
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	h.NoError(err)
-	return fpSK, fpPK, fp
+	return fpBTCSK, fpBTCPK, fp
 }
 
 func (h *Helper) CreateDelegationCustom(

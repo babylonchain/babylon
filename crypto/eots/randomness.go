@@ -71,6 +71,14 @@ func NewMasterSecretRand(b []byte) (*MasterSecretRand, error) {
 	return NewMasterSecretRandFromBase58(string(b))
 }
 
+func (msr *MasterSecretRand) MasterPubicRand() (*MasterPublicRand, error) {
+	masterPK, err := msr.k.Neuter()
+	if err != nil {
+		return nil, err
+	}
+	return &MasterPublicRand{masterPK}, nil
+}
+
 func (msr *MasterSecretRand) DeriveRandPair(height uint32) (*PrivateRand, *PublicRand, error) {
 	// get child SK, then child SK in BTC format, and finally private randomness
 	childSK, err := msr.k.Derive(height)
