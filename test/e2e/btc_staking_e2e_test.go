@@ -83,7 +83,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	s.NoError(err)
 	fp, err = datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, nonValidatorNode.SecretKey, msr)
 	s.NoError(err)
-	nonValidatorNode.CreateFinalityProvider(fp.BabylonPk, fp.BtcPk, fp.Pop, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
+	nonValidatorNode.CreateFinalityProvider(fp.BabylonPk, fp.BtcPk, fp.Pop, fp.MasterPubRand, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
