@@ -9,6 +9,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func FuzzBIP32RandomnessCodec(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// master randomness pair
+		msr, mpr, err := eots.NewMasterRandPair(r)
+		require.NoError(t, err)
+		require.NoError(t, msr.Validate())
+		require.NoError(t, mpr.Validate())
+
+		// roundtrip of marshaling/unmarshaling msr to/from string
+		msrStr := msr.MarshalBase58()
+		msr2, err := eots.NewMasterSecretRandFromBase58(msrStr)
+		require.NoError(t, err)
+		require.Equal(t, msr.Marshal(), msr2.Marshal())
+
+		// roundtrip of marshaling/unmarshaling msr to/from bytes
+		msrBytes := msr.Marshal()
+		msr2, err = eots.NewMasterSecretRand(msrBytes)
+		require.NoError(t, err)
+		require.Equal(t, msr.Marshal(), msr2.Marshal())
+
+		// roundtrip of marshaling/unmarshaling mpr to/from string
+		mprStr := mpr.MarshalBase58()
+		mpr2, err := eots.NewMasterPublicRandFromBase58(mprStr)
+		require.NoError(t, err)
+		require.Equal(t, mpr.Marshal(), mpr2.Marshal())
+
+		// roundtrip of marshaling/unmarshaling mpr to/from bytes
+		mprBytes := mpr.Marshal()
+		mpr2, err = eots.NewMasterPublicRand(mprBytes)
+		require.NoError(t, err)
+		require.Equal(t, mpr.Marshal(), mpr2.Marshal())
+	})
+}
+
 func FuzzBIP32RandomnessDerivation(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 

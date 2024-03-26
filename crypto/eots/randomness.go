@@ -56,6 +56,21 @@ func (msr *MasterSecretRand) Validate() error {
 	return nil
 }
 
+func NewMasterSecretRandFromBase58(s string) (*MasterSecretRand, error) {
+	k, err := hdkeychain.NewKeyFromString(s)
+	if err != nil {
+		return nil, err
+	}
+	if !k.IsPrivate() {
+		return nil, fmt.Errorf("the given string does not correspond to a secret key")
+	}
+	return &MasterSecretRand{k}, nil
+}
+
+func NewMasterSecretRand(b []byte) (*MasterSecretRand, error) {
+	return NewMasterSecretRandFromBase58(string(b))
+}
+
 func (msr *MasterSecretRand) DeriveRandPair(height uint32) (*PrivateRand, *PublicRand, error) {
 	// get child SK, then child SK in BTC format, and finally private randomness
 	childSK, err := msr.k.Derive(height)
@@ -75,6 +90,29 @@ func (msr *MasterSecretRand) DeriveRandPair(height uint32) (*PrivateRand, *Publi
 	pubRand := &j.X
 
 	return privRand, pubRand, nil
+}
+
+func (msr *MasterSecretRand) MarshalBase58() string {
+	return msr.k.String()
+}
+
+func (msr *MasterSecretRand) Marshal() []byte {
+	return []byte(msr.MarshalBase58())
+}
+
+func NewMasterPublicRandFromBase58(s string) (*MasterPublicRand, error) {
+	k, err := hdkeychain.NewKeyFromString(s)
+	if err != nil {
+		return nil, err
+	}
+	if k.IsPrivate() {
+		return nil, fmt.Errorf("the given string does not correspond to a public key")
+	}
+	return &MasterPublicRand{k}, nil
+}
+
+func NewMasterPublicRand(b []byte) (*MasterPublicRand, error) {
+	return NewMasterPublicRandFromBase58(string(b))
 }
 
 func (mpr *MasterPublicRand) Validate() error {
@@ -99,17 +137,10 @@ func (mpr *MasterPublicRand) DerivePubRand(height uint32) (*PublicRand, error) {
 	return pubRand, nil
 }
 
-func NewMasterPublicRandFromBase58(s string) (*MasterPublicRand, error) {
-	k, err := hdkeychain.NewKeyFromString(s)
-	if err != nil {
-		return nil, err
-	}
-	if k.IsPrivate() {
-		return nil, fmt.Errorf("the given string does not correspond to a public key")
-	}
-	return &MasterPublicRand{k}, nil
-}
-
 func (mpr *MasterPublicRand) MarshalBase58() string {
 	return mpr.k.String()
+}
+
+func (mpr *MasterPublicRand) Marshal() []byte {
+	return []byte(mpr.MarshalBase58())
 }
