@@ -286,13 +286,14 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.MintParams.GoalBonded = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
 
 	genParams.GovParams = govv1.DefaultParams()
+	// TODO investigate those numbers
 	genParams.GovParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdkmath.NewInt(2_500_000_000),
 	))
 	genParams.GovParams.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
-		sdkmath.NewInt(2_500_000_000),
+		sdkmath.NewInt(10_000_000_000),
 	))
 
 	genParams.CrisisConstantFee = sdk.NewCoin(
