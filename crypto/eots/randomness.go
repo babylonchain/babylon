@@ -79,6 +79,7 @@ func (msr *MasterSecretRand) MasterPubicRand() (*MasterPublicRand, error) {
 	return &MasterPublicRand{masterPK}, nil
 }
 
+// TODO: extend to support uint64
 func (msr *MasterSecretRand) DeriveRandPair(height uint32) (*PrivateRand, *PublicRand, error) {
 	// get child SK, then child SK in BTC format, and finally private randomness
 	childSK, err := msr.k.Derive(height)
