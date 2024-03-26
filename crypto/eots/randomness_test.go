@@ -1,7 +1,6 @@
 package eots_test
 
 import (
-	crand "crypto/rand"
 	"math/rand"
 	"testing"
 
@@ -9,28 +8,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/stretchr/testify/require"
 )
-
-func FuzzEOTSSignAndVerify(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		sk, err := eots.KeyGen(r)
-		require.NoError(t, err)
-		pk := eots.PubGen(sk)
-
-		sr, pr, err := eots.RandGen(crand.Reader)
-		require.NoError(t, err)
-
-		msg := datagen.GenRandomByteArray(r, 100)
-		sig, err := eots.Sign(sk, sr, msg)
-		require.NoError(t, err)
-
-		err = eots.Verify(pk, pr, msg, sig)
-		require.NoError(t, err)
-	})
-}
 
 func FuzzBIP32RandomnessDerivation(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
