@@ -26,6 +26,12 @@ fi
 # Home flag for folder
 homeF="--home $COVD_HOME"
 
+# babylon node Home flag for folder
+n0dir="$CHAIN_DIR/$CHAIN_ID/n0"
+homeN0="--home $n0dir"
+kbt="--keyring-backend test"
+cid="--chain-id $CHAIN_ID"
+
 if [[ "$CLEANUP" == 1 || "$CLEANUP" == "1" ]]; then
   PATH_OF_PIDS=$COVD_HOME/*.pid $CWD/kill-process.sh
 
@@ -37,6 +43,9 @@ if [[ "$SETUP" == 1 || "$SETUP" == "1" ]]; then
   $CWD/covd-setup.sh
 fi
 
+# transfer funds to the covenant acc created
+covenantAddr=$(babylond $homeF keys show covenant -a $kbt)
+babylond tx bank send user $covenantAddr 100000000ubbn $homeN0 $kbt $cid -y
 
 # Start Covenant
 covd start $homeF >> $COVD_HOME/covd-start.log &

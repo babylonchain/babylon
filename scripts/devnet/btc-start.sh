@@ -116,7 +116,7 @@ echo "2. btcwallet finish"
 
 
 echo "3. btcwallet start"
-btcwallet --simnet --rpclisten=127.0.0.1:18554 --appdata $BTC_HOME/appdata-wallet $flagRpcUserPass $flagRpcWalletCertKey $flagCatFile --logdir $btcLogs/btcwallet2 >> $btcLogs/btcwallet2.log &
+btcwallet --simnet --rpclisten=127.0.0.1:18554 --rpcconnect=127.0.0.1:18556 --appdata $BTC_HOME/appdata-wallet $flagRpcUserPass $flagRpcWalletCertKey $flagCatFile --logdir $btcLogs/btcwallet2 >> $btcLogs/btcwallet2.log &
 echo $! > $btcwalletpid
 sleep 1
 echo "3. btcwallet finish"

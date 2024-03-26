@@ -1,7 +1,7 @@
 #!/bin/bash -eux
 
 # USAGE:
-# ./covd-start
+# ./eots-start
 
 # it starts the covenant for single node chain
 
