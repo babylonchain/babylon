@@ -333,9 +333,8 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.Equal(activeFps[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
 }
 
-// Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
-// test for user story 3: finality provider commits public randomness and submits
-// finality signature, such that blocks can be finalised.
+// Test3SubmitFinalitySignature is an end-to-end test for user story 3:
+// finality provider and submits finality signature, such that blocks can be finalised.
 func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)

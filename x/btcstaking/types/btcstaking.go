@@ -36,6 +36,8 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	return nil
 }
 
+// MustGetPubRand gets the public randomness at the given height for the
+// finality provider. It is derived from its master public randomness.
 func (fp *FinalityProvider) MustGetPubRand(height uint64) *eots.PublicRand {
 	mpr, err := eots.NewMasterPublicRandFromBase58(fp.MasterPubRand)
 	if err != nil {
