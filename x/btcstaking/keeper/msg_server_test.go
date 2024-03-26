@@ -173,6 +173,70 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 	})
 }
 
+func TestProperVersionInDelegation(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	h := NewHelper(t, btclcKeeper, btccKeeper)
+
+	// set all parameters
+	h.GenAndApplyParams(r)
+
+	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+	require.NoError(t, err)
+
+	// generate and insert new finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	// generate and insert new BTC delegation
+	stakingValue := int64(2 * 10e8)
+	stakingTxHash, _, _, _, _ := h.CreateDelegation(
+		r,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+	)
+
+	// ensure consistency between the msg and the BTC delegation in DB
+	actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+	h.NoError(err)
+	err = actualDel.ValidateBasic()
+	h.NoError(err)
+	// Current version will be `1` as:
+	// - version `0` is initialized by `NewHelper`
+	// - version `1` is set by `GenAndApplyParams`
+	require.Equal(t, uint32(1), actualDel.ParamsVersion)
+
+	customMinUnbondingTime := uint32(2000)
+	currentParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+	currentParams.MinUnbondingTime = 2000
+	// Update new params
+	err = h.BTCStakingKeeper.SetParams(h.Ctx, currentParams)
+	require.NoError(t, err)
+	// create new delegation
+	stakingTxHash1, _, _, _, err := h.CreateDelegationCustom(
+		r,
+		fpPK,
+		changeAddress.EncodeAddress(),
+		stakingValue,
+		1000,
+		stakingValue-1000,
+		uint16(customMinUnbondingTime)+1,
+	)
+	require.NoError(t, err)
+	actualDel1, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash1)
+	h.NoError(err)
+	err = actualDel1.ValidateBasic()
+	h.NoError(err)
+	// Assert that the new delegation has the updated params version
+	require.Equal(t, uint32(2), actualDel1.ParamsVersion)
+}
+
 func FuzzAddCovenantSigs(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
