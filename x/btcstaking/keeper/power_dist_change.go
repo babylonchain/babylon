@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"sort"
 
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
@@ -193,7 +194,15 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		process new BTC delegations under new finality providers in activeBTCDels
 	*/
 	// TODO: fix non-determinism here
-	for fpBTCPKHex, fpActiveBTCDels := range activeBTCDels {
+	fpBTCPKHexList := []string{}
+	for fpBTCPKHex := range activeBTCDels {
+		fpBTCPKHexList = append(fpBTCPKHexList, fpBTCPKHex)
+	}
+	sort.SliceStable(fpBTCPKHexList, func(i, j int) bool {
+		return fpBTCPKHexList[i] < fpBTCPKHexList[j]
+	})
+
+	for _, fpBTCPKHex := range fpBTCPKHexList {
 		// get the finality provider and initialise its dist info
 		fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(fpBTCPKHex)
 		if err != nil {
@@ -206,6 +215,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpDistInfo := types.NewFinalityProviderDistInfo(newFP)
 
 		// add each BTC delegation
+		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
 			fpDistInfo.AddBTCDel(d)
 		}
