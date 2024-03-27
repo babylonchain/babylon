@@ -439,6 +439,22 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	return &types.MsgCreateBTCDelegationResponse{}, nil
 }
 
+func (ms msgServer) getBTCDelWithParams(
+	ctx context.Context,
+	stakingTxHash string) (*types.BTCDelegation, *types.Params, error) {
+	btcDel, err := ms.GetBTCDelegation(ctx, stakingTxHash)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bsParams := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+	if bsParams == nil {
+		panic("params version in BTC delegation is not found")
+	}
+
+	return btcDel, bsParams, nil
+}
+
 // AddCovenantSig adds signatures from covenants to a BTC delegation
 // TODO: refactor this handler. Now it's too convoluted
 func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCovenantSigs) (*types.MsgAddCovenantSigsResponse, error) {
@@ -450,17 +466,10 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
+	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+
 	if err != nil {
 		return nil, err
-	}
-
-	params := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
-
-	if params == nil {
-		// This is programming error, we should not prune params for existing delegations
-		panic("params version in BTC delegation is not found")
 	}
 
 	// ensure that the given covenant PK is in the parameter
@@ -602,17 +611,11 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	if err := req.ValidateBasic(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
+
+	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+
 	if err != nil {
 		return nil, err
-	}
-
-	bsParams := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
-
-	if bsParams == nil {
-		// This is programming error, we should not prune params for existing delegations
-		panic("params version in BTC delegation is not found")
 	}
 
 	// ensure the BTC delegation with the given staking tx hash is active
@@ -662,17 +665,10 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
+	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+
 	if err != nil {
 		return nil, err
-	}
-
-	bsParams := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
-
-	if bsParams == nil {
-		// This is programming error, we should not prune params for existing delegations
-		panic("params version in BTC delegation is not found")
 	}
 
 	// ensure the BTC delegation is active, or its BTC undelegation receives an
