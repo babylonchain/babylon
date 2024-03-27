@@ -10,6 +10,7 @@ VIGILANTE_HOME="${VIGILANTE_HOME:-$CHAIN_DIR/vigilante}"
 COVD_HOME="${COVD_HOME:-$CHAIN_DIR/covd}"
 EOTS_HOME="${EOTS_HOME:-$CHAIN_DIR/eots}"
 FPD_HOME="${FPD_HOME:-$CHAIN_DIR/fpd}"
+BTC_STAKER_HOME="${BTC_STAKER_HOME:-$CHAIN_DIR/btc-staker}"
 
 PATH_OF_PIDS=$babylonChain/*.pid $CWD/kill-process.sh
 PATH_OF_PIDS=$VIGILANTE_HOME/pid/*.pid $CWD/kill-process.sh
@@ -17,3 +18,4 @@ PATH_OF_PIDS=$BTC_HOME/pid/*.pid $CWD/kill-process.sh
 PATH_OF_PIDS=$COVD_HOME/*.pid $CWD/kill-process.sh
 PATH_OF_PIDS=$EOTS_HOME/*.pid $CWD/kill-process.sh
 PATH_OF_PIDS=$FPD_HOME/*.pid $CWD/kill-process.sh
+PATH_OF_PIDS=$BTC_STAKER_HOME/pid/*.pid $CWD/kill-process.sh

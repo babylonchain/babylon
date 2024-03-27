@@ -32,6 +32,9 @@ USER_MNEMONIC="pony glide frown crisp unfold lawn cup loan trial govern usual ma
 SUBMITTER_KEY="submitter"
 SUBMITTER_MNEMONIC="catalog disagree royal alley edge negative erase clip dolphin undo pipe fire small siren bird crowd reopen wrestle stumble survey rib gospel master toilet"
 
+BTC_STAKER_KEY="btc-staker"
+BTC_STAKER_MNEMONIC="birth immune execute prosper flee tonight slab own pause robust fatal debris endorse bottom ask hawk material trend tomato lunch surprise above finish road"
+
 NEWLINE=$'\n'
 
 hdir="$CHAIN_DIR/$CHAIN_ID"
@@ -109,6 +112,7 @@ echo "$VAL0_MNEMONIC$NEWLINE"
 yes "$VAL0_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $VAL0_KEY $kbt --recover
 yes "$USER_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $USER_KEY $kbt --recover
 yes "$SUBMITTER_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $SUBMITTER_KEY $kbt --recover
+yes "$BTC_STAKER_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $BTC_STAKER_KEY $kbt --recover
 
 echo "--- Adding addresses..."
 $NODE_BIN $home0 keys show $VAL0_KEY -a $kbt
@@ -120,6 +124,7 @@ VAL0_ADDR=$($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt --bech val)
 $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt) $coins &>/dev/null
 $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $USER_KEY -a $kbt) $coins_user &>/dev/null
 $NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $SUBMITTER_KEY -a $kbt) $coins_user &>/dev/null
+$NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $BTC_STAKER_KEY -a $kbt) $coins_user &>/dev/null
 $NODE_BIN $home0 create-bls-key $($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt)
 
 echo "--- Patching genesis..."
