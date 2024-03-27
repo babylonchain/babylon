@@ -104,18 +104,16 @@ perl -i -pe 's|DBPath = '$HOME'/.stakerd/data|DBPath = "'$stakercliDBDir'"|g' $s
 stakerd --configfile=$stakercliConfigFile > $stakercliLogsDir/daemon.log 2>&1 &
 echo $! > $pidPath/stakerd.pid
 
-sleep 15
+sleep 2
 
+# Generate new address and sends values to it
 # "legacy" "p2sh-segwit" "bech32"
-stakerBTCAddr=$(btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert getnewaddress default legacy)
-echo $stakerBTCAddr > $btcctldOutputDirPath/btcstaker.addr
-
-
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert walletpassphrase walletpass 10
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert sendtoaddress $stakerBTCAddr 6
-
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
+# stakerBTCAddr=$(btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert getnewaddress default legacy)
+# echo $stakerBTCAddr > $btcctldOutputDirPath/btcstaker.addr
+# btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert walletpassphrase walletpass 10
+# btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert sendtoaddress $stakerBTCAddr 6
+# btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
+# sleep 1
 
 finalityProviderBTCPubKey=$(stakercli daemon babylon-finality-providers | jq .finality_providers[0].bitcoin_public_Key -r)
 echo $finalityProviderBTCPubKey > $stakercliOutputDir/fpbtc.pub.key
@@ -123,35 +121,7 @@ echo $finalityProviderBTCPubKey > $stakercliOutputDir/fpbtc.pub.key
 stakerBTCAddrListOutput=$(stakercli daemon list-outputs | jq .outputs[-1].address -r)
 echo $stakerBTCAddrListOutput > $stakercliOutputDir/list.output.last.addr
 
-
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-
-sleep 20
-
+# Creates the btc delegation
 stakercli daemon stake --staker-address $stakerBTCAddrListOutput --staking-amount 1000000 --finality-providers-pks $finalityProviderBTCPubKey --staking-time 10000 > $stakercliOutputDir/btc-staking-tx.json
 
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-sleep 1
-btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
+btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 11

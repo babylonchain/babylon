@@ -84,11 +84,11 @@ then
 fi
 
 gen_blocks () {
-  echo "1 block generated each 20s"
+  echo "1 block generated each 8s"
 
   while true; do
     btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1 > /dev/null 2>&1
-    sleep 20
+    sleep 8
   done
 }
 
@@ -146,6 +146,6 @@ echo "..."
 btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate $blockHeight
 echo "generated $blockHeight blocks"
 
-# keeps mining 1 block each 10 sec.
+# keeps mining 1 block each 8 sec.
 gen_blocks &
 echo $! > $genblockspid

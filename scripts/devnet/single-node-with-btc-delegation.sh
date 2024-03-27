@@ -55,6 +55,6 @@ sleep 2
 # Start FPD
 CHAIN_DIR=$CHAIN_DIR $CWD/fpd-start.sh
 
-sleep 2
+# sleep 2
 # Start BTC Staker and stakes to btc
 CHAIN_DIR=$CHAIN_DIR $CWD/btc-staker.sh

@@ -27,6 +27,7 @@ func GenesisHelpers() *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
+
 	cmd.AddCommand(genHelperAddCheckpointGenesisKey())
 
 	return cmd
