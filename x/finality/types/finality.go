@@ -42,8 +42,8 @@ func (e *Evidence) ValidateBasic() error {
 	if e.FpBtcPk == nil {
 		return fmt.Errorf("empty FpBtcPk")
 	}
-	if e.PubRand == nil {
-		return fmt.Errorf("empty PubRand")
+	if len(e.MasterPubRand) == 0 {
+		return fmt.Errorf("empty MasterPubRand")
 	}
 	if len(e.CanonicalAppHash) != 32 {
 		return fmt.Errorf("malformed CanonicalAppHash")
@@ -76,8 +76,16 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 	if err != nil {
 		return nil, err
 	}
+	mpr, err := eots.NewMasterPublicRandFromBase58(e.MasterPubRand)
+	if err != nil {
+		return nil, err
+	}
+	pubRand, err := mpr.DerivePubRand(uint32(e.BlockHeight))
+	if err != nil {
+		return nil, err
+	}
 	return eots.Extract(
-		btcPK, e.PubRand.ToFieldVal(),
+		btcPK, pubRand,
 		e.canonicalMsgToSign(), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
 		e.forkMsgToSign(), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
 	)

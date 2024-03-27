@@ -7,8 +7,7 @@ import (
 
 // performance oriented metrics measuring the execution time of each message
 const (
-	MetricsKeyCommitPubRandList = "commit_pub_rand_list"
-	MetricsKeyAddFinalitySig    = "add_finality_sig"
+	MetricsKeyAddFinalitySig = "add_finality_sig"
 )
 
 // Metrics for monitoring block finalization status
