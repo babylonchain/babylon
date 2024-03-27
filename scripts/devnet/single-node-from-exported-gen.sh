@@ -50,8 +50,11 @@ tmpGen=$n0cfgDir/tmp_genesis.json
 
 inputFile=$n0cfgDir/input.json
 
-cat $EXPORTED_GEN_FILE | jq .app_state.btclightclient.btc_headers[-1] > $inputFile
-jq '.app_state.btclightclient.btc_headers = [input]' $newGen $inputFile > $tmpGen
+# cat $EXPORTED_GEN_FILE | jq .app_state.btclightclient.btc_headers[-1] > $inputFile
+# jq '.app_state.btclightclient.btc_headers = [input]' $newGen $inputFile > $tmpGen
+# mv $tmpGen $newGen
+cat $EXPORTED_GEN_FILE | jq .app_state.btclightclient.btc_headers > $inputFile
+jq '.app_state.btclightclient.btc_headers = input' $newGen $inputFile > $tmpGen
 mv $tmpGen $newGen
 
 cat $EXPORTED_GEN_FILE | jq .app_state.btcstaking.finality_providers > $inputFile
@@ -64,19 +67,18 @@ mv $tmpGen $newGen
 
 log_path=$hdir/n0.log
 
-$NODE_BIN $home0 start --api.enable true --grpc.address="0.0.0.0:9090" --api.enabled-unsafe-cors --grpc-web.enable=true --log_level info # > $log_path 2>&1 &
+$NODE_BIN $home0 start --api.enable true --grpc.address="0.0.0.0:9090" --api.enabled-unsafe-cors --grpc-web.enable=true --log_level info > $log_path 2>&1 &
 
-# Gets the node pid
-# echo $! > $n0pid
+echo $! > $n0pid
 
-# Start the instance
-# echo "--- Starting node..."
-# echo
-# echo "Logs:"
-# echo "  * tail -f $log_path"
-# echo
-# echo "Env for easy access:"
-# echo "export H1='--home $n0dir'"
-# echo
-# echo "Command Line Access:"
-# echo "  * $NODE_BIN --home $n0dir status"
+Start the instance
+echo "--- Starting node..."
+echo
+echo "Logs:"
+echo "  * tail -f $log_path"
+echo
+echo "Env for easy access:"
+echo "export H1='--home $n0dir'"
+echo
+echo "Command Line Access:"
+echo "  * $NODE_BIN --home $n0dir status"

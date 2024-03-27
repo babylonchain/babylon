@@ -5,6 +5,7 @@ CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 CHAIN_ID="${CHAIN_ID:-test-1}"
 
 babylonChain="$CHAIN_DIR/$CHAIN_ID"
+babylonChain2="$CHAIN_DIR/test-2"
 BTC_HOME="${BTC_HOME:-$CHAIN_DIR/btc}"
 VIGILANTE_HOME="${VIGILANTE_HOME:-$CHAIN_DIR/vigilante}"
 COVD_HOME="${COVD_HOME:-$CHAIN_DIR/covd}"
@@ -13,6 +14,7 @@ FPD_HOME="${FPD_HOME:-$CHAIN_DIR/fpd}"
 BTC_STAKER_HOME="${BTC_STAKER_HOME:-$CHAIN_DIR/btc-staker}"
 
 PATH_OF_PIDS=$babylonChain/*.pid $CWD/kill-process.sh
+PATH_OF_PIDS=$babylonChain2/*.pid $CWD/kill-process.sh
 PATH_OF_PIDS=$VIGILANTE_HOME/pid/*.pid $CWD/kill-process.sh
 PATH_OF_PIDS=$BTC_HOME/pid/*.pid $CWD/kill-process.sh
 PATH_OF_PIDS=$COVD_HOME/*.pid $CWD/kill-process.sh
