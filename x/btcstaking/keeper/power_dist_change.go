@@ -193,7 +193,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	/*
 		process new BTC delegations under new finality providers in activeBTCDels
 	*/
-	// TODO: fix non-determinism here
+	// sort new finality providers in activeBTCDels to ensure determinism
 	fpBTCPKHexList := []string{}
 	for fpBTCPKHex := range activeBTCDels {
 		fpBTCPKHexList = append(fpBTCPKHexList, fpBTCPKHex)
@@ -201,7 +201,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	sort.SliceStable(fpBTCPKHexList, func(i, j int) bool {
 		return fpBTCPKHexList[i] < fpBTCPKHexList[j]
 	})
-
+	// for each new finality provider, apply the new BTC delegations to the new dist cache
 	for _, fpBTCPKHex := range fpBTCPKHexList {
 		// get the finality provider and initialise its dist info
 		fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(fpBTCPKHex)
