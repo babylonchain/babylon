@@ -154,7 +154,8 @@ func PrepareGenesis(
 
 	// btcstaking module genesis
 	btcstakingGenState := btcstakingtypes.DefaultGenesis()
-	btcstakingGenState.Params = genesisParams.BtcstakingParams
+	// here we can start only from single params, which will be initially labelled version 0
+	btcstakingGenState.Params = []*btcstakingtypes.Params{&genesisParams.BtcstakingParams}
 	genesisState[btcstakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btcstakingGenState)
 
 	// finality module genesis

@@ -12,8 +12,12 @@ import (
 
 // InitGenesis initializes the module's state from a provided genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-	if err := k.SetParams(ctx, gs.Params); err != nil {
-		return err
+	// save all past params versions
+	for _, p := range gs.Params {
+		params := p
+		if err := k.SetParams(ctx, *params); err != nil {
+			return err
+		}
 	}
 
 	for _, fp := range gs.FinalityProviders {
@@ -87,7 +91,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 	}
 
 	return &types.GenesisState{
-		Params:            k.GetParams(ctx),
+		Params:            k.GetAllParams(ctx),
 		FinalityProviders: fps,
 		BtcDelegations:    dels,
 		VotingPowers:      vpFps,

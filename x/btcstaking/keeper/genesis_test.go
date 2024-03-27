@@ -121,7 +121,7 @@ func TestExportGenesis(t *testing.T) {
 
 	gs, err := k.ExportGenesis(ctx)
 	h.NoError(err)
-	require.Equal(t, k.GetParams(ctx), gs.Params)
+	require.Equal(t, k.GetParams(ctx), *gs.Params[0])
 
 	// finality providers
 	correctFps := 0

@@ -11,8 +11,9 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
+	p := types.DefaultParams()
 	genesisState := types.GenesisState{
-		Params: types.DefaultParams(),
+		Params: []*types.Params{&p},
 	}
 
 	k, ctx := keepertest.BTCStakingKeeper(t, nil, nil)

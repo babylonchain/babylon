@@ -78,6 +78,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	parsedSlashingAdaptorSignatures []asig.AdaptorSignature,
 	unbondingTxSig *bbn.BIP340Signature,
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
+	params *types.Params,
 ) {
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	btcDel.AddCovenantSigs(
@@ -91,7 +92,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 
 	// If reaching the covenant quorum after this msg, the BTC delegation becomes
 	// active. Then, record and emit this event
-	if len(btcDel.CovenantSigs) == int(k.GetParams(ctx).CovenantQuorum) {
+	if len(btcDel.CovenantSigs) == int(params.CovenantQuorum) {
 		// notify subscriber
 		event := &types.EventBTCDelegationStateUpdate{
 			StakingTxHash: btcDel.MustGetStakingTxHash().String(),

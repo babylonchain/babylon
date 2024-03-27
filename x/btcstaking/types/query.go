@@ -20,6 +20,7 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		StatusDesc:           status.String(),
 		UnbondingTime:        btcDel.UnbondingTime,
 		UndelegationResponse: nil,
+		ParamsVersion:        btcDel.ParamsVersion,
 	}
 
 	if btcDel.SlashingTx != nil {
