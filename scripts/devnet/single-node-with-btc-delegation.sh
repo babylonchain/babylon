@@ -1,4 +1,9 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
+
+# USAGE:
+# ./single-node-with-btc-delegation.sh
+
+# Starts all the process necessary to have a babylon chain running with active btc delegation.
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
@@ -51,10 +56,12 @@ CLEANUP=1 CHAIN_DIR=$CHAIN_DIR $CWD/vigilante-start.sh
 # Start EOTS
 CHAIN_DIR=$CHAIN_DIR $CWD/eots-start.sh
 
+# sleeps here, because covd and fpd need funds and execute an tx bank send from user
+# to avoid acc sequence errors, just wait until produces a block.
 sleep 2
+
 # Start FPD
 CHAIN_DIR=$CHAIN_DIR $CWD/fpd-start.sh
 
-# sleep 2
 # Start BTC Staker and stakes to btc
 CHAIN_DIR=$CHAIN_DIR $CWD/btc-staker.sh

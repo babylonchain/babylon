@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 # USAGE:
 # ./setup-single-node.sh <option of full path to babylond>
@@ -9,7 +9,6 @@ CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 NODE_BIN="${1:-$CWD/../../build/babylond}"
 
-# These options can be overridden by env
 CHAIN_ID="${CHAIN_ID:-test-1}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 DENOM="${DENOM:-ubbn}"
@@ -161,7 +160,7 @@ fi
 
 echo "--- Validating genesis..."
 # initial_height bad sdk --" https://github.com/cosmos/cosmos-sdk/issues/18477
-# $NODE_BIN $home0 validate-genesis
+# $NODE_BIN $home0 validate-genesis $n0cfgDir/genesis.json
 
 # Use perl for cross-platform compatibility
 # Example usage: perl -i -pe 's/^param = ".*?"/param = "100"/' config.toml

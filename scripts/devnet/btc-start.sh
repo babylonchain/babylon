@@ -95,15 +95,11 @@ gen_blocks () {
 gencerts -d $btcCertPath -H host.docker.internal
 
 
-echo "1. btcd start"
 btcd --simnet --rpclisten 127.0.0.1:18556 --datadir $BTC_HOME/btc-data-dir $flagRpcs $flagRpcBtcCert --rpckey $btcRpcKey --logdir $btcLogs/btcd-to-create-wallet >> $btcLogs/btcd-to-create-wallet.log &
-# Gets the btc pid
 echo $! > $btcdpid
 sleep 1
-echo "1. btcd finish"
 
 # Creates the wallet
-echo "2. btcwallet start"
 script -q -c 'btcwallet --simnet -u rpcuser -P rpcpass --rpccert '$btcWalletRpcCert' --rpckey '$btcWalletRpcKey' --cafile '$btcRpcCert' --logdir '$btcLogs'/btc-create-wallet --appdata '$BTC_HOME'/appdata-wallet --create' <<ENDDOC /dev/null
 walletpass
 walletpass
@@ -112,21 +108,12 @@ n
 OK
 ENDDOC
 sleep 1
-echo "2. btcwallet finish"
 
-
-echo "3. btcwallet start"
 btcwallet --simnet --rpclisten=127.0.0.1:18554 --rpcconnect=127.0.0.1:18556 --appdata $BTC_HOME/appdata-wallet $flagRpcUserPass $flagRpcWalletCertKey $flagCatFile --logdir $btcLogs/btcwallet2 >> $btcLogs/btcwallet2.log &
 echo $! > $btcwalletpid
 sleep 1
-echo "3. btcwallet finish"
 
-
-echo "4. btcctl new mining addr start"
 newMiningAddr=$(btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert --rpcserver 127.0.0.1 getnewaddress)
-echo "4. btcctl new mining addr finish"
-echo "."
-echo "."
 echo "new mining addr" $newMiningAddr
 
 echo "kills the btcprocess"
@@ -142,7 +129,6 @@ sleep 4
 blockHeight=120
 
 btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert setgenerate 0
-echo "..."
 btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate $blockHeight
 echo "generated $blockHeight blocks"
 

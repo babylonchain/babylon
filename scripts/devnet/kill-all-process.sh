@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# USAGE:
+# ./kill-all-process.sh
+
+# Kill all the process stored in the PID paths of possible generated processes in CHAIN_DIR
+
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 CHAIN_ID="${CHAIN_ID:-test-1}"

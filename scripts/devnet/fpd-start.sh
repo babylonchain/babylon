@@ -1,13 +1,11 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 # USAGE:
 # ./fpd-start
 
 # it starts the finality provider for single node chain and validator
-
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-# These options can be overridden by env
 CHAIN_ID="${CHAIN_ID:-test-1}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 FPD_HOME="${FPD_HOME:-$CHAIN_DIR/fpd}"
@@ -69,21 +67,24 @@ perl -i -pe 's|BitcoinNetwork = signet|BitcoinNetwork = simnet|g' $cfg
 perl -i -pe 's|Port = 2112|Port = 2734|g' $cfg
 perl -i -pe 's|RpcListener = 127.0.0.1:12581|RpcListener = "'$listenAddr'"|g' $cfg
 
+# Adds new key for the finality provider
 fpd keys add --key-name $fpKeyName $cid $homeF > $outdir/keys-add-keys-finality-provider.txt
 
+# Starts the finality provider daemon
 pid_file=$FPD_HOME/fpd.pid
 fpd start --rpc-listener $listenAddr $homeF > $logdir/fpd-start.log 2>&1 &
 echo $! > $pid_file
 sleep 2
 
+# Creates the finality provider and stores it into the database and eots
 createFPFile=$outdir/create-finality-provider.json
 fpcli create-finality-provider --key-name $fpKeyName $cid $homeF $dAddr --moniker val-fp > $createFPFile
 btcPKHex=$(cat $createFPFile | jq '.btc_pk_hex' -r)
 
-
+# Transfer funds to the fp acc created
 fpBbnAddr=$(babylond $homeF keys show $fpKeyName -a $kbt)
-# transfer funds to the acc created
 babylond tx bank send user $fpBbnAddr 100000000ubbn $homeN0 $kbt $cid -y
 
+# Register the finality provider
 registerFPFile=$outdir/register-finality-provider.json
 fpcli register-finality-provider $dAddr --btc-pk $btcPKHex > $registerFPFile

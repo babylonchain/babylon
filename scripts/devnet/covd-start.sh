@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 # USAGE:
 # ./covd-start
@@ -7,9 +7,6 @@
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-NODE_BIN="${1:-$CWD/../../build/babylond}"
-
-# These options can be overridden by env
 CHAIN_ID="${CHAIN_ID:-test-1}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 COVD_HOME="${COVD_HOME:-$CHAIN_DIR/covd}"
@@ -23,10 +20,14 @@ then
   exit 1
 fi
 
-# Home flag for folder
-homeF="--home $COVD_HOME"
+if ! command -v babylond &> /dev/null
+then
+  echo "⚠️ babylond command could not be found!"
+  echo "Install it by checking https://github.com/babylonchain/babylon"
+  exit 1
+fi
 
-# babylon node Home flag for folder
+homeF="--home $COVD_HOME"
 n0dir="$CHAIN_DIR/$CHAIN_ID/n0"
 homeN0="--home $n0dir"
 kbt="--keyring-backend test"

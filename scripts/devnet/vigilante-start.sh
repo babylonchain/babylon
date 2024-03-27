@@ -1,13 +1,12 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 # USAGE:
 # ./vigilante-start
 
-# Starts an btc chain with a new mining addr.
+# Starts an vigilate submitter and reporter connected to babylon and btc chain.
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-# These options can be overridden by env
 CHAIN_ID="${CHAIN_ID:-test-1}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 CHAIN_HOME="$CHAIN_DIR/$CHAIN_ID"
@@ -47,9 +46,11 @@ submitterpid="$vigilantepidPath/submitter.pid"
 kbt="--keyring-backend test"
 submitterAddr=$($NODE_BIN --home $N0_HOME keys show submitter -a $kbt)
 
+# Creates one config for each vigilante process
 CONF_PATH=$vigilanteConfSub CLEANUP=0 SUBMITTER_ADDR=$submitterAddr $CWD/vigilante-setup-conf.sh
 CONF_PATH=$vigilanteConfRep CLEANUP=0 SUBMITTER_ADDR=$submitterAddr SERVER_PORT=2134 LISTEN_PORT=8068 $CWD/vigilante-setup-conf.sh
 
+# Starts reporter and submitter
 vigilante --config $vigilanteConfRep reporter > $vigilanteLogs/reporter.log 2>&1 &
 echo $! > $reporterpid
 

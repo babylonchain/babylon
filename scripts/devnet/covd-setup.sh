@@ -1,4 +1,4 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 # USAGE:
 # ./covd-setup
@@ -7,9 +7,6 @@
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-NODE_BIN="${1:-$CWD/../../build/babylond}"
-
-# These options can be overridden by env
 CHAIN_ID="${CHAIN_ID:-test-1}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 COVD_HOME="${COVD_HOME:-$CHAIN_DIR/covd}"
@@ -29,12 +26,10 @@ then
   exit 1
 fi
 
-# Home flag for folder
 homeF="--home $COVD_HOME"
-
-# Config files for nodes
-cfg="$COVD_HOME/covd.conf"
 keyName="covenant"
+
+cfg="$COVD_HOME/covd.conf"
 covdPubFile=$COVD_HOME/keyring-test/$keyName.pubkey.json
 covdPKs=$COVD_HOME/pks.json
 

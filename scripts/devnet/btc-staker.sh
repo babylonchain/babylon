@@ -1,13 +1,12 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 # USAGE:
 # ./btc-staker
 
-# Starts an btc staker and stakes a btc to it.
+# Starts an btc staker and sends stake tx to btc.
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-# These options can be overridden by env
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 CHAIN_ID="${CHAIN_ID:-test-1}"
 BTC_HOME="${BTC_HOME:-$CHAIN_DIR/btc}"
@@ -44,7 +43,6 @@ mkdir -p $pidPath
 mkdir -p $btcctldOutputDirPath
 mkdir -p $stakercliLogsDir
 mkdir -p $stakercliOutputDir
-
 
 flagRpcs="--rpcuser=rpcuser --rpcpass=rpcpass"
 flagRpcWalletCert="--rpccert $btcWalletRpcCert"
@@ -103,17 +101,7 @@ perl -i -pe 's|DBPath = '$HOME'/.stakerd/data|DBPath = "'$stakercliDBDir'"|g' $s
 # starts the staker daemon
 stakerd --configfile=$stakercliConfigFile > $stakercliLogsDir/daemon.log 2>&1 &
 echo $! > $pidPath/stakerd.pid
-
-sleep 2
-
-# Generate new address and sends values to it
-# "legacy" "p2sh-segwit" "bech32"
-# stakerBTCAddr=$(btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert getnewaddress default legacy)
-# echo $stakerBTCAddr > $btcctldOutputDirPath/btcstaker.addr
-# btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert walletpassphrase walletpass 10
-# btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert sendtoaddress $stakerBTCAddr 6
-# btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 1
-# sleep 1
+sleep 2 # waits for the daemon to load.
 
 finalityProviderBTCPubKey=$(stakercli daemon babylon-finality-providers | jq .finality_providers[0].bitcoin_public_Key -r)
 echo $finalityProviderBTCPubKey > $stakercliOutputDir/fpbtc.pub.key
@@ -124,4 +112,5 @@ echo $stakerBTCAddrListOutput > $stakercliOutputDir/list.output.last.addr
 # Creates the btc delegation
 stakercli daemon stake --staker-address $stakerBTCAddrListOutput --staking-amount 1000000 --finality-providers-pks $finalityProviderBTCPubKey --staking-time 10000 > $stakercliOutputDir/btc-staking-tx.json
 
+# Generate a few blocks to confirm the tx.
 btcctl --simnet --wallet $flagRpcs $flagRpcWalletCert generate 11

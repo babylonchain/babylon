@@ -1,15 +1,12 @@
-#!/bin/bash -eux
+#!/bin/bash -eu
 
 # USAGE:
 # ./eots-start
 
-# it starts the covenant for single node chain
+# it starts the eots for finality provider
 
 CWD="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-NODE_BIN="${1:-$CWD/../../build/babylond}"
-
-# These options can be overridden by env
 CHAIN_ID="${CHAIN_ID:-test-1}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 EOTS_HOME="${EOTS_HOME:-$CHAIN_DIR/eots}"
