@@ -15,8 +15,6 @@ import (
 type ModNScalar = btcec.ModNScalar
 type PrivateKey = secp256k1.PrivateKey
 type PublicKey = secp256k1.PublicKey
-type PrivateRand = secp256k1.ModNScalar
-type PublicRand = secp256k1.FieldVal
 
 // The Signature is only the S part of the BEP-340 Schnorr signatures.
 type Signature = ModNScalar
@@ -29,17 +27,6 @@ func KeyGen(randSource io.Reader) (*PrivateKey, error) {
 // PubGen returns the associated public key from a private key.
 func PubGen(k *PrivateKey) *PublicKey {
 	return k.PubKey()
-}
-
-// RandGen returns the value to be used as random value when signing, and the associated public value.
-func RandGen(randSource io.Reader) (*PrivateRand, *PublicRand, error) {
-	pk, err := KeyGen(randSource)
-	if err != nil {
-		return nil, nil, err
-	}
-	var j secp256k1.JacobianPoint
-	pk.PubKey().AsJacobian(&j)
-	return &pk.Key, &j.X, nil
 }
 
 // hash function is used for hashing the message input for all functions of the library.
