@@ -194,7 +194,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		process new BTC delegations under new finality providers in activeBTCDels
 	*/
 	// sort new finality providers in activeBTCDels to ensure determinism
-	fpBTCPKHexList := []string{}
+	fpBTCPKHexList := make([]string, 0, len(activeBTCDels))
 	for fpBTCPKHex := range activeBTCDels {
 		fpBTCPKHexList = append(fpBTCPKHexList, fpBTCPKHex)
 	}
