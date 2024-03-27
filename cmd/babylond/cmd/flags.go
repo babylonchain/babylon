@@ -41,7 +41,6 @@ const (
 	flagSlashingAddress            = "slashing-address"
 	flagMinSlashingFee             = "min-slashing-fee-sat"
 	flagSlashingRate               = "slashing-rate"
-	flagMinPubRand                 = "min-pub-rand"
 	flagMinCommissionRate          = "min-commission-rate"
 )
 
@@ -71,7 +70,6 @@ type GenesisCLIArgs struct {
 	MaxActiveFinalityProviders   uint32
 	MinUnbondingTime             uint16
 	MinUnbondingRate             math.LegacyDec
-	MinPubRand                   uint64
 	MinCommissionRate            math.LegacyDec
 }
 
@@ -100,8 +98,6 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32(flagMaxActiveFinalityProviders, 100, "Bitcoin staking maximum active finality providers")
 	cmd.Flags().Uint16(flagMinUnbondingTime, 0, "Min timelock on unbonding transaction in btc blocks")
 	cmd.Flags().String(flagMinUnbondingRate, "0.8", "Min amount of btc required in unbonding output expressed as a fraction of staking output")
-	// finality args
-	cmd.Flags().Uint64(flagMinPubRand, 100, "Bitcoin staking minimum public randomness commit")
 	// inflation args
 	cmd.Flags().Float64(flagInflationRateChange, 0.13, "Inflation rate change")
 	cmd.Flags().Float64(flagInflationMax, 0.2, "Maximum inflation")
@@ -134,7 +130,6 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	maxActiveFinalityProviders, _ := cmd.Flags().GetUint32(flagMaxActiveFinalityProviders)
 	minUnbondingTime, _ := cmd.Flags().GetUint16(flagMinUnbondingTime)
 	minUnbondingRate, _ := cmd.Flags().GetString(flagMinUnbondingRate)
-	minPubRand, _ := cmd.Flags().GetUint64(flagMinPubRand)
 	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
 	inflationMax, _ := cmd.Flags().GetFloat64(flagInflationMax)
@@ -174,7 +169,6 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		MaxActiveFinalityProviders:   maxActiveFinalityProviders,
 		MinUnbondingTime:             minUnbondingTime,
 		MinUnbondingRate:             math.LegacyMustNewDecFromStr(minUnbondingRate),
-		MinPubRand:                   minPubRand,
 		GenesisTime:                  genesisTime,
 		InflationRateChange:          inflationRateChange,
 		InflationMax:                 inflationMax,

@@ -14,45 +14,6 @@ import (
 	"github.com/babylonchain/babylon/x/finality/types"
 )
 
-func FuzzListPublicRandomness(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
-		ctx = sdk.UnwrapSDKContext(ctx)
-
-		// add a random list of EOTS public randomness
-		fpBTCPK, err := datagen.GenRandomBIP340PubKey(r)
-		require.NoError(t, err)
-		startHeight := datagen.RandomInt(r, 100)
-		numPubRand := datagen.RandomInt(r, 1000) + 2
-		_, prList, err := datagen.GenRandomPubRandList(r, numPubRand)
-		require.NoError(t, err)
-		keeper.SetPubRandList(ctx, fpBTCPK, startHeight, prList)
-
-		// perform a query to pubrand list and assert consistency
-		// NOTE: pagination is already tested in Cosmos SDK so we don't test it here again,
-		// instead only ensure it takes effect
-		limit := datagen.RandomInt(r, int(numPubRand)-1) + 1
-		req := &types.QueryListPublicRandomnessRequest{
-			FpBtcPkHex: fpBTCPK.MarshalHex(),
-			Pagination: &query.PageRequest{
-				Limit: limit,
-			},
-		}
-		resp, err := keeper.ListPublicRandomness(ctx, req)
-		require.NoError(t, err)
-		require.Equal(t, int(limit), len(resp.PubRandMap)) // check if pagination takes effect
-		for i := startHeight; i < startHeight+limit; i++ {
-			expectedPR := prList[i-startHeight]
-			actualPR := resp.PubRandMap[i]
-			require.Equal(t, expectedPR.MustMarshal(), actualPR.MustMarshal())
-		}
-	})
-}
-
 func FuzzBlock(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {

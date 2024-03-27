@@ -1,6 +1,7 @@
 package eots
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -32,15 +33,32 @@ func RandGen(randSource io.Reader) (*PrivateRand, *PublicRand, error) {
 
 func NewMasterRandPair(randSource io.Reader) (*MasterSecretRand, *MasterPublicRand, error) {
 	// get random seed
-	var seed [32]byte
+	var (
+		seed [32]byte
+		err  error
+	)
 	if _, err := io.ReadFull(randSource, seed[:]); err != nil {
 		return nil, nil, err
 	}
 	// generate new master key pair
-	masterSK, err := hdkeychain.NewMaster(seed[:], &chaincfg.MainNetParams)
-	if err != nil {
+	var masterSK *hdkeychain.ExtendedKey
+	for {
+		masterSK, err = hdkeychain.NewMaster(seed[:], &chaincfg.MainNetParams)
+		// if all good, use this master SK
+		if err == nil {
+			break
+		}
+		// NOTE: There is an extremely small chance (< 1 in 2^127) the provided seed
+		// will derive to an unusable secret key.  The ErrUnusableSeed error will be
+		// returned if this should occur. We need to try to generate a new master SK
+		// again
+		if errors.Is(err, hdkeychain.ErrUnusableSeed) {
+			continue
+		}
+		// some other unrecoverable error, return error
 		return nil, nil, err
 	}
+
 	masterPK, err := masterSK.Neuter()
 	if err != nil {
 		return nil, nil, err
@@ -79,6 +97,7 @@ func (msr *MasterSecretRand) MasterPubicRand() (*MasterPublicRand, error) {
 	return &MasterPublicRand{masterPK}, nil
 }
 
+// TODO: extend to support uint64
 func (msr *MasterSecretRand) DeriveRandPair(height uint32) (*PrivateRand, *PublicRand, error) {
 	// get child SK, then child SK in BTC format, and finally private randomness
 	childSK, err := msr.k.Derive(height)
