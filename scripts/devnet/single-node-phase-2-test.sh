@@ -52,6 +52,7 @@ babylond --home $test1n0dir export > $exportedGenFile
 CHAIN_ID=test-2
 # Starts everything from a new chain id
 CHAIN_ID=$CHAIN_ID EXPORTED_GEN_FILE=$exportedGenFile $CWD/single-node-from-exported-gen.sh
+sleep 7 # waits for node to fully start to query
 
 WAIT_UNTIL=1
 amountActiveDels=0
