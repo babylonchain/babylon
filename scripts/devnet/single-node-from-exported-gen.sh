@@ -71,7 +71,7 @@ $NODE_BIN $home0 start --api.enable true --grpc.address="0.0.0.0:9090" --api.ena
 
 echo $! > $n0pid
 
-Start the instance
+# Start the instance
 echo "--- Starting node..."
 echo
 echo "Logs:"
