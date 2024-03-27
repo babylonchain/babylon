@@ -149,13 +149,10 @@ echo "--- Creating gentx..."
 $NODE_BIN $home0 gentx $VAL0_KEY 1000000000$DENOM $kbt $cid
 echo "--- Set POP to checkpointing module..."
 
-$NODE_BIN $home0 gen-helpers ckpt-gen-key $VAL0_ADDR
-# TODO, check how to use.
-# $NODE_BIN $home0 create-genesis-bls
-# $NODE_BIN $home0 add-genesis-bls $n0cfgDir/gen-bls-$VAL0_ADDR.json
-
 $NODE_BIN $home0 collect-gentxs > /dev/null
 
+$NODE_BIN $home0 create-genesis-bls
+$NODE_BIN $home0 add-genesis-bls $n0cfgDir/gen-bls-$VAL0_ADDR.json
 
 if [[ -n "$BTC_BASE_HEADER_FILE" ]]; then
   jq '.app_state.btclightclient.btc_headers = [input]' $n0cfgDir/genesis.json $BTC_BASE_HEADER_FILE > $n0cfgDir/tmp_genesis.json
