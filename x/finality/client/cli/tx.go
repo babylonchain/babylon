@@ -25,69 +25,8 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		NewCommitPubRandListCmd(),
 		NewAddFinalitySigCmd(),
 	)
-
-	return cmd
-}
-
-func NewCommitPubRandListCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "commit-pubrand-list [fp_btc_pk] [start_height] [pub_rand1]  [pub_rand2] ... [sig]",
-		Args:  cobra.MinimumNArgs(4),
-		Short: "Commit a list of public randomness",
-		Long: strings.TrimSpace(
-			`Commit a list of public randomness.`, // TODO: example
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			// get finality provider BTC PK
-			fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
-			if err != nil {
-				return err
-			}
-
-			// get start height
-			startHeight, err := strconv.ParseUint(args[1], 10, 64)
-			if err != nil {
-				return err
-			}
-
-			// get signature
-			sig, err := bbn.NewBIP340SignatureFromHex(args[len(args)-1])
-			if err != nil {
-				return err
-			}
-
-			// get pub rand list
-			pubRandHexList := args[2 : len(args)-1]
-			pubRandList := []bbn.SchnorrPubRand{}
-			for _, prHex := range pubRandHexList {
-				pr, err := bbn.NewSchnorrPubRandFromHex(prHex)
-				if err != nil {
-					return err
-				}
-				pubRandList = append(pubRandList, *pr)
-			}
-
-			msg := types.MsgCommitPubRandList{
-				Signer:      clientCtx.FromAddress.String(),
-				FpBtcPk:     fpBTCPK,
-				StartHeight: startHeight,
-				PubRandList: pubRandList,
-				Sig:         sig,
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

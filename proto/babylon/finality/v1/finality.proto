@@ -23,8 +23,9 @@ message Evidence {
     bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // block_height is the height of the conflicting blocks
     uint64 block_height = 2;
-    // pub_rand is the public randomness the finality provider has committed to
-    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+    // master_pub_rand is the master public randomness the finality provider has committed to
+    // encoded as a base58 string
+    string master_pub_rand = 3;
     // canonical_app_hash is the AppHash of the canonical block
     bytes canonical_app_hash = 4;
     // fork_app_hash is the AppHash of the fork block

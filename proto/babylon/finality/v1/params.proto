@@ -8,8 +8,4 @@ option go_package = "github.com/babylonchain/babylon/x/finality/types";
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
-
-  // min_pub_rand is the minimum number of public randomness each 
-  // message should commit
-  uint64 min_pub_rand = 1;
 }
