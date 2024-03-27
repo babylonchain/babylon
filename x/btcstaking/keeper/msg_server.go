@@ -450,12 +450,17 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	params := ms.GetParams(ctx)
-
 	// ensure BTC delegation exists
 	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
+	}
+
+	params := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+
+	if params == nil {
+		// This is programming error, we should not prune params for existing delegations
+		panic("params version in BTC delegation is not found")
 	}
 
 	// ensure that the given covenant PK is in the parameter
@@ -493,7 +498,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	/*
 		Verify each covenant adaptor signature over slashing tx
 	*/
-	stakingInfo, err := btcDel.GetStakingInfo(&params, ms.btcNet)
+	stakingInfo, err := btcDel.GetStakingInfo(params, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
 	}
@@ -550,7 +555,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		verify each adaptor signature on slashing unbonding tx
 	*/
 	unbondingOutput := unbondingMsgTx.TxOut[0] // unbonding tx always have only one output
-	unbondingInfo, err := btcDel.GetUnbondingInfo(&params, ms.btcNet)
+	unbondingInfo, err := btcDel.GetUnbondingInfo(params, ms.btcNet)
 	if err != nil {
 		panic(err)
 	}
@@ -580,6 +585,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		parsedSlashingAdaptorSignatures,
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
+		params,
 	)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
@@ -596,13 +602,17 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	if err := req.ValidateBasic(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
-	bsParams := ms.GetParams(ctx)
-
 	// ensure BTC delegation exists
 	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
+	}
+
+	bsParams := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+
+	if bsParams == nil {
+		// This is programming error, we should not prune params for existing delegations
+		panic("params version in BTC delegation is not found")
 	}
 
 	// ensure the BTC delegation with the given staking tx hash is active
@@ -617,7 +627,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	if err != nil {
 		panic(fmt.Errorf("failed to parse unbonding tx from existing delegation with hash %s : %v", req.StakingTxHash, err))
 	}
-	stakingInfo, err := btcDel.GetStakingInfo(&bsParams, ms.btcNet)
+	stakingInfo, err := btcDel.GetStakingInfo(bsParams, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
 	}
@@ -651,13 +661,20 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeySelectiveSlashingEvidence)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	bsParams := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists
 	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
+
+	bsParams := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+
+	if bsParams == nil {
+		// This is programming error, we should not prune params for existing delegations
+		panic("params version in BTC delegation is not found")
+	}
+
 	// ensure the BTC delegation is active, or its BTC undelegation receives an
 	// unbonding signature from the staker
 	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
