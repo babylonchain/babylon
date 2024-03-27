@@ -33,7 +33,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h := NewHelper(t, nil, nil)
+		h := NewHelper(t, nil, nil, nil)
 
 		// generate new finality providers
 		fps := []*types.FinalityProvider{}
@@ -140,7 +140,8 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -187,7 +188,8 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -251,7 +253,8 @@ func FuzzBTCUndelegate(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -323,7 +326,8 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -389,7 +393,8 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -465,7 +470,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-	h := NewHelper(t, btclcKeeper, btccKeeper)
+	ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 	// set covenant PK to params
 	_, covenantPKs := h.GenAndApplyParams(r)
@@ -632,7 +638,8 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			// mock BTC light client and BTC checkpoint modules
 			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-			h := NewHelper(t, btclcKeeper, btccKeeper)
+			ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+			h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 			// set all parameters
 			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime)
@@ -704,7 +711,8 @@ func TestMinimalUnbondingRate(t *testing.T) {
 			// mock BTC light client and BTC checkpoint modules
 			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-			h := NewHelper(t, btclcKeeper, btccKeeper)
+			ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+			h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 			// set all parameters, by default minimal unbonding value is 80% of staking value
 			_, _ = h.GenAndApplyParams(r)

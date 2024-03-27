@@ -130,3 +130,26 @@ func (mr *MockBtcCheckpointKeeperMockRecorder) GetPowLimit() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPowLimit", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetPowLimit))
 }
+
+// MockCheckpointingKeeper is a mock of CheckpointingKeeper interface.
+type MockCheckpointingKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockCheckpointingKeeperMockRecorder
+}
+
+// MockCheckpointingKeeperMockRecorder is the mock recorder for MockCheckpointingKeeper.
+type MockCheckpointingKeeperMockRecorder struct {
+	mock *MockCheckpointingKeeper
+}
+
+// NewMockCheckpointingKeeper creates a new mock instance.
+func NewMockCheckpointingKeeper(ctrl *gomock.Controller) *MockCheckpointingKeeper {
+	mock := &MockCheckpointingKeeper{ctrl: ctrl}
+	mock.recorder = &MockCheckpointingKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCheckpointingKeeper) EXPECT() *MockCheckpointingKeeperMockRecorder {
+	return m.recorder
+}

@@ -19,3 +19,6 @@ type BtcCheckpointKeeper interface {
 	GetPowLimit() *big.Int
 	GetParams(ctx context.Context) (p btcctypes.Params)
 }
+
+type CheckpointingKeeper interface {
+}
