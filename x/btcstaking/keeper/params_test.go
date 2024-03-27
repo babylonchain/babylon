@@ -86,6 +86,8 @@ func FuzzParamsVersioning(f *testing.F) {
 		}
 
 		lastParams := k.GetParams(ctx)
+		lastVer := k.GetParamsByVersion(ctx, uint32(len(generatedParams)-1))
 		require.EqualValues(t, *generatedParams[len(generatedParams)-1], lastParams)
+		require.EqualValues(t, lastParams, *lastVer)
 	})
 }

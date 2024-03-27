@@ -82,17 +82,6 @@ func (k Keeper) SetParams(ctx context.Context, p types.Params) error {
 	return nil
 }
 
-// GetParams returns the latest x/btcstaking module parameters.
-func (k Keeper) GetParams(ctx context.Context) (p types.Params) {
-	lastParams := k.getLastParams(ctx)
-
-	if lastParams == nil {
-		return p
-	}
-
-	return lastParams.Params
-}
-
 func (k Keeper) GetAllParams(ctx context.Context) []*types.Params {
 	paramsStore := k.paramsStore(ctx)
 	it := paramsStore.Iterator(nil, nil)
@@ -120,14 +109,22 @@ func (k Keeper) GetParamsByVersion(ctx context.Context, v uint32) *types.Params 
 	return &sp.Params
 }
 
-func (k Keeper) GetParamsWithVersion(ctx context.Context) (sp types.StoredParams) {
-	lastParams := k.getLastParams(ctx)
-
-	if lastParams == nil {
-		return sp
+func mustGetLastParams(ctx context.Context, k Keeper) types.StoredParams {
+	sp := k.getLastParams(ctx)
+	if sp == nil {
+		panic("last params not found")
 	}
 
-	return *k.getLastParams(ctx)
+	return *sp
+}
+
+// GetParams returns the latest x/btcstaking module parameters.
+func (k Keeper) GetParams(ctx context.Context) types.Params {
+	return mustGetLastParams(ctx, k).Params
+}
+
+func (k Keeper) GetParamsWithVersion(ctx context.Context) types.StoredParams {
+	return mustGetLastParams(ctx, k)
 }
 
 // MinCommissionRate returns the minimal commission rate of finality providers
