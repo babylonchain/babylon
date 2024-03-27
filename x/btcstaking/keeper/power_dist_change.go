@@ -9,7 +9,6 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/davecgh/go-spew/spew"
 )
 
 /* power distribution update */
@@ -52,9 +51,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
-	newDc := k.processAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
-
-	spew.Println("DEBUGGGGG newDc", newDc)
+	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
@@ -93,13 +90,13 @@ func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache, maxActiveFps uint3
 	// TODO: record number of BTC delegations under different status
 }
 
-// processAllPowerDistUpdateEvents processes all events that affect
+// ProcessAllPowerDistUpdateEvents processes all events that affect
 // voting power distribution and returns a new distribution cache.
 // The following events will affect the voting power distribution:
 // - newly active BTC delegations
 // - newly unbonded BTC delegations
 // - slashed finality providers
-func (k Keeper) processAllPowerDistUpdateEvents(
+func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	ctx context.Context,
 	dc *types.VotingPowerDistCache,
 	events []*types.EventPowerDistUpdate,
@@ -195,6 +192,7 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 	/*
 		process new BTC delegations under new finality providers in activeBTCDels
 	*/
+	// TODO: fix non-determinism here
 	for fpBTCPKHex, fpActiveBTCDels := range activeBTCDels {
 		// get the finality provider and initialise its dist info
 		fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(fpBTCPKHex)

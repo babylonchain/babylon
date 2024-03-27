@@ -7,9 +7,61 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
+
+func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		h.GenAndApplyParams(r)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		require.NoError(t, err)
+
+		// generate and insert a number of new finality providers
+		fpPKs := []*btcec.PublicKey{}
+		for i := 0; i < 5; i++ {
+			_, fpPK, _ := h.CreateFinalityProvider(r)
+			fpPKs = append(fpPKs, fpPK)
+		}
+
+		// empty dist cache
+		dc := types.NewVotingPowerDistCache()
+
+		stakingValue := int64(2 * 10e8)
+
+		// generate many new BTC delegations under each finality provider, and their corresponding events
+		events := []*types.EventPowerDistUpdate{}
+		for _, fpPK := range fpPKs {
+			for i := 0; i < 5; i++ {
+				_, _, _, _, del := h.CreateDelegation(r, fpPK, changeAddress.EncodeAddress(), stakingValue, 1000)
+				event := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+					StakingTxHash: del.MustGetStakingTxHash().String(),
+					NewState:      types.BTCDelegationStatus_ACTIVE,
+				})
+				events = append(events, event)
+			}
+		}
+
+		newDc := h.BTCStakingKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events, 100)
+		for i := 0; i < 10; i++ {
+			newDc2 := h.BTCStakingKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events, 100)
+			require.Equal(t, newDc, newDc2)
+		}
+	})
+}
 
 func FuzzFinalityProviderEvents(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
