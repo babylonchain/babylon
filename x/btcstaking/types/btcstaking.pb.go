@@ -83,6 +83,7 @@ type FinalityProvider struct {
 	// pop is the proof of possession of babylon_pk and btc_pk
 	Pop *ProofOfPossession `protobuf:"bytes,5,opt,name=pop,proto3" json:"pop,omitempty"`
 	// master_pub_rand is the master public randomness of the finality provider
+	// encoded as a base58 string
 	MasterPubRand string `protobuf:"bytes,6,opt,name=master_pub_rand,json=masterPubRand,proto3" json:"master_pub_rand,omitempty"`
 	// slashed_babylon_height indicates the Babylon height when
 	// the finality provider is slashed.
@@ -179,6 +180,7 @@ type FinalityProviderWithMeta struct {
 	// voting_power is the voting power of this finality provider at the given height
 	VotingPower uint64 `protobuf:"varint,3,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
 	// master_pub_rand is the master public randomness of the finality provider
+	// encoded as a base58 string
 	MasterPubRand string `protobuf:"bytes,4,opt,name=master_pub_rand,json=masterPubRand,proto3" json:"master_pub_rand,omitempty"`
 	// slashed_babylon_height indicates the Babylon height when
 	// the finality provider is slashed.
