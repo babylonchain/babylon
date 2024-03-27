@@ -187,10 +187,8 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		TestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
-		genhelpers.GenesisHelpers(),
+		genhelpers.CmdGenHelpers(gentxModule.GenTxValidator),
 		CreateBlsKeyCmd(),
-		GenBlsCmd(),
-		AddGenBlsCmd(gentxModule.GenTxValidator),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),
 	)

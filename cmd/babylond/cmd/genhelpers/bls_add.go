@@ -1,4 +1,4 @@
-package cmd
+package genhelpers
 
 import (
 	"encoding/json"
@@ -16,9 +16,10 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
-func AddGenBlsCmd(validator genutiltypes.MessageValidator) *cobra.Command {
+// CmdAddBls CLI command to add the file with proof of possesion into the genesis state.
+func CmdAddBls(validator genutiltypes.MessageValidator) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-genesis-bls [genesis_bls_file]",
+		Use:   "add-bls [genesis_bls_file]",
 		Short: "Add a genesis BLS key to genesis.json",
 		Long: `Add a genesis BLS key per validator and update the pregenesis file in place to include their
 BLS keys in the checkpointing module's genesis state.'

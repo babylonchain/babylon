@@ -151,8 +151,8 @@ echo "--- Set POP to checkpointing module..."
 
 $NODE_BIN $home0 collect-gentxs > /dev/null
 
-$NODE_BIN $home0 create-genesis-bls
-$NODE_BIN $home0 add-genesis-bls $n0cfgDir/gen-bls-$VAL0_ADDR.json
+$NODE_BIN $home0 gen-helpers create-bls
+$NODE_BIN $home0 gen-helpers add-bls $n0cfgDir/gen-bls-$VAL0_ADDR.json
 
 if [[ -n "$BTC_BASE_HEADER_FILE" ]]; then
   jq '.app_state.btclightclient.btc_headers = [input]' $n0cfgDir/genesis.json $BTC_BASE_HEADER_FILE > $n0cfgDir/tmp_genesis.json

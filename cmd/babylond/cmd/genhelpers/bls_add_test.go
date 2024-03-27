@@ -1,4 +1,4 @@
-package cmd_test
+package genhelpers_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 
@@ -30,7 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd/genhelpers"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/testutil/cli"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -67,7 +68,7 @@ func newConfig() depinject.Config {
 
 // test adding genesis BLS keys without gentx
 // error is expected
-func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
+func Test_CmdCreateAddWithoutGentx(t *testing.T) {
 	home := t.TempDir()
 	logger := log.NewNopLogger()
 	cmtcfg, err := genutiltest.CreateDefaultCometConfig(home)
@@ -86,7 +87,7 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 	gentxModule := bbn.BasicModuleManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 	appCodec := bbn.AppCodec()
 
-	err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
+	err = genutiltest.ExecInitCmd(module.NewBasicManager(genutil.AppModuleBasic{}), home, appCodec)
 	require.NoError(t, err)
 
 	serverCtx := server.NewContext(viper.New(), cmtcfg, logger)
@@ -104,7 +105,7 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 	genKeyFileName := filepath.Join(home, fmt.Sprintf("gen-bls-%s.json", genKey.ValidatorAddress))
 	err = tempfile.WriteFileAtomic(genKeyFileName, jsonBytes, 0600)
 	require.NoError(t, err)
-	addGenBlsCmd := cmd.AddGenBlsCmd(gentxModule.GenTxValidator)
+	addGenBlsCmd := genhelpers.CmdAddBls(gentxModule.GenTxValidator)
 	addGenBlsCmd.SetArgs(
 		[]string{genKeyFileName},
 	)
@@ -114,7 +115,7 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 
 // test adding genesis BLS keys with gentx
 // error is expected if adding duplicate
-func Test_AddGenBlsCmdWithGentx(t *testing.T) {
+func Test_CmdAddBlsWithGentx(t *testing.T) {
 	db := dbm.NewMemDB()
 	signer, err := app.SetupTestPrivSigner()
 	require.NoError(t, err)
@@ -144,7 +145,7 @@ func Test_AddGenBlsCmdWithGentx(t *testing.T) {
 	for i := 0; i < cfg.NumValidators; i++ {
 		v := testNetwork.Validators[i]
 		// build and create genesis BLS key
-		genBlsCmd := cmd.GenBlsCmd()
+		genBlsCmd := genhelpers.CmdCreateBls()
 		nodeCfg := cmtconfig.DefaultConfig()
 		homeDir := filepath.Join(v.Dir, "simd")
 		nodeCfg.SetRoot(homeDir)
@@ -160,7 +161,7 @@ func Test_AddGenBlsCmdWithGentx(t *testing.T) {
 		require.NotNil(t, genKey)
 
 		// add genesis BLS key to the target context
-		addBlsCmd := cmd.AddGenBlsCmd(gentxModule.GenTxValidator)
+		addBlsCmd := genhelpers.CmdAddBls(gentxModule.GenTxValidator)
 		_, err = cli.ExecTestCLICmd(targetCtx, addBlsCmd, []string{genKeyFileName})
 		require.NoError(t, err)
 		appState, _, err := genutiltypes.GenesisStateFromGenFile(targetGenesisFile)
