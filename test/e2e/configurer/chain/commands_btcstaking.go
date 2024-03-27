@@ -20,7 +20,7 @@ import (
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
-func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
+func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, masterPubRand string, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
 	n.LogActionF("creating finality provider")
 
 	// get babylon PK hex
@@ -34,7 +34,7 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 	require.NoError(n.t, err)
 
 	cmd := []string{
-		"babylond", "tx", "btcstaking", "create-finality-provider", babylonPKHex, btcPKHex, popHex, "--from=val", "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
+		"babylond", "tx", "btcstaking", "create-finality-provider", babylonPKHex, btcPKHex, popHex, masterPubRand, "--from=val", "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
 	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
