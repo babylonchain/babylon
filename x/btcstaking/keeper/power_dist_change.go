@@ -9,6 +9,7 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/davecgh/go-spew/spew"
 )
 
 /* power distribution update */
@@ -52,6 +53,8 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
 	newDc := k.processAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
+
+	spew.Println("DEBUGGGGG newDc", newDc)
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
