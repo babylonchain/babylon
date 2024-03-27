@@ -97,6 +97,7 @@ type Evidence struct {
 	// block_height is the height of the conflicting blocks
 	BlockHeight uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// master_pub_rand is the master public randomness the finality provider has committed to
+	// encoded as a base58 string
 	MasterPubRand string `protobuf:"bytes,3,opt,name=master_pub_rand,json=masterPubRand,proto3" json:"master_pub_rand,omitempty"`
 	// canonical_app_hash is the AppHash of the canonical block
 	CanonicalAppHash []byte `protobuf:"bytes,4,opt,name=canonical_app_hash,json=canonicalAppHash,proto3" json:"canonical_app_hash,omitempty"`
