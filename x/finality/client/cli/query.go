@@ -29,7 +29,6 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryParams())
-	cmd.AddCommand(CmdListPublicRandomness())
 	cmd.AddCommand(CmdBlock())
 	cmd.AddCommand(CmdListBlocks())
 	cmd.AddCommand(CmdVotesAtHeight())
@@ -63,39 +62,6 @@ func CmdVotesAtHeight() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdListPublicRandomness() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list-public-randomness [fp_btc_pk_hex]",
-		Short: "list public randomness committed by a given finality provider",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
-			if err != nil {
-				return err
-			}
-
-			res, err := queryClient.ListPublicRandomness(cmd.Context(), &types.QueryListPublicRandomnessRequest{
-				FpBtcPkHex: args[0],
-				Pagination: pageReq,
-			})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "list-public-randomness")
 
 	return cmd
 }

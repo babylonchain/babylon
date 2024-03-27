@@ -16,11 +16,6 @@ service Query {
     option (google.api.http).get = "/babylon/finality/v1/params";
   }
 
-  // ListPublicRandomness is a range query for public randomness of a given finality provider
-  rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
-    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/public_randomness_list";
-  }
-
   // Block queries a block at a given height
   rpc Block(QueryBlockRequest) returns (QueryBlockResponse) {
     option (google.api.http).get = "/babylon/finality/v1/blocks/{height}";
@@ -55,28 +50,6 @@ message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
 }
-
-// QueryListPublicRandomnessRequest is the request type for the
-// Query/ListPublicRandomness RPC method.
-message QueryListPublicRandomnessRequest {
-  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
-  string fp_btc_pk_hex = 1;
-
-  // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
-}
-
-// QueryListPublicRandomnessResponse is the response type for the
-// Query/ListPublicRandomness RPC method.
-message QueryListPublicRandomnessResponse {
-  // pub_rand_map is the map where the key is the height and the value
-  // is the public randomness at this height for the given finality provider
-  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
-
-  // pagination defines the pagination in the response.
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-
 
 // QueriedBlockStatus is the status of blocks that the querier wants to query.
 enum QueriedBlockStatus {

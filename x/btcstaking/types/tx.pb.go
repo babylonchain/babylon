@@ -50,6 +50,7 @@ type MsgCreateFinalityProvider struct {
 	// pop is the proof of possession of babylon_pk and btc_pk
 	Pop *ProofOfPossession `protobuf:"bytes,6,opt,name=pop,proto3" json:"pop,omitempty"`
 	// master_pub_rand is the master public randomness of the finality provider
+	// encoded as a base58 string
 	MasterPubRand string `protobuf:"bytes,7,opt,name=master_pub_rand,json=masterPubRand,proto3" json:"master_pub_rand,omitempty"`
 }
 
