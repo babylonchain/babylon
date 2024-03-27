@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"sort"
 
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
@@ -51,7 +52,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
-	newDc := k.processAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
+	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
@@ -90,13 +91,13 @@ func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache, maxActiveFps uint3
 	// TODO: record number of BTC delegations under different status
 }
 
-// processAllPowerDistUpdateEvents processes all events that affect
+// ProcessAllPowerDistUpdateEvents processes all events that affect
 // voting power distribution and returns a new distribution cache.
 // The following events will affect the voting power distribution:
 // - newly active BTC delegations
 // - newly unbonded BTC delegations
 // - slashed finality providers
-func (k Keeper) processAllPowerDistUpdateEvents(
+func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	ctx context.Context,
 	dc *types.VotingPowerDistCache,
 	events []*types.EventPowerDistUpdate,
@@ -192,7 +193,16 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 	/*
 		process new BTC delegations under new finality providers in activeBTCDels
 	*/
-	for fpBTCPKHex, fpActiveBTCDels := range activeBTCDels {
+	// sort new finality providers in activeBTCDels to ensure determinism
+	fpBTCPKHexList := make([]string, 0, len(activeBTCDels))
+	for fpBTCPKHex := range activeBTCDels {
+		fpBTCPKHexList = append(fpBTCPKHexList, fpBTCPKHex)
+	}
+	sort.SliceStable(fpBTCPKHexList, func(i, j int) bool {
+		return fpBTCPKHexList[i] < fpBTCPKHexList[j]
+	})
+	// for each new finality provider, apply the new BTC delegations to the new dist cache
+	for _, fpBTCPKHex := range fpBTCPKHexList {
 		// get the finality provider and initialise its dist info
 		fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(fpBTCPKHex)
 		if err != nil {
@@ -205,6 +215,7 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 		fpDistInfo := types.NewFinalityProviderDistInfo(newFP)
 
 		// add each BTC delegation
+		fpActiveBTCDels := activeBTCDels[fpBTCPKHex]
 		for _, d := range fpActiveBTCDels {
 			fpDistInfo.AddBTCDel(d)
 		}

@@ -47,7 +47,7 @@ message FinalityProviderWithMeta {
     // voting_power is the voting power of this finality provider at the given height
     uint64 voting_power = 3;
     // master_pub_rand is the master public randomness of the finality provider
-    bytes master_pub_rand = 4;
+    string master_pub_rand = 4;
     // slashed_babylon_height indicates the Babylon height when
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
