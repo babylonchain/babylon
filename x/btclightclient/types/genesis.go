@@ -57,16 +57,16 @@ func (gs GenesisState) Validate() error {
 	// TODO: Even though number of block per re-target depends on the network, in reality it
 	// is always 2016. Maybe we should consider moving it to param, or try to pass
 	// it through
-	// isRetarget := IsRetargetBlock(gs.BtcHeaders[0], &chaincfg.SimNetParams)
-	// if !isRetarget {
-	// 	return fmt.Errorf("genesis block must be a difficulty adjustment block")
-	// }
+	isRetarget := IsRetargetBlock(gs.BtcHeaders[0], &chaincfg.SimNetParams)
+	if !isRetarget {
+		return fmt.Errorf("genesis block must be a difficulty adjustment block")
+	}
 
-	// for _, header := range gs.BtcHeaders {
-	// 	if err := header.Validate(); err != nil {
-	// 		return err
-	// 	}
-	// }
+	for _, header := range gs.BtcHeaders {
+		if err := header.Validate(); err != nil {
+			return err
+		}
+	}
 	// TODO: validate headers have proper parent-child relationships and proper proof of work
 
 	return nil
