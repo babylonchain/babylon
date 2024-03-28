@@ -93,19 +93,6 @@ func (n *NodeConfig) QueryActivatedHeight() uint64 {
 	return resp.Height
 }
 
-// TODO: pagination support
-func (n *NodeConfig) QueryListPublicRandomness(fpBTCPK *bbn.BIP340PubKey) map[uint64]*bbn.SchnorrPubRand {
-	path := fmt.Sprintf("/babylon/finality/v1/finality_providers/%s/public_randomness_list", fpBTCPK.MarshalHex())
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	require.NoError(n.t, err)
-
-	var resp ftypes.QueryListPublicRandomnessResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.PubRandMap
-}
-
 func (n *NodeConfig) QueryVotesAtHeight(height uint64) []bbn.BIP340PubKey {
 	path := fmt.Sprintf("/babylon/finality/v1/votes/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})

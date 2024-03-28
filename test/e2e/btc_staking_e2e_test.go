@@ -32,6 +32,7 @@ var (
 	// finality provider
 	fpBTCSK, _, _ = datagen.GenRandomBTCKeyPair(r)
 	fp            *bstypes.FinalityProvider
+	msr           *eots.MasterSecretRand
 	// BTC delegation
 	delBTCSK, delBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
 	// covenant
@@ -79,9 +80,11 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		create a random finality provider on Babylon
 	*/
 	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	fp, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nonValidatorNode.SecretKey)
+	msr, _, err = eots.NewMasterRandPair(r)
 	s.NoError(err)
-	nonValidatorNode.CreateFinalityProvider(fp.BabylonPk, fp.BtcPk, fp.Pop, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
+	fp, err = datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, nonValidatorNode.SecretKey, msr)
+	s.NoError(err)
+	nonValidatorNode.CreateFinalityProvider(fp.BabylonPk, fp.BtcPk, fp.Pop, fp.MasterPubRand, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
@@ -330,10 +333,9 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.Equal(activeFps[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
 }
 
-// Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
-// test for user story 3: finality provider commits public randomness and submits
-// finality signature, such that blocks can be finalised.
-func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignature() {
+// Test3SubmitFinalitySignature is an end-to-end test for user story 3:
+// finality provider and submits finality signature, such that blocks can be finalised.
+func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -342,28 +344,6 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// get activated height
 	activatedHeight := nonValidatorNode.QueryActivatedHeight()
 	s.Positive(activatedHeight)
-
-	/*
-		commit a number of public randomness since activatedHeight
-	*/
-	// commit public randomness list
-	srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpBTCSK, activatedHeight, 100)
-	s.NoError(err)
-	nonValidatorNode.CommitPubRandList(
-		msgCommitPubRandList.FpBtcPk,
-		msgCommitPubRandList.StartHeight,
-		msgCommitPubRandList.PubRandList,
-		msgCommitPubRandList.Sig,
-	)
-
-	// ensure public randomness list is eventually committed
-	nonValidatorNode.WaitForNextBlock()
-	var pubRandMap map[uint64]*bbn.SchnorrPubRand
-	s.Eventually(func() bool {
-		pubRandMap = nonValidatorNode.QueryListPublicRandomness(fp.BtcPk)
-		return len(pubRandMap) > 0
-	}, time.Minute, time.Second*5)
-	s.Equal(pubRandMap[activatedHeight].MustMarshal(), msgCommitPubRandList.PubRandList[0].MustMarshal())
 
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
@@ -383,7 +363,9 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 
 	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
 	// generate EOTS signature
-	sig, err := eots.Sign(fpBTCSK, srList[0], msgToSign)
+	sr, _, err := msr.DeriveRandPair(uint32(activatedHeight))
+	s.NoError(err)
+	sig, err := eots.Sign(fpBTCSK, sr, msgToSign)
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature

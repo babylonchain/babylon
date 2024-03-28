@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
+	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -29,23 +30,21 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	// create a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(b, err)
+	fpBBNSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
+	require.NoError(b, err)
+	msr, _, err := eots.NewMasterRandPair(r)
+	require.NoError(b, err)
+	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
+	require.NoError(b, err)
+
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
-	require.NoError(b, err)
 
 	// register the finality provider
 	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
 	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).AnyTimes()
 	// mock voting power
 	bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Any()).Return(uint64(1)).AnyTimes()
-
-	// commit enough public randomness
-	// TODO: generalise commit public randomness to allow arbitrary benchtime
-	srList, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, 0, 100000)
-	require.NoError(b, err)
-	_, err = ms.CommitPubRandList(ctx, msg)
-	require.NoError(b, err)
 
 	// Start the CPU profiler
 	cpuProfileFile := "/tmp/finality-submit-finality-sig-cpu.pprof"
@@ -68,7 +67,8 @@ func benchmarkAddFinalitySig(b *testing.B) {
 		height := uint64(i)
 
 		// generate a vote
-		sr := srList[height]
+		sr, _, err := msr.DeriveRandPair(uint32(height))
+		require.NoError(b, err)
 		blockHash := datagen.GenRandomByteArray(r, 32)
 		signer := datagen.GenRandomAccount().Address
 		msg, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, height, blockHash)

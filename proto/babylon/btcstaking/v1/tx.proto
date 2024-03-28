@@ -54,6 +54,9 @@ message MsgCreateFinalityProvider {
   bytes btc_pk = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 6;
+  // master_pub_rand is the master public randomness of the finality provider
+  // encoded as a base58 string
+  string master_pub_rand = 7;
 }
 // MsgCreateFinalityProviderResponse is the response for MsgCreateFinalityProvider
 message MsgCreateFinalityProviderResponse {}

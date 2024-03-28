@@ -14,8 +14,6 @@ service Msg {
 
     // AddFinalitySig adds a finality signature to a given block
     rpc AddFinalitySig(MsgAddFinalitySig) returns (MsgAddFinalitySigResponse);
-    // CommitPubRandList commits a list of public randomness for EOTS
-    rpc CommitPubRandList(MsgCommitPubRandList) returns (MsgCommitPubRandListResponse);
     // TODO: msg for evidence of equivocation. this is not specified yet
     // UpdateParams updates the finality module parameters.
     rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
@@ -40,27 +38,6 @@ message MsgAddFinalitySig {
 }
 // MsgAddFinalitySigResponse is the response to the MsgAddFinalitySig message
 message MsgAddFinalitySigResponse{}
-
-// MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
-message MsgCommitPubRandList {
-    option (cosmos.msg.v1.signer) = "signer";
-
-    string signer = 1;
-    // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // start_height is the start block height of the list of public randomness
-    uint64 start_height = 3;
-    // pub_rand_list is the list of public randomness
-    repeated bytes pub_rand_list = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
-    // sig is the signature on (start_height || pub_rand_list) signed by 
-    // SK corresponding to fp_btc_pk. This prevents others to commit public
-    // randomness on behalf of fp_btc_pk
-    // TODO: another option is to restrict signer to correspond to fp_btc_pk. This restricts
-    // the tx submitter to be the holder of fp_btc_pk. Decide this later
-    bytes sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-}
-// MsgCommitPubRandListResponse is the response to the MsgCommitPubRandList message
-message MsgCommitPubRandListResponse{}
 
 // MsgUpdateParams defines a message for updating finality module parameters.
 message MsgUpdateParams {
