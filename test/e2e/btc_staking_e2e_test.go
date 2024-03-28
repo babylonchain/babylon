@@ -92,6 +92,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	// query the existence of finality provider and assert equivalence
 	actualFps := nonValidatorNode.QueryFinalityProviders()
 	s.Len(actualFps, 1)
+	fp.RegisteredEpoch = actualFps[0].RegisteredEpoch // remember registered epoch
 	s.equalFinalityProviderResp(fp, actualFps[0])
 
 	/*
@@ -354,13 +355,12 @@ func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	s.Error(err)
 
 	/*
-		submit finality signature
+		generate finality signature
 	*/
 	// get block to vote
 	blockToVote, err := nonValidatorNode.QueryBlock(int64(activatedHeight))
 	s.NoError(err)
 	appHash := blockToVote.AppHash
-
 	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
 	// generate EOTS signature
 	sr, _, err := msr.DeriveRandPair(uint32(activatedHeight))
@@ -368,6 +368,18 @@ func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	sig, err := eots.Sign(fpBTCSK, sr, msgToSign)
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	// finalise epochs until the registered epoch of the finality provider
+	// so that the finality provider can vote
+	var (
+		startEpoch = uint64(1)
+		endEpoch   = fp.RegisteredEpoch
+	)
+	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
+
+	/*
+		submit finality signature
+	*/
 	// submit finality signature
 	nonValidatorNode.AddFinalitySig(fp.BtcPk, activatedHeight, appHash, eotsSig)
 
@@ -602,6 +614,8 @@ func (s *BTCStakingTestSuite) equalFinalityProviderResp(fp *bstypes.FinalityProv
 	s.Equal(fp.BabylonPk, fpResp.BabylonPk)
 	s.Equal(fp.BtcPk, fpResp.BtcPk)
 	s.Equal(fp.Pop, fpResp.Pop)
+	s.Equal(fp.MasterPubRand, fpResp.MasterPubRand)
+	s.Equal(fp.RegisteredEpoch, fpResp.RegisteredEpoch)
 	s.Equal(fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	s.Equal(fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
 }
