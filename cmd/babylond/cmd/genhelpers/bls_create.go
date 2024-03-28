@@ -1,4 +1,4 @@
-package cmd
+package genhelpers
 
 import (
 	"errors"
@@ -14,9 +14,10 @@ import (
 	"github.com/babylonchain/babylon/privval"
 )
 
-func GenBlsCmd() *cobra.Command {
+// CmdCreateBls CLI command to create BLS file with proof of possesion.
+func CmdCreateBls() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-genesis-bls",
+		Use:   "create-bls",
 		Short: "Create genesis BLS key file for the validator",
 		Long: strings.TrimSpace(`genbls will create a BLS key file that consists of
 {address, bls_pub_key, pop, pub_key} where pop is the proof-of-possession that proves

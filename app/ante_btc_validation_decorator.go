@@ -42,7 +42,7 @@ func (bvd BtcValidationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulat
 				powLimit := bvd.BtcCfg.PowLimit()
 				err := msg.ValidateHeaders(&powLimit)
 				if err != nil {
-					return ctx, btclightclient.ErrInvalidProofOfWOrk
+					return ctx, btclightclient.ErrInvalidProofOfWOrk.Wrapf("MsgInsertHeaders error: %s - PoW Limit - %s", err.Error(), powLimit.String())
 				}
 			default:
 				// NOOP in case of other messages

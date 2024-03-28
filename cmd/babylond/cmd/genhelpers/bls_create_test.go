@@ -1,4 +1,4 @@
-package cmd_test
+package genhelpers_test
 
 import (
 	"bufio"
@@ -23,12 +23,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd/genhelpers"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
-func Test_GenBlsCmd(t *testing.T) {
+func Test_CmdCreateBls(t *testing.T) {
 	home := t.TempDir()
 	logger := log.NewNopLogger()
 	cfg, err := genutiltest.CreateDefaultCometConfig(home)
@@ -55,7 +55,7 @@ func Test_GenBlsCmd(t *testing.T) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
-	genBlsCmd := cmd.GenBlsCmd()
+	genBlsCmd := genhelpers.CmdCreateBls()
 	genBlsCmd.SetArgs([]string{fmt.Sprintf("--%s=%s", flags.FlagHome, home)})
 
 	// create keyring to get the validator address

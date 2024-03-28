@@ -60,12 +60,25 @@ func CreateBlsKey(home string, addr sdk.AccAddress) error {
 	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
-	if !cmtos.FileExists(keyPath) {
-		return errors.New("validator key file does not exist")
+
+	pv, err := LoadWrappedFilePV(keyPath, statePath)
+	if err != nil {
+		return err
 	}
-	pv := privval.LoadWrappedFilePV(keyPath, statePath)
+
 	wrappedPV := privval.NewWrappedFilePV(pv.GetValPrivKey(), bls12381.GenPrivKey(), keyPath, statePath)
 	wrappedPV.SetAccAddress(addr)
 
 	return nil
+}
+
+// LoadWrappedFilePV loads the wrapped file private key from the file path.
+func LoadWrappedFilePV(keyPath, statePath string) (*privval.WrappedFilePV, error) {
+	if !cmtos.FileExists(keyPath) {
+		return nil, errors.New("validator key file does not exist")
+	}
+	if !cmtos.FileExists(statePath) {
+		return nil, errors.New("validator state file does not exist")
+	}
+	return privval.LoadWrappedFilePV(keyPath, statePath), nil
 }
