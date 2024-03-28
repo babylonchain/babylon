@@ -342,17 +342,31 @@ func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
+	// finalise epochs until the registered epoch of the finality provider
+	// so that the finality provider can vote
+	var (
+		startEpoch = uint64(1)
+		endEpoch   = fp.RegisteredEpoch
+	)
+	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
+
 	// get activated height
 	activatedHeight := nonValidatorNode.QueryActivatedHeight()
 	s.Positive(activatedHeight)
 
-	// no reward gauge for finality provider and delegation yet
+	// no reward gauge for finality provider yet
 	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
-	_, err = nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.Error(err)
+	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
+	s.NoError(err)
+	_, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
+	s.False(ok)
+
+	// no reward gauge for BTC delegator yet
 	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
-	_, err = nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.Error(err)
+	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+	s.NoError(err)
+	_, ok = btcDelRewardGauges[itypes.BTCDelegationType.String()]
+	s.False(ok)
 
 	/*
 		generate finality signature
@@ -368,14 +382,6 @@ func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	sig, err := eots.Sign(fpBTCSK, sr, msgToSign)
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
-
-	// finalise epochs until the registered epoch of the finality provider
-	// so that the finality provider can vote
-	var (
-		startEpoch = uint64(1)
-		endEpoch   = fp.RegisteredEpoch
-	)
-	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
 
 	/*
 		submit finality signature
@@ -401,13 +407,14 @@ func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 
 	// ensure finality provider has received rewards after the block is finalised
-	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
+	fpRewardGauges, err = nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
 	s.NoError(err)
 	fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
 	s.True(ok)
 	s.True(fpRewardGauge.Coins.IsAllPositive())
+
 	// ensure BTC delegation has received rewards after the block is finalised
-	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+	btcDelRewardGauges, err = nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
 	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
 	s.True(ok)
