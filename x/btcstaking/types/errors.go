@@ -29,4 +29,5 @@ var (
 	ErrInvalidBTCUndelegateReq      = errorsmod.Register(ModuleName, 1120, "invalid undelegation request")
 	ErrVotingPowerTableNotUpdated   = errorsmod.Register(ModuleName, 1121, "voting power table has not been updated")
 	ErrVotingPowerDistCacheNotFound = errorsmod.Register(ModuleName, 1122, "the voting power distribution cache is not found")
+	ErrParamsNotFound               = errorsmod.Register(ModuleName, 1123, "the parameters are not found")
 )

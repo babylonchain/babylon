@@ -19,6 +19,10 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/params";
   }
+  // ParamsByVersion queries the parameters of the module for a specific version of past params.
+  rpc ParamsByVersion(QueryParamsByVersionRequest) returns (QueryParamsByVersionResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/params/{version}";
+  }
 
   // FinalityProviders queries all finality providers
   rpc FinalityProviders(QueryFinalityProvidersRequest) returns (QueryFinalityProvidersResponse) {
@@ -72,6 +76,17 @@ message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsByVersionRequest {
+  uint32 version = 1;
+}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsByVersionResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
 }
@@ -267,6 +282,8 @@ message BTCDelegationResponse {
   uint32 unbonding_time = 13;
   // undelegation_response is the undelegation info of this delegation.
   BTCUndelegationResponse undelegation_response = 14;
+  // params version used to validate delegation
+  uint32 params_version = 15;
 }
 
 // BTCUndelegationResponse provides all necessary info about the undeleagation

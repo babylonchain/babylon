@@ -51,3 +51,13 @@ message Params {
     (gogoproto.nullable)   = false
   ];
 }
+
+// StoredParams attach information about the version of stored parameters
+message StoredParams {
+  // version of the stored parameters. Each parameters update
+  // increments version number by 1
+  uint32 version = 1;
+
+  // NOTE: Parameters must always be provided
+  Params params = 2 [(gogoproto.nullable) = false];
+}
