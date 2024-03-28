@@ -33,9 +33,8 @@ var (
 	CanonicalChainKey     = []byte{0x13} // CanonicalChainKey defines the key to store the canonical chain for each CZ in store
 	ForkKey               = []byte{0x14} // ForkKey defines the key to store the forks for each CZ in store
 	EpochChainInfoKey     = []byte{0x15} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each CZ in store
-	FinalizedEpochKey     = []byte{0x16} // FinalizedEpochKey defines the key to store the last finalised epoch
-	LastSentBTCSegmentKey = []byte{0x17} // LastSentBTCSegmentKey is key holding last btc light client segment sent to other cosmos zones
-	ParamsKey             = []byte{0x18} // key prefix for the parameters
+	LastSentBTCSegmentKey = []byte{0x16} // LastSentBTCSegmentKey is key holding last btc light client segment sent to other cosmos zones
+	ParamsKey             = []byte{0x17} // key prefix for the parameters
 )
 
 func KeyPrefix(p string) []byte {

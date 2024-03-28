@@ -14,6 +14,7 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -30,12 +31,13 @@ type Helper struct {
 	BTCStakingKeeper     *keeper.Keeper
 	BTCLightClientKeeper *types.MockBTCLightClientKeeper
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
+	CheckpointingKeeper  *types.MockCheckpointingKeeper
 	MsgServer            types.MsgServer
 	Net                  *chaincfg.Params
 }
 
-func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper) *Helper {
-	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper, ckptKeeper *types.MockCheckpointingKeeper) *Helper {
+	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
@@ -45,6 +47,7 @@ func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKe
 		BTCStakingKeeper:     k,
 		BTCLightClientKeeper: btclcKeeper,
 		BTCCheckpointKeeper:  btccKeeper,
+		CheckpointingKeeper:  ckptKeeper,
 		MsgServer:            msgSrvr,
 		Net:                  &chaincfg.SimNetParams,
 	}
@@ -134,6 +137,11 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr)
 	h.NoError(err)
 
+	registeredEpoch := uint64(10)
+	fp.RegisteredEpoch = registeredEpoch
+
+	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).Times(1)
+
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Signer:        datagen.GenRandomAccount().Address,
 		Description:   fp.Description,
@@ -143,6 +151,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		Pop:           fp.Pop,
 		MasterPubRand: fp.MasterPubRand,
 	}
+
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	h.NoError(err)
 	return fpBTCSK, fpBTCPK, fp

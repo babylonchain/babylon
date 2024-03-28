@@ -64,6 +64,7 @@ func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight, votingPowe
 		BtcPk:                f.BtcPk,
 		Pop:                  f.Pop,
 		MasterPubRand:        f.MasterPubRand,
+		RegisteredEpoch:      f.RegisteredEpoch,
 		SlashedBabylonHeight: f.SlashedBabylonHeight,
 		SlashedBtcHeight:     f.SlashedBtcHeight,
 		Height:               bbnBlockHeight,

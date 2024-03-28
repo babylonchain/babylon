@@ -30,9 +30,6 @@ func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 
 // AfterRawCheckpointFinalized is triggered upon an epoch has been finalised
 func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
-	// upon an epoch has been finalised, update the last finalised epoch
-	h.k.setFinalizedEpoch(ctx, epoch)
-
 	headersToBroadcast := h.k.getHeadersToBroadcast(ctx)
 
 	// send BTC timestamp to all open channels with ZoneConcierge

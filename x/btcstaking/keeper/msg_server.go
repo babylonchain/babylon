@@ -88,12 +88,13 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
-		Description:   req.Description,
-		Commission:    req.Commission,
-		BabylonPk:     req.BabylonPk,
-		BtcPk:         req.BtcPk,
-		Pop:           req.Pop,
-		MasterPubRand: req.MasterPubRand,
+		Description:     req.Description,
+		Commission:      req.Commission,
+		BabylonPk:       req.BabylonPk,
+		BtcPk:           req.BtcPk,
+		Pop:             req.Pop,
+		MasterPubRand:   req.MasterPubRand,
+		RegisteredEpoch: ms.ckptKeeper.GetEpoch(ctx).EpochNumber,
 	}
 	ms.SetFinalityProvider(ctx, &fp)
 
@@ -703,7 +704,7 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 		panic(types.ErrFpNotFound.Wrapf("failing to find the finality provider with BTC delegations"))
 	}
 	if fp.IsSlashed() {
-		return nil, types.ErrFpAlreadySlashed
+		return nil, types.ErrFpNotUsable.Wrap("the finality provider is already slashed")
 	}
 
 	// at this point, the finality provider must have done selective slashing and must be
