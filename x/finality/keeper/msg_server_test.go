@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"testing"
 	"time"
@@ -51,6 +52,10 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
 		require.NoError(t, err)
 
+		// randomise registered epoch for this finality provider
+		registeredEpoch := datagen.RandomInt(r, 10) + 10
+		fp.RegisteredEpoch = registeredEpoch
+
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
 		require.NoError(t, err)
@@ -66,7 +71,29 @@ func FuzzAddFinalitySig(f *testing.F) {
 		msg, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash)
 		require.NoError(t, err)
 
-		// Case 1: fail if the finality provider does not have voting power
+		// Case 1: slashed finality proivder cannot vote
+		fp.SlashedBabylonHeight = blockHeight
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.True(t, errors.Is(err, bstypes.ErrFpNotUsable))
+
+		// reset slashed height
+		fp.SlashedBabylonHeight = 0
+
+		// Case 2: fail if the finality provider's registered epoch is not finalised
+		// by BTC timestamping yet
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+		finalizedEpoch := registeredEpoch - 1
+		bsKeeper.EXPECT().GetFinalizedEpoch(gomock.Any()).Return(finalizedEpoch, nil).Times(1)
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.Error(t, err)
+		require.True(t, errors.Is(err, bstypes.ErrFpNotUsable))
+
+		// make the registered finality provider BTC-timestamped
+		finalizedEpoch = registeredEpoch
+		bsKeeper.EXPECT().GetFinalizedEpoch(gomock.Any()).Return(finalizedEpoch, nil).AnyTimes()
+
+		// Case 3: fail if the finality provider does not have voting power
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(0)).Times(1)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
@@ -75,7 +102,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// mock voting power
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
 
-		// Case 2: successful if the finality provider has voting power and has not casted this vote yet
+		// Case 4: successful if the finality provider has voting power and has not casted this vote yet
 		// index this block first
 		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockHash})
 		fKeeper.IndexBlock(ctx)
@@ -88,13 +115,13 @@ func FuzzAddFinalitySig(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, msg.FinalitySig.MustMarshal(), sig.MustMarshal())
 
-		// Case 3: In case of duplicate vote return success
+		// Case 5: In case of duplicate vote return success
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		resp, err := ms.AddFinalitySig(ctx, msg)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 
-		// Case 4: the finality provider is slashed if it votes for a fork
+		// Case 6: the finality provider is slashed if it votes for a fork
 		blockHash2 := datagen.GenRandomByteArray(r, 32)
 		msg2, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash2)
 		require.NoError(t, err)
@@ -122,12 +149,6 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// not affect verification
 		require.True(t, btcSK.Key.Equals(&btcSK2.Key) || btcSK.Key.Negate().Equals(&btcSK2.Key))
 		require.Equal(t, btcSK.PubKey().SerializeCompressed()[1:], btcSK2.PubKey().SerializeCompressed()[1:])
-
-		// Case 5: slashed finality proivder cannot vote
-		fp.SlashedBabylonHeight = blockHeight
-		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
-		_, err = ms.AddFinalitySig(ctx, msg)
-		require.Equal(t, bstypes.ErrFpAlreadySlashed, err)
 	})
 }
 

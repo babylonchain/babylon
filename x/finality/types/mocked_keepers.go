@@ -65,6 +65,21 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
 }
 
+// GetFinalizedEpoch mocks base method.
+func (m *MockBTCStakingKeeper) GetFinalizedEpoch(ctx context.Context) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFinalizedEpoch", ctx)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFinalizedEpoch indicates an expected call of GetFinalizedEpoch.
+func (mr *MockBTCStakingKeeperMockRecorder) GetFinalizedEpoch(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalizedEpoch", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalizedEpoch), ctx)
+}
+
 // GetParams mocks base method.
 func (m *MockBTCStakingKeeper) GetParams(ctx context.Context) types.Params {
 	m.ctrl.T.Helper()

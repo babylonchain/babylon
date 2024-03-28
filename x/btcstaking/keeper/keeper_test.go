@@ -86,8 +86,6 @@ func (h *Helper) GenAndApplyCustomParams(
 
 	h.BTCCheckpointKeeper.EXPECT().GetParams(gomock.Any()).Return(params).AnyTimes()
 
-	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&etypes.Epoch{EpochNumber: 10}).AnyTimes()
-
 	// randomise covenant committee
 	covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 	h.NoError(err)
@@ -139,6 +137,11 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr)
 	h.NoError(err)
 
+	registeredEpoch := uint64(10)
+	fp.RegisteredEpoch = registeredEpoch
+
+	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).Times(1)
+
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Signer:        datagen.GenRandomAccount().Address,
 		Description:   fp.Description,
@@ -148,6 +151,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		Pop:           fp.Pop,
 		MasterPubRand: fp.MasterPubRand,
 	}
+
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	h.NoError(err)
 	return fpBTCSK, fpBTCPK, fp

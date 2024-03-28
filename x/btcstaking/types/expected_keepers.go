@@ -23,4 +23,5 @@ type BtcCheckpointKeeper interface {
 
 type CheckpointingKeeper interface {
 	GetEpoch(ctx context.Context) *etypes.Epoch
+	GetFinalizedEpoch(ctx context.Context) (uint64, error)
 }

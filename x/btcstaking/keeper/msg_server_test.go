@@ -17,6 +17,7 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -50,6 +51,9 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		for i := 0; i < int(datagen.RandomInt(r, 10)); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
+
+			h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: 10}).Times(1)
+
 			msg := &types.MsgCreateFinalityProvider{
 				Signer:        datagen.GenRandomAccount().Address,
 				Description:   fp.Description,
