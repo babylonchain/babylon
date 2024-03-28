@@ -192,6 +192,7 @@ func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.
 				MasterPubRand:        finalityProvider.MasterPubRand,
 				SlashedBabylonHeight: finalityProvider.SlashedBabylonHeight,
 				SlashedBtcHeight:     finalityProvider.SlashedBtcHeight,
+				RegisteredEpoch:      finalityProvider.RegisteredEpoch,
 			}
 			finalityProvidersWithMeta = append(finalityProvidersWithMeta, &finalityProviderWithMeta)
 		}

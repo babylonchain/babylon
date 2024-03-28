@@ -33,7 +33,17 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h := NewHelper(t, nil, nil, nil)
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
+
+		// set all parameters
+		h.GenAndApplyParams(r)
 
 		// generate new finality providers
 		fps := []*types.FinalityProvider{}

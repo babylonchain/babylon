@@ -12,6 +12,7 @@ import (
 	types "github.com/babylonchain/babylon/types"
 	types0 "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	types1 "github.com/babylonchain/babylon/x/btclightclient/types"
+	types2 "github.com/babylonchain/babylon/x/epoching/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -152,4 +153,18 @@ func NewMockCheckpointingKeeper(ctrl *gomock.Controller) *MockCheckpointingKeepe
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockCheckpointingKeeper) EXPECT() *MockCheckpointingKeeperMockRecorder {
 	return m.recorder
+}
+
+// GetEpoch mocks base method.
+func (m *MockCheckpointingKeeper) GetEpoch(ctx context.Context) *types2.Epoch {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEpoch", ctx)
+	ret0, _ := ret[0].(*types2.Epoch)
+	return ret0
+}
+
+// GetEpoch indicates an expected call of GetEpoch.
+func (mr *MockCheckpointingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetEpoch), ctx)
 }

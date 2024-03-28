@@ -88,12 +88,13 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
-		Description:   req.Description,
-		Commission:    req.Commission,
-		BabylonPk:     req.BabylonPk,
-		BtcPk:         req.BtcPk,
-		Pop:           req.Pop,
-		MasterPubRand: req.MasterPubRand,
+		Description:     req.Description,
+		Commission:      req.Commission,
+		BabylonPk:       req.BabylonPk,
+		BtcPk:           req.BtcPk,
+		Pop:             req.Pop,
+		MasterPubRand:   req.MasterPubRand,
+		RegisteredEpoch: ms.ckptKeeper.GetEpoch(ctx).EpochNumber,
 	}
 	ms.SetFinalityProvider(ctx, &fp)
 

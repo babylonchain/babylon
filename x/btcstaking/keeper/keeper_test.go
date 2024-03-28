@@ -14,6 +14,7 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -84,6 +85,8 @@ func (h *Helper) GenAndApplyCustomParams(
 	params.CheckpointFinalizationTimeout = finalizationTimeout
 
 	h.BTCCheckpointKeeper.EXPECT().GetParams(gomock.Any()).Return(params).AnyTimes()
+
+	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&etypes.Epoch{EpochNumber: 10}).AnyTimes()
 
 	// randomise covenant committee
 	covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
