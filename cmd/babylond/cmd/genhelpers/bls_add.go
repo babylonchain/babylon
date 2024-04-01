@@ -16,7 +16,7 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
-// CmdAddBls CLI command to add the file with proof of possesion into the genesis state.
+// CmdAddBls CLI adds the BLS key file with proof of possesion into the genesis state.
 func CmdAddBls(validator genutiltypes.MessageValidator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-bls [genesis_bls_file]",
