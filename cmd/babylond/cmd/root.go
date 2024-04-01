@@ -41,6 +41,7 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/app/params"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd/genhelpers"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -186,9 +187,8 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		TestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
+		genhelpers.CmdGenHelpers(gentxModule.GenTxValidator),
 		CreateBlsKeyCmd(),
-		GenBlsCmd(),
-		AddGenBlsCmd(gentxModule.GenTxValidator),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),
 	)
