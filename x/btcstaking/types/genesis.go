@@ -1,6 +1,11 @@
 package types
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+)
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
@@ -24,4 +29,16 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 	return nil
+}
+
+// GenesisStateFromAppState returns x/btcstaking GenesisState given raw application
+// genesis state.
+func GenesisStateFromAppState(cdc codec.Codec, appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+
+	if appState[ModuleName] != nil {
+		cdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+
+	return genesisState
 }
