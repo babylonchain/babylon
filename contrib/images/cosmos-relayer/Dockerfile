@@ -21,8 +21,8 @@ ENV PATH $GOPATH/bin:$PATH
 WORKDIR /work
 
 ENV GO111MODULE on
-#ENV RELAYER_TAG main
-ENV RELAYER_TAG v2.5.1
+ENV RELAYER_TAG main
+# ENV RELAYER_TAG v2.4.2
 
 # Install the relayer
 RUN git clone https://github.com/cosmos/relayer.git
