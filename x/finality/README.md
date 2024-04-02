@@ -218,18 +218,20 @@ Upon `MsgAddFinalitySig`, a Babylon node will execute as follows:
 
 1. Ensure the finality provider has been registered in Babylon and is not
    slashed.
-2. Ensure the finality provider has voting power at this height.
-3. Ensure the finality provider has not previously casted the same vote.
-4. Derive the EOTS public randomness using the committed EOTS master public
+2. Ensure the epoch that the finality provider is registered has been finalized
+   by BTC timestamping.
+3. Ensure the finality provider has voting power at this height.
+4. Ensure the finality provider has not previously casted the same vote.
+5. Derive the EOTS public randomness using the committed EOTS master public
    randomness and the block height.
-5. Verify the EOTS signature w.r.t. the derived EOTS public randomness.
-6. If the voted block's `AppHash` is different from the canonical block at the
+6. Verify the EOTS signature w.r.t. the derived EOTS public randomness.
+7. If the voted block's `AppHash` is different from the canonical block at the
    same height known by the Babylon node, then this means the finality provider
    has voted for a fork. Babylon node buffers this finality vote to the evidence
    storage. If the finality provider has also voted for the block at the same
    height, then this finality provider is slashed, i.e., its voting power is
    removed, equivocation evidence is recorded, and a slashing event is emitted.
-7. If the voted block's `AppHash` is same as that of the canonical block at the
+8. If the voted block's `AppHash` is same as that of the canonical block at the
    same height, then this means the finality provider has voted for the
    canonical block, and the Babylon node will store this finality vote to the
    finality vote storage. If the finality provider has also voted for a fork
