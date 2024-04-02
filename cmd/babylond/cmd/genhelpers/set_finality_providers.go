@@ -23,7 +23,7 @@ func CmdSetFp() *cobra.Command {
 		Short: "Set the finality providers from the given json file into the genesis.json",
 		Long: `Reads finality providers structures from the given json file and update the genesis.json file
 in place to include the finality providers in the btcstaking module's genesis state.
-Duplicated finality providers between
+Duplicated finality providers are not allowed and it will prompt an error.
 `,
 		Example: `babylond gen-helpers set-finality-providers path/to/finality_providers.json
 Possible content of 'finality_providers.json' is
