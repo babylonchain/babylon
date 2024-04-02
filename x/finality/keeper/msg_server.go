@@ -77,6 +77,15 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, bstypes.ErrFpAlreadySlashed
 	}
 
+	// ensure the finality provider's registered epoch is already finalised by BTC timestamping
+	finalizedEpoch, err := ms.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
+	if err != nil {
+		panic(err) // only programming error
+	}
+	if finalizedEpoch < fp.RegisteredEpoch {
+		return nil, bstypes.ErrFpNotBTCTimestamped
+	}
+
 	// ensure the finality provider has voting power at this height
 	if req.FpBtcPk == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")

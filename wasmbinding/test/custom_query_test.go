@@ -74,9 +74,8 @@ func TestFinalizedEpoch(t *testing.T) {
 	// There is no finalized epoch yet so we require an error
 	queryCustomErr(t, ctx, babylonApp, contractAddress, query)
 
-	epoch := babylonApp.EpochingKeeper.IncEpoch(ctx)
-
-	_ = babylonApp.ZoneConciergeKeeper.Hooks().AfterRawCheckpointFinalized(ctx, epoch.EpochNumber)
+	epoch := babylonApp.EpochingKeeper.InitEpoch(ctx)
+	babylonApp.CheckpointingKeeper.SetCheckpointFinalized(ctx, epoch.EpochNumber)
 
 	resp := bindings.LatestFinalizedEpochInfoResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
