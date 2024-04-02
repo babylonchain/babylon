@@ -238,7 +238,7 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	resp := &types.QueryFinalizedChainsInfoResponse{FinalizedChainsInfo: []*types.FinalizedChainInfo{}}
 
 	// find the last finalised epoch
-	lastFinalizedEpoch, err := k.GetFinalizedEpoch(ctx)
+	lastFinalizedEpoch, err := k.GetLastFinalizedEpoch(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	resp := &types.QueryFinalizedChainInfoUntilHeightResponse{}
 
 	// find the last finalised epoch
-	lastFinalizedEpoch, err := k.GetFinalizedEpoch(ctx)
+	lastFinalizedEpoch, err := k.GetLastFinalizedEpoch(ctx)
 	if err != nil {
 		return nil, err
 	}

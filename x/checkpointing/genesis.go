@@ -2,6 +2,7 @@ package checkpointing
 
 import (
 	"context"
+
 	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
@@ -10,6 +11,7 @@ import (
 // state.
 func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetGenBlsKeys(ctx, genState.GenesisKeys)
+	// TODO: should we consider epoch 0 to be finalised at genesis?
 }
 
 // ExportGenesis returns the capability module's exported genesis.
