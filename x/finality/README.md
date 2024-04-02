@@ -82,11 +82,11 @@ needs to interact with Babylon as follows:
   secret/public randomness allows to derive a EOTS secret/public randomness
   deterministically for each given height, respectively. Babylon further
   requires the epoch of the finality provider registration to be finalized by
-  BTC timestamping in order to submit finality signatures. This ensures that
-  each finality provider has a unique public randomness for each height, and
-  that if the finality provider submits two finality signatures over two
-  conflicting blocks, anyone can extract the finality provider's secret key
-  using EOTS.
+  BTC timestamping before the registered finality provider can submit finality
+  signatures. This ensures that each finality provider has a unique public
+  randomness for each height, and that if the finality provider submits two
+  finality signatures over two conflicting blocks, anyone can extract the
+  finality provider's secret key using EOTS.
 - **Submitting EOTS signatures.** Upon a new block, the finality provider
   submits an EOTS signature w.r.t. the derived public randomness at that height.
   The Finality module will verify the EOTS signature, and check if there are
