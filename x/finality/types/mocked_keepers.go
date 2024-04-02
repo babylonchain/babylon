@@ -65,6 +65,21 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
 }
 
+// GetLastFinalizedEpoch mocks base method.
+func (m *MockBTCStakingKeeper) GetLastFinalizedEpoch(ctx context.Context) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLastFinalizedEpoch", ctx)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLastFinalizedEpoch indicates an expected call of GetLastFinalizedEpoch.
+func (mr *MockBTCStakingKeeperMockRecorder) GetLastFinalizedEpoch(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastFinalizedEpoch", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetLastFinalizedEpoch), ctx)
+}
+
 // GetParams mocks base method.
 func (m *MockBTCStakingKeeper) GetParams(ctx context.Context) types.Params {
 	m.ctrl.T.Helper()
@@ -186,13 +201,13 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 }
 
 // RewardBTCStaking mocks base method.
-func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint64, dc *types.VotingPowerDistCache) {
+func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc *types.VotingPowerDistCache) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RewardBTCStaking", ctx, height, dc)
+	m.ctrl.Call(m, "RewardBTCStaking", ctx, height, filteredDc)
 }
 
 // RewardBTCStaking indicates an expected call of RewardBTCStaking.
-func (mr *MockIncentiveKeeperMockRecorder) RewardBTCStaking(ctx, height, dc interface{}) *gomock.Call {
+func (mr *MockIncentiveKeeperMockRecorder) RewardBTCStaking(ctx, height, filteredDc interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RewardBTCStaking", reflect.TypeOf((*MockIncentiveKeeper)(nil).RewardBTCStaking), ctx, height, dc)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RewardBTCStaking", reflect.TypeOf((*MockIncentiveKeeper)(nil).RewardBTCStaking), ctx, height, filteredDc)
 }

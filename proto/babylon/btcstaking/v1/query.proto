@@ -338,16 +338,18 @@ message FinalityProviderResponse {
   // master_pub_rand is the master public randomness of the finality provider
   // encoded as a base58 string
   string master_pub_rand = 6;
+  // registered_epoch is the epoch when this finality provider is registered
+  uint64 registered_epoch = 7;
   // slashed_babylon_height indicates the Babylon height when
   // the finality provider is slashed.
   // if it's 0 then the finality provider is not slashed
-  uint64 slashed_babylon_height = 7;
+  uint64 slashed_babylon_height = 8;
   // slashed_btc_height indicates the BTC height when
   // the finality provider is slashed.
   // if it's 0 then the finality provider is not slashed
-  uint64 slashed_btc_height = 8;
+  uint64 slashed_btc_height = 9;
   // height is the queried Babylon height
-  uint64 height = 9;
+  uint64 height = 10;
   // voting_power is the voting power of this finality provider at the given height
-  uint64 voting_power = 10;
+  uint64 voting_power = 11;
 }
