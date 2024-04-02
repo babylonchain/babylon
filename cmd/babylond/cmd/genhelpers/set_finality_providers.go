@@ -20,8 +20,8 @@ import (
 func CmdSetFp() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-finality-providers [path/to/finality_providers.json]",
-		Short: "Set the finality providers from input inot the genesis.json",
-		Long: `Reads finality providers structures from the input file as json and update the genesis.json file
+		Short: "Set the finality providers from the given json file into the genesis.json",
+		Long: `Reads finality providers structures from the given json file and update the genesis.json file
 in place to include the finality providers in the btcstaking module's genesis state.
 `,
 		Example: `babylond gen-helpers set-finality-providers path/to/finality_providers.json
