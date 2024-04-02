@@ -131,6 +131,17 @@ message Params {
   uint32 max_active_finality_providers = 7;
   // min_unbonding_time is the minimum time for unbonding transaction timelock in BTC blocks
   uint32 min_unbonding_time = 8;
+
+  // min_unbonding_rate is the minimum amount of BTC that are required in unbonding
+  // output, expressed as a fraction of staking output
+  // example: if min_unbonding_rate=0.9, then the unbonding output value
+  // must be at least 90% of staking output, for staking request to be considered
+  // valid
+  string min_unbonding_rate = 9 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
 }
 ```
 
@@ -146,28 +157,33 @@ finality provider.
 ```protobuf
 // FinalityProvider defines a finality provider
 message FinalityProvider {
-  // description defines the description terms for the finality provider.
-  cosmos.staking.v1beta1.Description description = 1;
-  // commission defines the commission rate of the finality provider.
-  string commission = 2  [
-      (cosmos_proto.scalar)  = "cosmos.Dec",
-      (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
-  ];
-  // babylon_pk is the Babylon secp256k1 PK of this finality provider
-  cosmos.crypto.secp256k1.PubKey babylon_pk = 3;
-  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
-  // the PK follows encoding in BIP-340 spec
-  bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // pop is the proof of possession of babylon_pk and btc_pk
-  ProofOfPossession pop = 5;
-  // slashed_babylon_height indicates the Babylon height when
-  // the finality provider is slashed.
-  // if it's 0 then the finality provider is not slashed
-  uint64 slashed_babylon_height = 6;
-  // slashed_btc_height indicates the BTC height when
-  // the finality provider is slashed.
-  // if it's 0 then the finality provider is not slashed
-  uint64 slashed_btc_height = 7;
+    // description defines the description terms for the finality provider.
+    cosmos.staking.v1beta1.Description description = 1;
+    // commission defines the commission rate of the finality provider.
+    string commission = 2  [
+        (cosmos_proto.scalar)  = "cosmos.Dec",
+        (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+    ];
+    // babylon_pk is the Babylon secp256k1 PK of this finality provider
+    cosmos.crypto.secp256k1.PubKey babylon_pk = 3;
+    // btc_pk is the Bitcoin secp256k1 PK of this finality provider
+    // the PK follows encoding in BIP-340 spec
+    bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // pop is the proof of possession of babylon_pk and btc_pk
+    ProofOfPossession pop = 5;
+    // master_pub_rand is the master public randomness of the finality provider
+    // encoded as a base58 string
+    string master_pub_rand = 6;
+    // registered_epoch is the epoch when this finality provider is registered
+    uint64 registered_epoch = 7;
+    // slashed_babylon_height indicates the Babylon height when
+    // the finality provider is slashed.
+    // if it's 0 then the finality provider is not slashed
+    uint64 slashed_babylon_height = 8;
+    // slashed_btc_height indicates the BTC height when
+    // the finality provider is slashed.
+    // if it's 0 then the finality provider is not slashed
+    uint64 slashed_btc_height = 9;
 }
 ```
 
@@ -183,7 +199,6 @@ identifies a `BTCDelegation` as creating a BTC delegation requires the staker to
 submit a staking transaction to Bitcoin.
 
 ```protobuf
-
 // BTCDelegation defines a BTC delegation
 message BTCDelegation {
     // babylon_pk is the Babylon secp256k1 PK of this BTC delegation
@@ -228,6 +243,8 @@ message BTCDelegation {
     uint32 unbonding_time = 13;
     // btc_undelegation is the information about the early unbonding path of the BTC delegation
     BTCUndelegation btc_undelegation = 14;
+    // version of the params used to validate the delegation
+    uint32 params_version = 15;
 }
 
 // BTCUndelegation contains the information about the early unbonding path of the BTC delegation
@@ -347,9 +364,9 @@ message MsgCreateFinalityProvider {
 
   string signer = 1;
 
-  // description defines the description terms for the finality provider.
+  // description defines the description terms for the finality provider
   cosmos.staking.v1beta1.Description description = 2;
-  // commission defines the commission rate of finality provider.
+  // commission defines the commission rate of the finality provider
   string commission = 3 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
@@ -361,6 +378,9 @@ message MsgCreateFinalityProvider {
   bytes btc_pk = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 6;
+  // master_pub_rand is the master public randomness of the finality provider
+  // encoded as a base58 string
+  string master_pub_rand = 7;
 }
 ```
 
@@ -393,7 +413,8 @@ Upon `MsgCreateFinalityProvider`, a Babylon node will execute as follows:
 2. Ensure the given commission rate is at least the `MinCommissionRate` in the
    parameters and at most 100%.
 3. Ensure the finality provider does not exist already.
-4. Create a `FinalityProvider` object and save it to finality provider storage.
+4. Ensure the committed master public randomness is in the correct format.
+5. Create a `FinalityProvider` object and save it to finality provider storage.
 
 ### MsgEditFinalityProvider
 
