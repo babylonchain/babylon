@@ -47,6 +47,7 @@ jobs:
       - add_ssh_keys
       - run:
           name: Run e2e tests
+          no_output_timeout: 20m
           command: |
             sudo ln -s /usr/local/go/bin/go /usr/bin/go
             sudo make test-e2e
