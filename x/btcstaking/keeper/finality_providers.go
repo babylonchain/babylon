@@ -46,7 +46,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 
 	// ensure finality provider is not slashed yet
 	if fp.IsSlashed() {
-		return types.ErrFpNotUsable.Wrap("the finality provider is already slashed")
+		return types.ErrFpAlreadySlashed
 	}
 
 	// set finality provider to be slashed

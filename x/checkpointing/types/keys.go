@@ -32,7 +32,7 @@ var (
 	AddrToBlsKeyPrefix = append(RegistrationPrefix, 0x0) // where we save the concrete BLS public keys
 	BlsKeyToAddrPrefix = append(RegistrationPrefix, 0x1) // where we save BLS key set
 
-	FinalizedEpochKey = []byte{0x04} // FinalizedEpochKey defines the key to store the last finalised epoch
+	LastFinalizedEpochKey = []byte{0x04} // LastFinalizedEpochKey defines the key to store the last finalised epoch
 )
 
 // CkptsObjectKey defines epoch

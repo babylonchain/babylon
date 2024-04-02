@@ -169,17 +169,17 @@ func (mr *MockCheckpointingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetEpoch), ctx)
 }
 
-// GetFinalizedEpoch mocks base method.
-func (m *MockCheckpointingKeeper) GetFinalizedEpoch(ctx context.Context) (uint64, error) {
+// GetLastFinalizedEpoch mocks base method.
+func (m *MockCheckpointingKeeper) GetLastFinalizedEpoch(ctx context.Context) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFinalizedEpoch", ctx)
+	ret := m.ctrl.Call(m, "GetLastFinalizedEpoch", ctx)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetFinalizedEpoch indicates an expected call of GetFinalizedEpoch.
-func (mr *MockCheckpointingKeeperMockRecorder) GetFinalizedEpoch(ctx interface{}) *gomock.Call {
+// GetLastFinalizedEpoch indicates an expected call of GetLastFinalizedEpoch.
+func (mr *MockCheckpointingKeeperMockRecorder) GetLastFinalizedEpoch(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalizedEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetFinalizedEpoch), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastFinalizedEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetLastFinalizedEpoch), ctx)
 }

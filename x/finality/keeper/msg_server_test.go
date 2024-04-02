@@ -75,7 +75,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fp.SlashedBabylonHeight = blockHeight
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
-		require.True(t, errors.Is(err, bstypes.ErrFpNotUsable))
+		require.True(t, errors.Is(err, bstypes.ErrFpAlreadySlashed))
 
 		// reset slashed height
 		fp.SlashedBabylonHeight = 0
@@ -84,14 +84,14 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// by BTC timestamping yet
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		finalizedEpoch := registeredEpoch - 1
-		bsKeeper.EXPECT().GetFinalizedEpoch(gomock.Any()).Return(finalizedEpoch, nil).Times(1)
+		bsKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(finalizedEpoch, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.Error(t, err)
-		require.True(t, errors.Is(err, bstypes.ErrFpNotUsable))
+		require.True(t, errors.Is(err, bstypes.ErrFpNotBTCTimestamped))
 
 		// make the registered finality provider BTC-timestamped
 		finalizedEpoch = registeredEpoch
-		bsKeeper.EXPECT().GetFinalizedEpoch(gomock.Any()).Return(finalizedEpoch, nil).AnyTimes()
+		bsKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(finalizedEpoch, nil).AnyTimes()
 
 		// Case 3: fail if the finality provider does not have voting power
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(0)).Times(1)
@@ -170,7 +170,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
 	require.NoError(t, err)
 	fp.RegisteredEpoch = 10
-	bsKeeper.EXPECT().GetFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch, nil).AnyTimes()
+	bsKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch, nil).AnyTimes()
 
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()

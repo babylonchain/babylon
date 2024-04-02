@@ -704,7 +704,7 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 		panic(types.ErrFpNotFound.Wrapf("failing to find the finality provider with BTC delegations"))
 	}
 	if fp.IsSlashed() {
-		return nil, types.ErrFpNotUsable.Wrap("the finality provider is already slashed")
+		return nil, types.ErrFpAlreadySlashed
 	}
 
 	// at this point, the finality provider must have done selective slashing and must be

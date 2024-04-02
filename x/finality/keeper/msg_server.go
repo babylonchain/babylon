@@ -74,16 +74,16 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	//     corrupt a new finality provider and equivocate a historical block over and over again, making a previous block
 	//     unfinalisable forever
 	if fp.IsSlashed() {
-		return nil, bstypes.ErrFpNotUsable.Wrap("the finality provider is slashed")
+		return nil, bstypes.ErrFpAlreadySlashed
 	}
 
 	// ensure the finality provider's registered epoch is already finalised by BTC timestamping
-	finalizedEpoch, err := ms.BTCStakingKeeper.GetFinalizedEpoch(ctx)
+	finalizedEpoch, err := ms.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
 	if err != nil {
 		panic(err) // only programming error
 	}
 	if finalizedEpoch < fp.RegisteredEpoch {
-		return nil, bstypes.ErrFpNotUsable.Wrap("the finality provider is not BTC timestamped yet")
+		return nil, bstypes.ErrFpNotBTCTimestamped
 	}
 
 	// ensure the finality provider has voting power at this height
