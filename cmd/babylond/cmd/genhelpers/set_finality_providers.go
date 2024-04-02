@@ -81,16 +81,26 @@ Possible content of 'finality_providers.json' is
 			}
 			btcstkGenState := btcstakingtypes.GenesisStateFromAppState(clientCtx.Codec, appState)
 
-			var newFps []*btcstakingtypes.FinalityProvider
+			genStateFpsByBtcPk := make(map[string]struct{}, len(btcstkGenState.FinalityProviders))
+			for _, fpGen := range btcstkGenState.FinalityProviders {
+				key := fpGen.BtcPk.MarshalHex()
+				_, ok := genStateFpsByBtcPk[key]
+				if ok {
+					return fmt.Errorf("bad genesis state, there is more than one finality provider with the same btc key %s", key)
+				}
+				genStateFpsByBtcPk[key] = struct{}{}
+			}
+
+			newFps := make([]*btcstakingtypes.FinalityProvider, 0, len(inputFps.FinalityProviders))
 			for _, fp := range inputFps.FinalityProviders {
 				if err := fp.ValidateBasic(); err != nil {
 					return fmt.Errorf("failed to validate basic finality provider: %w", err)
 				}
 
-				for _, fpGen := range btcstkGenState.FinalityProviders {
-					if fp.BtcPk.Equals(fpGen.BtcPk) {
-						return fmt.Errorf("error: finality provider: %+v\nwas already set on genesis, or contains the same BtcPk %s than another finality provider", fp, fpGen.BtcPk.MarshalHex())
-					}
+				key := fp.BtcPk.MarshalHex()
+				_, ok := genStateFpsByBtcPk[key]
+				if ok {
+					return fmt.Errorf("error: finality provider: %+v\nwas already set on genesis, or contains the same BtcPk %s than another finality provider", fp, key)
 				}
 
 				newFps = append(newFps, fp)
