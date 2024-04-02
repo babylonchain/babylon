@@ -23,6 +23,7 @@ func CmdSetFp() *cobra.Command {
 		Short: "Set the finality providers from the given json file into the genesis.json",
 		Long: `Reads finality providers structures from the given json file and update the genesis.json file
 in place to include the finality providers in the btcstaking module's genesis state.
+Duplicated finality providers between
 `,
 		Example: `babylond gen-helpers set-finality-providers path/to/finality_providers.json
 Possible content of 'finality_providers.json' is
@@ -81,7 +82,7 @@ Possible content of 'finality_providers.json' is
 			}
 			btcstkGenState := btcstakingtypes.GenesisStateFromAppState(clientCtx.Codec, appState)
 
-			genStateFpsByBtcPk := make(map[string]struct{}, len(btcstkGenState.FinalityProviders))
+			genStateFpsByBtcPk := make(map[string]struct{}, 0)
 			for _, fpGen := range btcstkGenState.FinalityProviders {
 				key := fpGen.BtcPk.MarshalHex()
 				_, ok := genStateFpsByBtcPk[key]
@@ -103,6 +104,8 @@ Possible content of 'finality_providers.json' is
 					return fmt.Errorf("error: finality provider: %+v\nwas already set on genesis, or contains the same BtcPk %s than another finality provider", fp, key)
 				}
 
+				// sets the fp to the genstate to avoid having 2 fps with same btc pk in the input
+				genStateFpsByBtcPk[key] = struct{}{}
 				newFps = append(newFps, fp)
 			}
 			btcstkGenState.FinalityProviders = append(btcstkGenState.FinalityProviders, newFps...)
