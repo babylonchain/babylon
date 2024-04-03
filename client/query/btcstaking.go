@@ -32,6 +32,19 @@ func (c *QueryClient) BTCStakingParams() (*btcstakingtypes.QueryParamsResponse, 
 	return resp, err
 }
 
+// BTCStakingParamsByVersion queries the BTC staking module parameters at a given version
+func (c *QueryClient) BTCStakingParamsByVersion(version uint32) (*btcstakingtypes.QueryParamsByVersionResponse, error) {
+	var resp *btcstakingtypes.QueryParamsByVersionResponse
+	err := c.QueryBTCStaking(func(ctx context.Context, queryClient btcstakingtypes.QueryClient) error {
+		var err error
+		req := &btcstakingtypes.QueryParamsByVersionRequest{Version: version}
+		resp, err = queryClient.ParamsByVersion(ctx, req)
+		return err
+	})
+
+	return resp, err
+}
+
 // FinalityProvider queries the BTCStaking module for a given finlaity provider
 func (c *QueryClient) FinalityProvider(fpBtcPkHex string) (*btcstakingtypes.QueryFinalityProviderResponse, error) {
 	var resp *btcstakingtypes.QueryFinalityProviderResponse
