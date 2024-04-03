@@ -8,15 +8,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"cosmossdk.io/log"
-	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/cmd/babylond/cmd/genhelpers"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/testutil/helper"
 	btcstktypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cometbft/cometbft/libs/tempfile"
-	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/stretchr/testify/require"
@@ -37,45 +34,32 @@ func FuzzCmdSetFp(f *testing.F) {
 		}
 
 		home := t.TempDir()
-		signer, err := app.SetupTestPrivSigner()
-		require.NoError(t, err)
+		h := helper.NewHelper(t)
 
-		bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
-			Logger:             log.NewNopLogger(),
-			DB:                 dbm.NewMemDB(),
-			InvCheckPeriod:     0,
-			SkipUpgradeHeights: map[int64]bool{},
-			AppOpts:            app.EmptyAppOptions{},
-		})
-		cdc := bbn.AppCodec()
-		err = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, cdc)
+		app := h.App
+		cdc := app.AppCodec()
+
+		err := genutiltest.ExecInitCmd(app.BasicModuleManager, home, cdc)
 		require.NoError(t, err)
 
 		clientCtx := client.Context{}.
-			WithCodec(bbn.AppCodec()).
+			WithCodec(app.AppCodec()).
 			WithHomeDir(home).
-			WithTxConfig(bbn.TxConfig())
-
+			WithTxConfig(app.TxConfig())
 		ctx := context.WithValue(context.Background(), client.ClientContextKey, &clientCtx)
 
-		fpsToAddFilePath := filepath.Join(home, "fpsToAdd.json")
-		fpToAddGen := &btcstktypes.GenesisState{
+		jsonBytes, err := cdc.MarshalJSON(&btcstktypes.GenesisState{
 			FinalityProviders: fpsToAdd,
-		}
-
-		jsonBytes, err := cdc.MarshalJSON(fpToAddGen)
+		})
 		require.NoError(t, err)
 
+		fpsToAddFilePath := filepath.Join(home, "fpsToAdd.json")
 		err = tempfile.WriteFileAtomic(fpsToAddFilePath, jsonBytes, 0600)
 		require.NoError(t, err)
 
 		cmdSetFp := genhelpers.CmdSetFp()
-		cmdSetFp.SetArgs([]string{
-			fpsToAddFilePath,
-		})
+		cmdSetFp.SetArgs([]string{fpsToAddFilePath})
 		cmdSetFp.SetContext(ctx)
-		err = cmdSetFp.Flags().Set(flags.FlagHome, home)
-		require.NoError(t, err)
 
 		// Runs the cmd to write into the genesis
 		err = cmdSetFp.Execute()
@@ -85,11 +69,11 @@ func FuzzCmdSetFp(f *testing.F) {
 		require.NoError(t, err)
 
 		// Verifies that the new genesis were created
-		genFile := cmtcfg.GenesisFile()
-		appState, _, err := genutiltypes.GenesisStateFromGenFile(genFile)
+		appState, _, err := genutiltypes.GenesisStateFromGenFile(cmtcfg.GenesisFile())
 		require.NoError(t, err)
 
-		btcstkGenState := btcstktypes.GenesisStateFromAppState(clientCtx.Codec, appState)
+		btcstkGenState := btcstktypes.GenesisStateFromAppState(cdc, appState)
+		// make sure the same quantity of finality providers were created.
 		require.Equal(t, qntFps, len(btcstkGenState.FinalityProviders))
 
 		for i := 0; i < qntFps; i++ {
