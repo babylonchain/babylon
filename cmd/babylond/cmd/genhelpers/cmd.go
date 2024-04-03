@@ -20,6 +20,7 @@ func CmdGenHelpers(validator genutiltypes.MessageValidator) *cobra.Command {
 	cmd.AddCommand(
 		CmdCreateBls(),
 		CmdAddBls(validator),
+		CmdSetFp(),
 	)
 
 	return cmd
