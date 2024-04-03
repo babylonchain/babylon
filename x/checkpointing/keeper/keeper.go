@@ -401,20 +401,15 @@ func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddres
 }
 
 // GetLastFinalizedEpoch gets the last finalised epoch
-func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) (uint64, error) {
+func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	store := k.storeService.OpenKVStore(ctx)
-	has, err := store.Has(types.LastFinalizedEpochKey)
-	if err != nil {
-		panic(err)
-	}
-	if !has {
-		return 0, types.ErrFinalizedEpochNotFound
-	}
 	epochNumberBytes, err := store.Get(types.LastFinalizedEpochKey)
 	if err != nil {
+		// we have set epoch 0 to be finalised at genesis so this can
+		// only be a programming error
 		panic(err)
 	}
-	return sdk.BigEndianToUint64(epochNumberBytes), nil
+	return sdk.BigEndianToUint64(epochNumberBytes)
 }
 
 // SetLastFinalizedEpoch sets the last finalised epoch

@@ -170,12 +170,11 @@ func (mr *MockCheckpointingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock
 }
 
 // GetLastFinalizedEpoch mocks base method.
-func (m *MockCheckpointingKeeper) GetLastFinalizedEpoch(ctx context.Context) (uint64, error) {
+func (m *MockCheckpointingKeeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLastFinalizedEpoch", ctx)
 	ret0, _ := ret[0].(uint64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	return ret0
 }
 
 // GetLastFinalizedEpoch indicates an expected call of GetLastFinalizedEpoch.

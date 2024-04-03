@@ -39,8 +39,8 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		NewCreateFinalityProvicerCmd(),
-		NewEditFinalityProvicerCmd(),
+		NewCreateFinalityProviderCmd(),
+		NewEditFinalityProviderCmd(),
 		NewCreateBTCDelegationCmd(),
 		NewAddCovenantSigsCmd(),
 		NewBTCUndelegateCmd(),
@@ -50,7 +50,7 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
-func NewCreateFinalityProvicerCmd() *cobra.Command {
+func NewCreateFinalityProviderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-finality-provider [babylon_pk] [btc_pk] [pop] [master_pub_rand]",
 		Args:  cobra.ExactArgs(4),
@@ -138,7 +138,7 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 	return cmd
 }
 
-func NewEditFinalityProvicerCmd() *cobra.Command {
+func NewEditFinalityProviderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit-finality-provider [btc_pk]",
 		Args:  cobra.ExactArgs(1),

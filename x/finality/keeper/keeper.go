@@ -47,6 +47,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) (uint64, error) {
+func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return k.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
 }

@@ -97,7 +97,7 @@ type BtcCheckpointKeeper interface {
 type CheckpointingKeeper interface {
 	GetBLSPubKeySet(ctx context.Context, epochNumber uint64) ([]*checkpointingtypes.ValidatorWithBlsKey, error)
 	GetRawCheckpoint(ctx context.Context, epochNumber uint64) (*checkpointingtypes.RawCheckpointWithMeta, error)
-	GetLastFinalizedEpoch(ctx context.Context) (uint64, error)
+	GetLastFinalizedEpoch(ctx context.Context) uint64
 }
 
 type EpochingKeeper interface {

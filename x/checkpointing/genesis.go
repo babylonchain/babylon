@@ -11,7 +11,8 @@ import (
 // state.
 func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetGenBlsKeys(ctx, genState.GenesisKeys)
-	// TODO: should we consider epoch 0 to be finalised at genesis?
+	// set epoch 0 to be finalised at genesis
+	k.SetLastFinalizedEpoch(ctx, 0)
 }
 
 // ExportGenesis returns the capability module's exported genesis.

@@ -56,12 +56,7 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 
 			return bz, nil
 		case contractQuery.LatestFinalizedEpochInfo != nil:
-			epoch, err := qp.zcKeeper.GetLastFinalizedEpoch(ctx)
-
-			if err != nil {
-				return nil, err
-			}
-
+			epoch := qp.zcKeeper.GetLastFinalizedEpoch(ctx)
 			epochInfo, err := qp.epochingKeeper.GetHistoricalEpoch(ctx, epoch)
 
 			if err != nil {
