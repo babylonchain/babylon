@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	btcstktypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -69,7 +69,7 @@ Possible content of 'finality_providers.json' is
 				return err
 			}
 
-			var inputFps btcstakingtypes.GenesisState
+			var inputFps btcstktypes.GenesisState
 			err = clientCtx.Codec.UnmarshalJSON(fpsBz, &inputFps)
 			if err != nil {
 				return err
@@ -80,7 +80,7 @@ Possible content of 'finality_providers.json' is
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal genesis state: %w", err)
 			}
-			btcstkGenState := btcstakingtypes.GenesisStateFromAppState(clientCtx.Codec, appState)
+			btcstkGenState := btcstktypes.GenesisStateFromAppState(clientCtx.Codec, appState)
 
 			genStateFpsByBtcPk := make(map[string]struct{}, 0)
 			for _, fpGen := range btcstkGenState.FinalityProviders {
@@ -92,7 +92,7 @@ Possible content of 'finality_providers.json' is
 				genStateFpsByBtcPk[key] = struct{}{}
 			}
 
-			newFps := make([]*btcstakingtypes.FinalityProvider, 0, len(inputFps.FinalityProviders))
+			newFps := make([]*btcstktypes.FinalityProvider, 0, len(inputFps.FinalityProviders))
 			for _, fp := range inputFps.FinalityProviders {
 				if err := fp.ValidateBasic(); err != nil {
 					return fmt.Errorf("failed to validate basic finality provider: %w", err)
@@ -114,7 +114,7 @@ Possible content of 'finality_providers.json' is
 			if err != nil {
 				return fmt.Errorf("failed to marshal btcstaking genesis state: %w", err)
 			}
-			appState[btcstakingtypes.ModuleName] = btcstkGenStateWithFps
+			appState[btcstktypes.ModuleName] = btcstkGenStateWithFps
 
 			appStateJSON, err := json.Marshal(appState)
 			if err != nil {
