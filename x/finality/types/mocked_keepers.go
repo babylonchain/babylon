@@ -66,12 +66,11 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK int
 }
 
 // GetLastFinalizedEpoch mocks base method.
-func (m *MockBTCStakingKeeper) GetLastFinalizedEpoch(ctx context.Context) (uint64, error) {
+func (m *MockBTCStakingKeeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLastFinalizedEpoch", ctx)
 	ret0, _ := ret[0].(uint64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	return ret0
 }
 
 // GetLastFinalizedEpoch indicates an expected call of GetLastFinalizedEpoch.

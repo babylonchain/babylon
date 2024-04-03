@@ -71,13 +71,16 @@ func TestFinalizedEpoch(t *testing.T) {
 		LatestFinalizedEpochInfo: &struct{}{},
 	}
 
-	// There is no finalized epoch yet so we require an error
-	queryCustomErr(t, ctx, babylonApp, contractAddress, query)
+	// Only epoch 0 is finalised at genesis
+	resp := bindings.LatestFinalizedEpochInfoResponse{}
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	require.Equal(t, resp.EpochInfo.EpochNumber, uint64(0))
+	require.Equal(t, resp.EpochInfo.LastBlockHeight, uint64(0))
 
 	epoch := babylonApp.EpochingKeeper.InitEpoch(ctx)
 	babylonApp.CheckpointingKeeper.SetCheckpointFinalized(ctx, epoch.EpochNumber)
 
-	resp := bindings.LatestFinalizedEpochInfoResponse{}
+	resp = bindings.LatestFinalizedEpochInfoResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
 	require.Equal(t, resp.EpochInfo.EpochNumber, epoch.EpochNumber)
 	require.Equal(t, resp.EpochInfo.LastBlockHeight, epoch.GetLastBlockHeight())

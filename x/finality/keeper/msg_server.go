@@ -78,10 +78,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 
 	// ensure the finality provider's registered epoch is already finalised by BTC timestamping
-	finalizedEpoch, err := ms.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
-	if err != nil {
-		panic(err) // only programming error
-	}
+	finalizedEpoch := ms.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
 	if finalizedEpoch < fp.RegisteredEpoch {
 		return nil, bstypes.ErrFpNotBTCTimestamped
 	}

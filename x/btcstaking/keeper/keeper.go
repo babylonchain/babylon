@@ -71,6 +71,6 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	return nil
 }
 
-func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) (uint64, error) {
+func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return k.ckptKeeper.GetLastFinalizedEpoch(ctx)
 }

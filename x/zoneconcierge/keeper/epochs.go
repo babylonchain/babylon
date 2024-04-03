@@ -36,7 +36,7 @@ func (k Keeper) setLastSentSegment(ctx context.Context, segment *types.BTCChainS
 	}
 }
 
-func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) (uint64, error) {
+func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return k.checkpointingKeeper.GetLastFinalizedEpoch(ctx)
 }
 

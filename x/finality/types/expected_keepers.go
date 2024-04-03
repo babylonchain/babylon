@@ -16,7 +16,7 @@ type BTCStakingKeeper interface {
 	GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error)
 	GetVotingPowerDistCache(ctx context.Context, height uint64) (*bstypes.VotingPowerDistCache, error)
 	RemoveVotingPowerDistCache(ctx context.Context, height uint64)
-	GetLastFinalizedEpoch(ctx context.Context) (uint64, error)
+	GetLastFinalizedEpoch(ctx context.Context) uint64
 }
 
 // IncentiveKeeper defines the expected interface needed to distribute rewards.
