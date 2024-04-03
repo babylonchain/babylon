@@ -329,6 +329,7 @@ func queryCustom(
 	require.NoError(t, err)
 }
 
+//nolint:unused
 func queryCustomErr(
 	t *testing.T,
 	ctx sdk.Context,
