@@ -85,8 +85,7 @@ Possible content of 'finality_providers.json' is
 			genStateFpsByBtcPk := make(map[string]struct{}, 0)
 			for _, fpGen := range btcstkGenState.FinalityProviders {
 				key := fpGen.BtcPk.MarshalHex()
-				_, ok := genStateFpsByBtcPk[key]
-				if ok {
+				if _, ok := genStateFpsByBtcPk[key]; ok {
 					return fmt.Errorf("bad genesis state, there is more than one finality provider with the same btc key %s", key)
 				}
 				genStateFpsByBtcPk[key] = struct{}{}
@@ -99,8 +98,7 @@ Possible content of 'finality_providers.json' is
 				}
 
 				key := fp.BtcPk.MarshalHex()
-				_, ok := genStateFpsByBtcPk[key]
-				if ok {
+				if _, ok := genStateFpsByBtcPk[key]; ok {
 					return fmt.Errorf("error: finality provider: %+v\nwas already set on genesis, or contains the same BtcPk %s than another finality provider", fp, key)
 				}
 
