@@ -93,19 +93,3 @@ func (c *QueryClient) ListEvidences(startHeight uint64, pagination *sdkquerytype
 
 	return resp, err
 }
-
-// ListPublicRandomness is a range query for public randomness of a given finality provider.
-func (c *QueryClient) ListPublicRandomness(fpBtcPkHex string, pagination *sdkquerytypes.PageRequest) (*finalitytypes.QueryListPublicRandomnessResponse, error) {
-	var resp *finalitytypes.QueryListPublicRandomnessResponse
-	err := c.QueryFinality(func(ctx context.Context, queryClient finalitytypes.QueryClient) error {
-		var err error
-		req := &finalitytypes.QueryListPublicRandomnessRequest{
-			FpBtcPkHex: fpBtcPkHex,
-			Pagination: pagination,
-		}
-		resp, err = queryClient.ListPublicRandomness(ctx, req)
-		return err
-	})
-
-	return resp, err
-}
