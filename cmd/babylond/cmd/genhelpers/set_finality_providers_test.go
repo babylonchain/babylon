@@ -28,7 +28,7 @@ func FuzzCmdSetFp(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		qntFps := int(datagen.RandomInt(r, 10))
+		qntFps := int(datagen.RandomInt(r, 10)) + 1
 		fpsToAdd := make([]*btcstktypes.FinalityProvider, qntFps)
 		for i := 0; i < qntFps; i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
@@ -56,8 +56,7 @@ func FuzzCmdSetFp(f *testing.F) {
 			WithHomeDir(home).
 			WithTxConfig(bbn.TxConfig())
 
-		ctx := context.Background()
-		ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
+		ctx := context.WithValue(context.Background(), client.ClientContextKey, &clientCtx)
 
 		fpsToAddFilePath := filepath.Join(home, "fpsToAdd.json")
 		fpToAddGen := &btcstktypes.GenesisState{
@@ -75,8 +74,8 @@ func FuzzCmdSetFp(f *testing.F) {
 			fpsToAddFilePath,
 		})
 		cmdSetFp.SetContext(ctx)
-		client.SetCmdClientContext(cmdSetFp, clientCtx)
-		cmdSetFp.Flags().Set(flags.FlagHome, home)
+		err = cmdSetFp.Flags().Set(flags.FlagHome, home)
+		require.NoError(t, err)
 
 		// Runs the cmd to write into the genesis
 		err = cmdSetFp.Execute()
