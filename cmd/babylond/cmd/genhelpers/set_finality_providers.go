@@ -2,13 +2,13 @@ package genhelpers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 
 	btcstktypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -59,18 +59,7 @@ Possible content of 'finality_providers.json' is
 			config := server.GetServerContextFromCmd(cmd).Config
 			config.SetRoot(clientCtx.HomeDir)
 
-			finalityProvidersInputPath := args[0]
-			if !cmtos.FileExists(finalityProvidersInputPath) {
-				return errors.New("finality providers input file does not exist")
-			}
-
-			fpsBz, err := os.ReadFile(finalityProvidersInputPath)
-			if err != nil {
-				return err
-			}
-
-			var inputFps btcstktypes.GenesisState
-			err = clientCtx.Codec.UnmarshalJSON(fpsBz, &inputFps)
+			inputFps, err := getBtcStakingGenStateFromFile(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
 			}
@@ -124,4 +113,23 @@ Possible content of 'finality_providers.json' is
 	}
 
 	return cmd
+}
+
+func getBtcStakingGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btcstktypes.GenesisState, error) {
+	if !cmtos.FileExists(inputFilePath) {
+		return nil, fmt.Errorf("input file %s does not exists", inputFilePath)
+	}
+
+	fpsBz, err := os.ReadFile(inputFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var genState btcstktypes.GenesisState
+	err = cdc.UnmarshalJSON(fpsBz, &genState)
+	if err != nil {
+		return nil, err
+	}
+
+	return &genState, nil
 }
