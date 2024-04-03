@@ -10,8 +10,8 @@ require (
 	// TODO: the current cosmos-sdk version is a non-released version, which is
 	// to fix the gasLimit problem
 	// should be replaced by a released version if there's any
-	github.com/cosmos/cosmos-sdk v0.50.4
-	github.com/cosmos/relayer/v2 v2.5.2
+	github.com/cosmos/cosmos-sdk v0.50.4-0.20240126152601-c4a2fe2b8987
+	github.com/cosmos/relayer/v2 v2.5.1
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
