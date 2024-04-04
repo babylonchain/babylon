@@ -5,7 +5,6 @@ import (
 
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetLastSentSegment get last broadcasted btc light client segment
@@ -37,32 +36,8 @@ func (k Keeper) setLastSentSegment(ctx context.Context, segment *types.BTCChainS
 	}
 }
 
-// GetFinalizedEpoch gets the last finalised epoch
-// used upon querying the last BTC-finalised chain info for CZs
-func (k Keeper) GetFinalizedEpoch(ctx context.Context) (uint64, error) {
-	store := k.storeService.OpenKVStore(ctx)
-	has, err := store.Has(types.FinalizedEpochKey)
-	if err != nil {
-		panic(err)
-	}
-	if !has {
-		return 0, types.ErrFinalizedEpochNotFound
-	}
-	epochNumberBytes, err := store.Get(types.FinalizedEpochKey)
-	if err != nil {
-		panic(err)
-	}
-	return sdk.BigEndianToUint64(epochNumberBytes), nil
-}
-
-// setFinalizedEpoch sets the last finalised epoch
-// called upon each AfterRawCheckpointFinalized hook invocation
-func (k Keeper) setFinalizedEpoch(ctx context.Context, epochNumber uint64) {
-	store := k.storeService.OpenKVStore(ctx)
-	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
-	if err := store.Set(types.FinalizedEpochKey, epochNumberBytes); err != nil {
-		panic(err)
-	}
+func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
+	return k.checkpointingKeeper.GetLastFinalizedEpoch(ctx)
 }
 
 func (k Keeper) GetEpoch(ctx context.Context) *epochingtypes.Epoch {

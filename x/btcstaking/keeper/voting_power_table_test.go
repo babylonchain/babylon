@@ -23,7 +23,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -38,6 +39,9 @@ func FuzzVotingPowerTable(f *testing.F) {
 			_, _, fp := h.CreateFinalityProvider(r)
 			fps = append(fps, fp)
 		}
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
 
 		// for the first numFpsWithVotingPower finality providers, generate a random number of BTC delegations
 		numBTCDels := datagen.RandomInt(r, 10) + 1
@@ -161,12 +165,16 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		h.NoError(err)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
 
 		// generate a random batch of finality providers, each with a BTC delegation with random power
 		fpsWithMeta := []*types.FinalityProviderDistInfo{}
@@ -245,7 +253,8 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -259,6 +268,9 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// change address
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		h.NoError(err)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
 
 		numFps := datagen.RandomInt(r, 20) + 10
 		numActiveFPs := int(min(numFps, uint64(bsParams.MaxActiveFinalityProviders)))

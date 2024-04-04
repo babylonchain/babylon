@@ -721,6 +721,20 @@ func (mr *MockCheckpointingKeeperMockRecorder) GetBLSPubKeySet(ctx, epochNumber 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBLSPubKeySet", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetBLSPubKeySet), ctx, epochNumber)
 }
 
+// GetLastFinalizedEpoch mocks base method.
+func (m *MockCheckpointingKeeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLastFinalizedEpoch", ctx)
+	ret0, _ := ret[0].(uint64)
+	return ret0
+}
+
+// GetLastFinalizedEpoch indicates an expected call of GetLastFinalizedEpoch.
+func (mr *MockCheckpointingKeeperMockRecorder) GetLastFinalizedEpoch(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastFinalizedEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetLastFinalizedEpoch), ctx)
+}
+
 // GetRawCheckpoint mocks base method.
 func (m *MockCheckpointingKeeper) GetRawCheckpoint(ctx context.Context, epochNumber uint64) (*types2.RawCheckpointWithMeta, error) {
 	m.ctrl.T.Helper()

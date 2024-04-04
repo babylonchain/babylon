@@ -22,7 +22,8 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -40,6 +41,9 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 				fpsWithVotingPowerMap[fp.BabylonPk.String()] = fp
 			}
 		}
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
 
 		// for the first numFpsWithVotingPower finality providers, generate a random number of BTC delegations and add covenant signatures to activate them
 		numBTCDels := datagen.RandomInt(r, 10) + 1
