@@ -424,6 +424,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		hooks.AfterEpochEnds(ctx, epoch.EpochNumber)
 		err := hooks.AfterRawCheckpointFinalized(ctx, epoch.EpochNumber)
 		require.NoError(t, err)
+		checkpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epoch.EpochNumber).AnyTimes()
 
 		// check if the chain info of this epoch is recorded or not
 		resp, err := zcKeeper.FinalizedChainsInfo(ctx, &zctypes.QueryFinalizedChainsInfoRequest{ChainIds: chainIDs, Prove: true})

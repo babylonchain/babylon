@@ -23,7 +23,8 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -36,6 +37,9 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 			_, fpPK, _ := h.CreateFinalityProvider(r)
 			fpPKs = append(fpPKs, fpPK)
 		}
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
 
 		// empty dist cache
 		dc := types.NewVotingPowerDistCache()
@@ -74,7 +78,8 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -83,6 +88,9 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 
 		// generate and insert new finality provider
 		_, fpPK, fp := h.CreateFinalityProvider(r)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).AnyTimes()
 
 		/*
 			insert new BTC delegation and give it covenant quorum
@@ -151,7 +159,8 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := NewHelper(t, btclcKeeper, btccKeeper)
+		ckptKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -160,6 +169,9 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 
 		// generate and insert new finality provider
 		_, fpPK, fp := h.CreateFinalityProvider(r)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).AnyTimes()
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)

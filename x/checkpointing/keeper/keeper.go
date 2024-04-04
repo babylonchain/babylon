@@ -297,7 +297,11 @@ func (k Keeper) SetCheckpointConfirmed(ctx context.Context, epoch uint64) {
 // and records the associated state update in lifecycle
 func (k Keeper) SetCheckpointFinalized(ctx context.Context, epoch uint64) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	// set the checkpoint's status to be finalised
 	ckpt := k.setCheckpointStatus(ctx, epoch, types.Confirmed, types.Finalized)
+	// remember the last finalised epoch
+	k.SetLastFinalizedEpoch(ctx, epoch)
+	// emit event
 	err := sdkCtx.EventManager().EmitTypedEvent(
 		&types.EventCheckpointFinalized{Checkpoint: ckpt},
 	)
@@ -394,4 +398,25 @@ func (k Keeper) GetTotalVotingPower(ctx context.Context, epochNumber uint64) int
 
 func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error) {
 	return k.epochingKeeper.GetPubKeyByConsAddr(ctx, consAddr)
+}
+
+// GetLastFinalizedEpoch gets the last finalised epoch
+func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
+	store := k.storeService.OpenKVStore(ctx)
+	epochNumberBytes, err := store.Get(types.LastFinalizedEpochKey)
+	if err != nil {
+		// we have set epoch 0 to be finalised at genesis so this can
+		// only be a programming error
+		panic(err)
+	}
+	return sdk.BigEndianToUint64(epochNumberBytes)
+}
+
+// SetLastFinalizedEpoch sets the last finalised epoch
+func (k Keeper) SetLastFinalizedEpoch(ctx context.Context, epochNumber uint64) {
+	store := k.storeService.OpenKVStore(ctx)
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
+	if err := store.Set(types.LastFinalizedEpochKey, epochNumberBytes); err != nil {
+		panic(err)
+	}
 }

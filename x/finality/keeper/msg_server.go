@@ -77,6 +77,12 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, bstypes.ErrFpAlreadySlashed
 	}
 
+	// ensure the finality provider's registered epoch is already finalised by BTC timestamping
+	finalizedEpoch := ms.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
+	if finalizedEpoch < fp.RegisteredEpoch {
+		return nil, bstypes.ErrFpNotBTCTimestamped
+	}
+
 	// ensure the finality provider has voting power at this height
 	if req.FpBtcPk == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
@@ -97,18 +103,15 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
-	// ensure the finality provider has committed public randomness
-	pubRand, err := ms.GetPubRand(ctx, fpPK, req.BlockHeight)
-	if err != nil {
-		return nil, types.ErrPubRandNotFound
-	}
+	// derive public randomness at this height from the master public randomness
+	pubRand := fp.MustGetPubRand(req.BlockHeight)
 
 	// verify EOTS signature w.r.t. public randomness
 	fpBTCPK, err := fpPK.ToBTCPK()
 	if err != nil {
 		return nil, err
 	}
-	if err := eots.Verify(fpBTCPK, pubRand.ToFieldVal(), req.MsgToSign(), req.FinalitySig.ToModNScalar()); err != nil {
+	if err := eots.Verify(fpBTCPK, pubRand, req.MsgToSign(), req.FinalitySig.ToModNScalar()); err != nil {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the EOTS signature is invalid: %v", err)
 	}
 
@@ -124,7 +127,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		evidence := &types.Evidence{
 			FpBtcPk:              req.FpBtcPk,
 			BlockHeight:          req.BlockHeight,
-			PubRand:              pubRand,
+			MasterPubRand:        fp.MasterPubRand,
 			CanonicalAppHash:     indexedBlock.AppHash,
 			CanonicalFinalitySig: nil,
 			ForkAppHash:          req.BlockAppHash,
@@ -174,54 +177,6 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 
 	return &types.MsgAddFinalitySigResponse{}, nil
-}
-
-// CommitPubRandList commits a list of EOTS public randomness
-func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommitPubRandList) (*types.MsgCommitPubRandListResponse, error) {
-	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
-
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// ensure the request contains enough number of public randomness
-	minPubRand := ms.GetParams(ctx).MinPubRand
-	givenPubRand := len(req.PubRandList)
-	if uint64(givenPubRand) < minPubRand {
-		return nil, types.ErrTooFewPubRand.Wrapf("required minimum: %d, actual: %d", minPubRand, givenPubRand)
-	}
-
-	// ensure the finality provider is registered
-	if req.FpBtcPk == nil {
-		return nil, types.ErrInvalidPubRand.Wrap("empty finality provider public key")
-	}
-	fpBTCPKBytes := req.FpBtcPk.MustMarshal()
-	if !ms.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPKBytes) {
-		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
-	}
-
-	// this finality provider has not commit any public randomness,
-	// commit the given public randomness list and return
-	if ms.IsFirstPubRand(ctx, req.FpBtcPk) {
-		ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
-		return &types.MsgCommitPubRandListResponse{}, nil
-	}
-
-	// ensure height and req.StartHeight do not overlap, i.e., height < req.StartHeight
-	height, _, err := ms.GetLastPubRand(ctx, req.FpBtcPk)
-	if err != nil {
-		return nil, err
-	}
-	if height >= req.StartHeight {
-		return nil, types.ErrInvalidPubRand.Wrapf("the start height (%d) has overlap with the height of the highest public randomness (%d)", req.StartHeight, height)
-	}
-
-	// verify signature over the list
-	if err := req.VerifySig(); err != nil {
-		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)
-	}
-
-	// all good, commit the given public randomness list
-	ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
-	return &types.MsgCommitPubRandListResponse{}, nil
 }
 
 // slashFinalityProvider slashes a finality provider with the given evidence
