@@ -163,7 +163,10 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		_, fpPK, _ := h.CreateFinalityProvider(r)
+		_, fpPK, fp := h.CreateFinalityProvider(r)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -208,7 +211,10 @@ func TestProperVersionInDelegation(t *testing.T) {
 	require.NoError(t, err)
 
 	// generate and insert new finality provider
-	_, fpPK, _ := h.CreateFinalityProvider(r)
+	_, fpPK, fp := h.CreateFinalityProvider(r)
+
+	// mock that the registered epoch is finalised
+	h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).AnyTimes()
 
 	// generate and insert new BTC delegation
 	stakingValue := int64(2 * 10e8)
@@ -276,7 +282,10 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		_, fpPK, _ := h.CreateFinalityProvider(r)
+		_, fpPK, fp := h.CreateFinalityProvider(r)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -344,7 +353,10 @@ func FuzzBTCUndelegate(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		_, fpPK, _ := h.CreateFinalityProvider(r)
+		_, fpPK, fp := h.CreateFinalityProvider(r)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -415,8 +427,11 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
+		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
 		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -482,8 +497,11 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
+		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
 		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -647,10 +665,11 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	h.NoError(err)
 
 	// all good, construct and send MsgCreateBTCDelegation message
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
-		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
 		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
@@ -664,6 +683,10 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
 		DelegatorUnbondingSlashingSig: delUnbondingSlashingSig,
 	}
+
+	// mock last finalised epoch
+	h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(0))
+
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrFpNotFound))
@@ -726,7 +749,10 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			require.NoError(t, err)
 
 			// generate and insert new finality provider
-			_, fpPK, _ := h.CreateFinalityProvider(r)
+			_, fpPK, fp := h.CreateFinalityProvider(r)
+
+			// mock that the registered epoch is finalised
+			h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).MaxTimes(1)
 
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
@@ -799,7 +825,10 @@ func TestMinimalUnbondingRate(t *testing.T) {
 			require.NoError(t, err)
 
 			// generate and insert new finality provider
-			_, fpPK, _ := h.CreateFinalityProvider(r)
+			_, fpPK, fp := h.CreateFinalityProvider(r)
+
+			// mock that the registered epoch is finalised
+			h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).MaxTimes(1)
 
 			// generate and insert new BTC delegation
 			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(

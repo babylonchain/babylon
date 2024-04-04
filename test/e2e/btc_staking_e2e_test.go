@@ -179,6 +179,14 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
 
+	// finalise epochs until the registered epoch of the finality provider
+	// so that the finality provider can receive BTC delegations
+	var (
+		startEpoch = uint64(1)
+		endEpoch   = fp.RegisteredEpoch
+	)
+	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
+
 	// submit the message for creating BTC delegation
 	nonValidatorNode.CreateBTCDelegation(
 		delBabylonSK.PubKey().(*secp256k1.PubKey),
@@ -341,14 +349,6 @@ func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
-
-	// finalise epochs until the registered epoch of the finality provider
-	// so that the finality provider can vote
-	var (
-		startEpoch = uint64(1)
-		endEpoch   = fp.RegisteredEpoch
-	)
-	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
 
 	// get activated height
 	activatedHeight := nonValidatorNode.QueryActivatedHeight()
