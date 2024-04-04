@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 )
 
@@ -71,13 +71,9 @@ Possible content of 'finality_providers.json' is
 			}
 			btcstkGenState := btcstktypes.GenesisStateFromAppState(clientCtx.Codec, appState)
 
-			genStateFpsByBtcPk := make(map[string]struct{}, 0)
-			for _, fpGen := range btcstkGenState.FinalityProviders {
-				key := fpGen.BtcPk.MarshalHex()
-				if _, ok := genStateFpsByBtcPk[key]; ok {
-					return fmt.Errorf("bad genesis state, there is more than one finality provider with the same btc key %s", key)
-				}
-				genStateFpsByBtcPk[key] = struct{}{}
+			genStateFpsByBtcPk, err := mapFinalityProvidersByBtcPk(btcstkGenState.FinalityProviders)
+			if err != nil {
+				return fmt.Errorf("bad gen state: %w", err)
 			}
 
 			newFps := make([]*btcstktypes.FinalityProvider, 0, len(inputFps.FinalityProviders))
@@ -97,22 +93,37 @@ Possible content of 'finality_providers.json' is
 			}
 			btcstkGenState.FinalityProviders = append(btcstkGenState.FinalityProviders, newFps...)
 
-			btcstkGenStateWithFps, err := clientCtx.Codec.MarshalJSON(&btcstkGenState)
+			err = replaceModOnGenesis(clientCtx.Codec, genDoc, appState, btcstktypes.ModuleName, &btcstkGenState)
 			if err != nil {
-				return fmt.Errorf("failed to marshal btcstaking genesis state: %w", err)
+				return err
 			}
-			appState[btcstktypes.ModuleName] = btcstkGenStateWithFps
 
-			appStateJSON, err := json.Marshal(appState)
-			if err != nil {
-				return fmt.Errorf("failed to marshal application genesis state: %w", err)
-			}
-			genDoc.AppState = appStateJSON
 			return genutil.ExportGenesisFile(genDoc, genFile)
 		},
 	}
 
 	return cmd
+}
+
+func replaceModOnGenesis(
+	cdc codec.Codec,
+	genDoc *genutiltypes.AppGenesis,
+	appState map[string]json.RawMessage,
+	modname string,
+	modGenState proto.Message,
+) error {
+	newModGenState, err := cdc.MarshalJSON(modGenState)
+	if err != nil {
+		return fmt.Errorf("failed to marshal %s genesis state: %w", modname, err)
+	}
+	appState[modname] = newModGenState
+
+	appStateJSON, err := json.Marshal(appState)
+	if err != nil {
+		return fmt.Errorf("failed to marshal application genesis state: %w", err)
+	}
+	genDoc.AppState = appStateJSON
+	return nil
 }
 
 func getBtcStakingGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btcstktypes.GenesisState, error) {
@@ -132,4 +143,16 @@ func getBtcStakingGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btcs
 	}
 
 	return &genState, nil
+}
+
+func mapFinalityProvidersByBtcPk(fps []*btcstktypes.FinalityProvider) (map[string]struct{}, error) {
+	genStateFpsByBtcPk := make(map[string]struct{}, 0)
+	for _, fpGen := range fps {
+		key := fpGen.BtcPk.MarshalHex()
+		if _, ok := genStateFpsByBtcPk[key]; ok {
+			return nil, fmt.Errorf("there is more than one finality provider with the same btc key %s", key)
+		}
+		genStateFpsByBtcPk[key] = struct{}{}
+	}
+	return genStateFpsByBtcPk, nil
 }

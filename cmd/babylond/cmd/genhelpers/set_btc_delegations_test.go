@@ -27,13 +27,40 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
+		r, h := rand.New(rand.NewSource(seed)), helper.NewHelper(t)
+		app := h.App
+		cdc := app.AppCodec()
+		home := t.TempDir()
+
+		clientCtx := client.Context{}.
+			WithCodec(app.AppCodec()).
+			WithHomeDir(home).
+			WithTxConfig(app.TxConfig())
+		ctx := context.WithValue(context.Background(), client.ClientContextKey, &clientCtx)
+
+		err := genutiltest.ExecInitCmd(app.BasicModuleManager, home, cdc)
+		require.NoError(t, err)
 
 		qntBtcDels := int(datagen.RandomInt(r, 10)) + 1
 		btcDelsToAdd := make([]*btcstktypes.BTCDelegation, qntBtcDels)
 
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
+
+		// write fp to genesis
+		fpsToAddFilePath := filepath.Join(home, "fpsToAdd.json")
+		writeFileProto(t, cdc, fpsToAddFilePath, &btcstktypes.GenesisState{
+			FinalityProviders: []*btcstktypes.FinalityProvider{fp},
+		})
+
+		cmdSetFp := genhelpers.CmdSetFp()
+		cmdSetFp.SetArgs([]string{fpsToAddFilePath})
+		cmdSetFp.SetContext(ctx)
+
+		// Runs the cmd to write into the genesis
+		err = cmdSetFp.Execute()
+		require.NoError(t, err)
+
 		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -62,21 +89,6 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 			require.NoError(t, err)
 			btcDelsToAdd[i] = del
 		}
-
-		home := t.TempDir()
-		h := helper.NewHelper(t)
-
-		app := h.App
-		cdc := app.AppCodec()
-
-		err = genutiltest.ExecInitCmd(app.BasicModuleManager, home, cdc)
-		require.NoError(t, err)
-
-		clientCtx := client.Context{}.
-			WithCodec(app.AppCodec()).
-			WithHomeDir(home).
-			WithTxConfig(app.TxConfig())
-		ctx := context.WithValue(context.Background(), client.ClientContextKey, &clientCtx)
 
 		jsonBytes, err := cdc.MarshalJSON(&btcstktypes.GenesisState{
 			BtcDelegations: btcDelsToAdd,

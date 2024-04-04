@@ -1,7 +1,6 @@
 package genhelpers
 
 import (
-	"encoding/json"
 	"fmt"
 
 	btcstktypes "github.com/babylonchain/babylon/x/btcstaking/types"
@@ -112,6 +111,11 @@ Possible content of 'btc_delegations.json' is
 				genStateBtcDelsByTxHash[key] = struct{}{}
 			}
 
+			genStateFpsByBtcPk, err := mapFinalityProvidersByBtcPk(btcstkGenState.FinalityProviders)
+			if err != nil {
+				return fmt.Errorf("bad gen state: %w", err)
+			}
+
 			newDels := make([]*btcstktypes.BTCDelegation, 0, len(inputBtcDels.BtcDelegations))
 			for _, del := range inputBtcDels.BtcDelegations {
 				if err := del.ValidateBasic(); err != nil {
@@ -128,22 +132,23 @@ Possible content of 'btc_delegations.json' is
 					return fmt.Errorf("error: btc delegation: %+v\nwas already set on genesis, or contains the same staking tx hash %s than another btc delegation", del, key)
 				}
 
+				for _, fpBTCpk := range del.FpBtcPkList {
+					fpKey := fpBTCpk.MarshalHex()
+					if _, ok := genStateFpsByBtcPk[fpKey]; !ok {
+						return fmt.Errorf("error: btc delegation: %+v\nhas an associated finality provider that is not set on genesis %s", del, fpKey)
+					}
+				}
+
 				genStateBtcDelsByTxHash[key] = struct{}{}
 				newDels = append(newDels, del)
 			}
 			btcstkGenState.BtcDelegations = append(btcstkGenState.BtcDelegations, newDels...)
 
-			btcstkGenStateWithBtcDels, err := clientCtx.Codec.MarshalJSON(&btcstkGenState)
+			err = replaceModOnGenesis(clientCtx.Codec, genDoc, appState, btcstktypes.ModuleName, &btcstkGenState)
 			if err != nil {
-				return fmt.Errorf("failed to marshal btcstaking genesis state: %w", err)
+				return err
 			}
-			appState[btcstktypes.ModuleName] = btcstkGenStateWithBtcDels
 
-			appStateJSON, err := json.Marshal(appState)
-			if err != nil {
-				return fmt.Errorf("failed to marshal application genesis state: %w", err)
-			}
-			genDoc.AppState = appStateJSON
 			return genutil.ExportGenesisFile(genDoc, genFile)
 		},
 	}

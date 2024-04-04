@@ -14,8 +14,10 @@ import (
 	btcstktypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cometbft/cometbft/libs/tempfile"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,14 +50,10 @@ func FuzzCmdSetFp(f *testing.F) {
 			WithTxConfig(app.TxConfig())
 		ctx := context.WithValue(context.Background(), client.ClientContextKey, &clientCtx)
 
-		jsonBytes, err := cdc.MarshalJSON(&btcstktypes.GenesisState{
+		fpsToAddFilePath := filepath.Join(home, "fpsToAdd.json")
+		writeFileProto(t, cdc, fpsToAddFilePath, &btcstktypes.GenesisState{
 			FinalityProviders: fpsToAdd,
 		})
-		require.NoError(t, err)
-
-		fpsToAddFilePath := filepath.Join(home, "fpsToAdd.json")
-		err = tempfile.WriteFileAtomic(fpsToAddFilePath, jsonBytes, 0600)
-		require.NoError(t, err)
 
 		cmdSetFp := genhelpers.CmdSetFp()
 		cmdSetFp.SetArgs([]string{fpsToAddFilePath})
@@ -91,4 +89,12 @@ func FuzzCmdSetFp(f *testing.F) {
 		fp := fpsToAdd[0]
 		require.EqualError(t, err, fmt.Errorf("error: finality provider: %+v\nwas already set on genesis, or contains the same BtcPk %s than another finality provider", fp, fp.BtcPk.MarshalHex()).Error())
 	})
+}
+
+func writeFileProto(t *testing.T, cdc codec.Codec, fpath string, structToWriteInFile proto.Message) {
+	jsonBytes, err := cdc.MarshalJSON(structToWriteInFile)
+	require.NoError(t, err)
+
+	err = tempfile.WriteFileAtomic(fpath, jsonBytes, 0600)
+	require.NoError(t, err)
 }
