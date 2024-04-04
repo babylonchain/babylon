@@ -192,10 +192,22 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
 	}
 
-	// Ensure all finality providers are known to Babylon
+	// Ensure all finality providers are known to Babylon, are not slashed,
+	// and their registered epochs are finalised
+	lastFinalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
 	for _, fpBTCPK := range req.FpBtcPkList {
-		if !ms.HasFinalityProvider(ctx, fpBTCPK) {
-			return nil, types.ErrFpNotFound.Wrapf("finality provider pk: %s", fpBTCPK.MarshalHex())
+		// get this finality provider
+		fp, err := ms.GetFinalityProvider(ctx, fpBTCPK)
+		if err != nil {
+			return nil, err
+		}
+		// ensure the finality provider is not slashed
+		if fp.IsSlashed() {
+			return nil, types.ErrFpAlreadySlashed
+		}
+		// ensure the finality provider's registered epoch is finalised
+		if lastFinalizedEpoch < fp.RegisteredEpoch {
+			return nil, types.ErrFpNotBTCTimestamped
 		}
 	}
 
@@ -698,11 +710,12 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 		return nil, types.ErrFpNotFound.Wrapf("BTC delegation is not staked to the finality provider")
 	}
 
-	// ensure the finality provider exists and is not slashed
+	// ensure the finality provider exists
 	fp, err := ms.GetFinalityProvider(ctx, fpBTCPK.MustMarshal())
 	if err != nil {
 		panic(types.ErrFpNotFound.Wrapf("failing to find the finality provider with BTC delegations"))
 	}
+	// ensure the finality provider is not slashed
 	if fp.IsSlashed() {
 		return nil, types.ErrFpAlreadySlashed
 	}

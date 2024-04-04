@@ -38,6 +38,9 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 			fpPKs = append(fpPKs, fpPK)
 		}
 
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
+
 		// empty dist cache
 		dc := types.NewVotingPowerDistCache()
 
@@ -85,6 +88,9 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 
 		// generate and insert new finality provider
 		_, fpPK, fp := h.CreateFinalityProvider(r)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).AnyTimes()
 
 		/*
 			insert new BTC delegation and give it covenant quorum
@@ -163,6 +169,9 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 
 		// generate and insert new finality provider
 		_, fpPK, fp := h.CreateFinalityProvider(r)
+
+		// mock that the registered epoch is finalised
+		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).AnyTimes()
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)

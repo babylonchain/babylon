@@ -22,6 +22,7 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
 )
@@ -178,6 +179,23 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	)
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
+
+	// finalise epochs until the registered epoch of the finality provider
+	// so that the finality provider can receive BTC delegations
+	var (
+		startEpoch = uint64(1)
+		endEpoch   = fp.RegisteredEpoch
+	)
+	// wait until the end epoch is sealed
+	s.Eventually(func() bool {
+		resp, err := nonValidatorNode.QueryRawCheckpoint(endEpoch)
+		if err != nil {
+			return false
+		}
+		return resp.Status == ckpttypes.Sealed
+	}, time.Minute, time.Second*5)
+	// finalise these epochs
+	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
 
 	// submit the message for creating BTC delegation
 	nonValidatorNode.CreateBTCDelegation(
@@ -341,14 +359,6 @@ func (s *BTCStakingTestSuite) Test3SubmitFinalitySignature() {
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
-
-	// finalise epochs until the registered epoch of the finality provider
-	// so that the finality provider can vote
-	var (
-		startEpoch = uint64(1)
-		endEpoch   = fp.RegisteredEpoch
-	)
-	nonValidatorNode.FinalizeSealedEpochs(startEpoch, endEpoch)
 
 	// get activated height
 	activatedHeight := nonValidatorNode.QueryActivatedHeight()

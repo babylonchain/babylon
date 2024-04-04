@@ -256,11 +256,12 @@ func (h *Helper) CreateDelegationCustom(
 	h.NoError(err)
 
 	// all good, construct and send MsgCreateBTCDelegation message
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
 		BtcPk:                         stPk,
-		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
@@ -275,7 +276,6 @@ func (h *Helper) CreateDelegationCustom(
 	}
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
-
 	if err != nil {
 		return "", nil, nil, nil, err
 	}

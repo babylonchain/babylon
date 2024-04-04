@@ -413,8 +413,10 @@ Upon `MsgCreateFinalityProvider`, a Babylon node will execute as follows:
 2. Ensure the given commission rate is at least the `MinCommissionRate` in the
    parameters and at most 100%.
 3. Ensure the finality provider does not exist already.
-4. Ensure the committed master public randomness is in the correct format.
-5. Create a `FinalityProvider` object and save it to finality provider storage.
+4. Ensure the finality provider is not slashed.
+5. Ensure the finality provider is registered at an epoch that has been BTC-timestamped.
+6. Ensure the committed master public randomness is in the correct format.
+7. Create a `FinalityProvider` object and save it to finality provider storage.
 
 ### MsgEditFinalityProvider
 
