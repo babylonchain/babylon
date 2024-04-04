@@ -16,7 +16,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btcstktypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/cometbft/cometbft/libs/tempfile"
 	"github.com/cosmos/cosmos-sdk/client"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -90,14 +89,10 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 			btcDelsToAdd[i] = del
 		}
 
-		jsonBytes, err := cdc.MarshalJSON(&btcstktypes.GenesisState{
+		btcDelsToAddFilePath := filepath.Join(home, "delsToAdd.json")
+		writeFileProto(t, cdc, btcDelsToAddFilePath, &btcstktypes.GenesisState{
 			BtcDelegations: btcDelsToAdd,
 		})
-		require.NoError(t, err)
-
-		btcDelsToAddFilePath := filepath.Join(home, "delsToAdd.json")
-		err = tempfile.WriteFileAtomic(btcDelsToAddFilePath, jsonBytes, 0600)
-		require.NoError(t, err)
 
 		cmdSetBtcDel := genhelpers.CmdSetBtcDels()
 		cmdSetBtcDel.SetArgs([]string{btcDelsToAddFilePath})
@@ -137,5 +132,33 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 
 		err = cmdSetBtcDel.Execute()
 		require.EqualError(t, err, fmt.Errorf("error: btc delegation: %+v\nwas already set on genesis, or contains the same staking tx hash %s than another btc delegation", btcDel, key).Error())
+
+		// checks trying to insert a new btc delegation with an finality provider that is not present in genesis. It should error out
+		notInGenFp, err := datagen.GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+
+		delWithBadFp, err := datagen.GenRandomBTCDelegation(
+			r,
+			t,
+			[]bbn.BIP340PubKey{*notInGenFp.BtcPk},
+			delSK,
+			covenantSKs,
+			covenantQuorum,
+			slashingAddress.EncodeAddress(),
+			startHeight, endHeight, 10000,
+			slashingRate,
+			slashingChangeLockTime,
+		)
+		require.NoError(t, err)
+
+		writeFileProto(t, cdc, btcDelsToAddFilePath, &btcstktypes.GenesisState{
+			BtcDelegations: []*btcstktypes.BTCDelegation{delWithBadFp},
+		})
+
+		err = cmdSetBtcDel.Execute()
+		require.EqualError(t, err, fmt.Errorf("error: btc delegation: %+v\nhas an associated finality provider that is not set on genesis %s", delWithBadFp, notInGenFp.BtcPk.MarshalHex()).Error())
 	})
 }
