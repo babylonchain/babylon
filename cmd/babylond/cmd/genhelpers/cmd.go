@@ -22,6 +22,7 @@ func CmdGenHelpers(validator genutiltypes.MessageValidator) *cobra.Command {
 		CmdAddBls(validator),
 		CmdSetFp(),
 		CmdSetBtcDels(),
+		CmdSetBtcHeaders(),
 	)
 
 	return cmd

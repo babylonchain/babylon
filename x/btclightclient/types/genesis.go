@@ -1,11 +1,14 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 func SimnetGenesisBlock() BTCHeaderInfo {
@@ -70,4 +73,16 @@ func (gs GenesisState) Validate() error {
 	// TODO: validate headers have proper parent-child relationships and proper proof of work
 
 	return nil
+}
+
+// GenesisStateFromAppState returns x/btclightclient GenesisState given raw application
+// genesis state.
+func GenesisStateFromAppState(cdc codec.Codec, appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+
+	if appState[ModuleName] != nil {
+		cdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+
+	return genesisState
 }

@@ -131,13 +131,13 @@ func getBtcStakingGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btcs
 		return nil, fmt.Errorf("input file %s does not exists", inputFilePath)
 	}
 
-	fpsBz, err := os.ReadFile(inputFilePath)
+	bz, err := os.ReadFile(inputFilePath)
 	if err != nil {
 		return nil, err
 	}
 
 	var genState btcstktypes.GenesisState
-	err = cdc.UnmarshalJSON(fpsBz, &genState)
+	err = cdc.UnmarshalJSON(bz, &genState)
 	if err != nil {
 		return nil, err
 	}
