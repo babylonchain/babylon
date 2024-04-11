@@ -45,9 +45,6 @@ message Evidence {
 // FinalityProviderSigningInfo defines a finality provider's signing info for monitoring their
 // liveness activity.
 message FinalityProviderSigningInfo {
-    option (gogoproto.equal)            = true;
-    option (gogoproto.goproto_stringer) = false;
-
     // fp_btc_pk is the BTC PK of the finality provider that casts this vote
     bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // start_height is the block height at which finality provider become active OR was unjailed

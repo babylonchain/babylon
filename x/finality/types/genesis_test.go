@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/babylonchain/babylon/x/finality/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/x/finality/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -19,11 +20,11 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid:    true,
 		},
 		{
-			desc: "valid genesis state",
+			desc: "invalid genesis state",
 			genState: &types.GenesisState{
 				Params: types.Params{},
 			},
-			valid: true,
+			valid: false,
 		},
 	}
 	for _, tc := range tests {
