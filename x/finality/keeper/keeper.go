@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbntypes "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
 )
 
@@ -70,14 +69,4 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return k.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
-}
-
-// Jail attempts to jail a finality provider. The jailing is delegated to the btcstaking module
-// to make the necessary finality provider changes.
-func (k Keeper) Jail(ctx context.Context, btcPk *bbntypes.BIP340PubKey) error {
-	// TODO: implement jailing functionalities in the btcstaking module
-
-	// TODO: emit jailing event
-
-	return nil
 }

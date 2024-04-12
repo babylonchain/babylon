@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 // SetFinalityProvider adds the given finality provider to KVStore
@@ -64,6 +65,34 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
 
 	return nil
+}
+
+// JailFinalityProvider fails a finality provider with the given PK
+// A jailed finality provider will not have voting power
+func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	// TODO: implement me
+	return nil
+}
+
+func (k Keeper) GetActiveFinalityProviders(ctx context.Context, height uint64) ([]*types.FinalityProvider, error) {
+	dc, err := k.GetVotingPowerDistCache(ctx, height)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get voting power dist cache at height %d: %w", height, err)
+	}
+	// filter out voted finality providers
+	maxActiveFPs := k.GetParams(ctx).MaxActiveFinalityProviders
+	activeFpsDisInfo := dc.GetActiveFinalityProviders(maxActiveFPs)
+
+	activeFps := make([]*types.FinalityProvider, len(activeFpsDisInfo))
+	for i, fpInfo := range activeFps {
+		fp, err := k.GetFinalityProvider(ctx, fpInfo.BtcPk.MustMarshal())
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch finality provider %s: %w", fpInfo.BtcPk.MarshalHex(), err)
+		}
+		activeFps[i] = fp
+	}
+
+	return activeFps, nil
 }
 
 // finalityProviderStore returns the KVStore of the finality provider set
