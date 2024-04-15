@@ -52,9 +52,7 @@ message FinalityProviderSigningInfo {
     // jailed_until defines the timestamp until which the finality provider is jailed due to liveness downtime.
     google.protobuf.Timestamp jailed_until = 3
     [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
-    // slashed indicates whether a finality provider has been slashed
-    bool slashed = 4;
     // missed_blocks_counter defines a counter to avoid unnecessary array reads.
     // Note that `Sum(MissedBlocksBitArray)` always equals `MissedBlocksCounter`.
-    int64 missed_blocks_counter = 5;
+    int64 missed_blocks_counter = 4;
 }
