@@ -31,6 +31,11 @@ func RandGen(randSource io.Reader) (*PrivateRand, *PublicRand, error) {
 	return &pk.Key, &j.X, nil
 }
 
+// NewMasterRandPairFromSeed deterministically generates a pair of
+// master/secret randomness from a given seed.
+// NOTE: BIP-32 allows to use seed with 16-64 bytes. We used 32 here
+// as the seed is typically a 32-byte hash, e.g., finality provider
+// uses a hash to derive randomness.
 func NewMasterRandPairFromSeed(seed [32]byte) (*MasterSecretRand, *MasterPublicRand, error) {
 	// generate new master key pair
 	var (
@@ -62,6 +67,7 @@ func NewMasterRandPairFromSeed(seed [32]byte) (*MasterSecretRand, *MasterPublicR
 	return &MasterSecretRand{masterSK}, &MasterPublicRand{masterPK}, nil
 }
 
+// NewMasterRandPair generates a pair of master secret/public randomness
 func NewMasterRandPair(randSource io.Reader) (*MasterSecretRand, *MasterPublicRand, error) {
 	// get random seed
 	var seed [32]byte
