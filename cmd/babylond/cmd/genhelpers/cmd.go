@@ -23,6 +23,7 @@ func CmdGenHelpers(validator genutiltypes.MessageValidator) *cobra.Command {
 		CmdSetFp(),
 		CmdSetBtcDels(),
 		CmdSetBtcHeaders(),
+		CmdCreateFinalityProvider(),
 	)
 
 	return cmd
