@@ -39,8 +39,8 @@ to lock up their Bitcoin for a set period of time to secure a PoS chain.
 - **Finality Provider**: A Finality Provider is the an entity that votes 
 in the finality round to provide security assurance to the PoS chain.
 
-The Bitcoin Staker can choose a specific Finality Provider to which 
-to they can delegate (stake) their locked Bitcoin.
+The Bitcoin staker can choose a specific Finality Provider to delegate 
+their voting power derived from their locked Bitcoin.
 
 The key to making all these possible is special constructions of BTC
 transactions using BTC scripts.
