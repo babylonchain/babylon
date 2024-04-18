@@ -35,12 +35,12 @@ In the entire Bitcoin staking process, two parties are involved: one is called
 the Bitcoin Staker, and the other is called the Finality Provider.
 
 - **Bitcoin Staker**: A Bitcoin Staker is a person who owns Bitcoin and chooses 
-to lock up their Bitcoin for a set period of time to earn yields.
-- **Finality Provider**: A Finality Provider is the service that provides security 
-assurance to the proof-of-stake chain.
+to lock up their Bitcoin for a set period of time to secure a PoS chain.
+- **Finality Provider**: A Finality Provider is the an entity that votes 
+in the finality round to provide security assurance to the PoS chain.
 
-The Bitcoin Staker can choose a specific Finality Provider with 
-which to lock (stake) their Bitcoins."
+The Bitcoin Staker can choose a specific Finality Provider to which 
+to they can delegate (stake) their locked Bitcoin.
 
 The key to making all these possible is special constructions of BTC
 transactions using BTC scripts.
