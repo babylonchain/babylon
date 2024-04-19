@@ -38,6 +38,8 @@ message FinalityProvider {
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
     uint64 slashed_btc_height = 9;
+    // jailed defines whether the finality provider has been jailed
+    bool jailed = 10;
 }
 
 // FinalityProviderWithMeta wraps the FinalityProvider with metadata.
@@ -62,6 +64,8 @@ message FinalityProviderWithMeta {
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
     uint64 slashed_btc_height = 7;
+    // jailed defines whether the finality provider has been jailed
+    bool jailed = 8;
 }
 
 // BTCDelegation defines a BTC delegation

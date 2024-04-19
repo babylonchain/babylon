@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/babylonchain/babylon/x/finality/keeper"
-	"github.com/babylonchain/babylon/x/finality/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
+
+	"github.com/babylonchain/babylon/x/finality/keeper"
+	"github.com/babylonchain/babylon/x/finality/types"
 )
 
 func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
@@ -25,6 +26,8 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		k.IndexBlock(ctx)
 		// tally all non-finalised blocks
 		k.TallyBlocks(ctx)
+		// jail inactive finality providers if there are any
+		k.HandleLiveness(ctx)
 	}
 
 	return []abci.ValidatorUpdate{}, nil
