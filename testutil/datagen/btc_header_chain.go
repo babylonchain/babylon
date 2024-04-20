@@ -73,6 +73,10 @@ func (c *BTCHeaderPartialChain) GetChainInfo() []*types.BTCHeaderInfo {
 	return ChainToInfoChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
 }
 
+func (c *BTCHeaderPartialChain) GetChainInfoResponse() []*types.BTCHeaderInfoResponse {
+	return ChainToInfoResponseChain(c.Headers, c.initialHeaderHeight, c.inititialHeaderTotalWork)
+}
+
 func (c *BTCHeaderPartialChain) ChainToBytes() []bbn.BTCHeaderBytes {
 	chainBytes := make([]bbn.BTCHeaderBytes, 0)
 	for _, header := range c.Headers {
