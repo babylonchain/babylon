@@ -1,7 +1,6 @@
 package datagen
 
 import (
-	"encoding/hex"
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
@@ -75,7 +74,7 @@ func NewBTCHeaderChainFromParentInfoResponse(
 	parent *types.BTCHeaderInfoResponse,
 	length uint32,
 ) *BTCHeaderPartialChain {
-	headerBytes, err := hex.DecodeString(parent.HeaderHex)
+	headerBytes, err := bbn.NewBTCHeaderBytesFromHex(parent.HeaderHex)
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +82,7 @@ func NewBTCHeaderChainFromParentInfoResponse(
 		r,
 		parent.Height+1,
 		parent.Work,
-		bbn.BTCHeaderBytes(headerBytes).ToBlockHeader(),
+		headerBytes.ToBlockHeader(),
 		length,
 	)
 }
