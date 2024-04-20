@@ -35,24 +35,6 @@ func NewBTCHeaderChainWithLength(
 	)
 }
 
-func NewBTCHeaderChainFromParentInfoResponse(
-	r *rand.Rand,
-	parent *types.BTCHeaderInfoResponse,
-	length uint32,
-) *BTCHeaderPartialChain {
-	headerBytes, err := hex.DecodeString(parent.HeaderHex)
-	if err != nil {
-		panic(err)
-	}
-	return NewBTCHeaderChainFromParent(
-		r,
-		parent.Height+1,
-		parent.Work,
-		bbn.BTCHeaderBytes(headerBytes).ToBlockHeader(),
-		length,
-	)
-}
-
 func NewBTCHeaderChainFromParentInfo(
 	r *rand.Rand,
 	parent *types.BTCHeaderInfo,
@@ -86,6 +68,24 @@ func NewBTCHeaderChainFromParent(
 		initialHeaderHeight:      initialHeaderHeight,
 		inititialHeaderTotalWork: initialHeaderTotalWork,
 	}
+}
+
+func NewBTCHeaderChainFromParentInfoResponse(
+	r *rand.Rand,
+	parent *types.BTCHeaderInfoResponse,
+	length uint32,
+) *BTCHeaderPartialChain {
+	headerBytes, err := hex.DecodeString(parent.HeaderHex)
+	if err != nil {
+		panic(err)
+	}
+	return NewBTCHeaderChainFromParent(
+		r,
+		parent.Height+1,
+		parent.Work,
+		bbn.BTCHeaderBytes(headerBytes).ToBlockHeader(),
+		length,
+	)
 }
 
 func (c *BTCHeaderPartialChain) GetChainInfo() []*types.BTCHeaderInfo {
