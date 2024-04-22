@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -58,8 +57,8 @@ func (m *BTCHeaderInfo) Validate() error {
 
 func NewBTCHeaderInfoResponse(header *bbn.BTCHeaderBytes, headerHash *bbn.BTCHeaderHashBytes, height uint64, work *sdkmath.Uint) *BTCHeaderInfoResponse {
 	return &BTCHeaderInfoResponse{
-		HeaderHex: hex.EncodeToString(*header),
-		HashHex:   hex.EncodeToString(*headerHash),
+		HeaderHex: header.MarshalHex(),
+		HashHex:   headerHash.MarshalHex(),
 		Height:    height,
 		Work:      *work,
 	}
