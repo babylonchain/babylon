@@ -114,8 +114,7 @@ func (tx *BTCSlashingTx) Sign(
 
 // VerifySignature verifies a signature on the slashing tx signed by staker, finality provider, or covenant
 func (tx *BTCSlashingTx) VerifySignature(
-	fundingPkScript []byte,
-	fundingAmount int64,
+	fundingOut *wire.TxOut,
 	slashingPkScriptPath []byte,
 	pk *btcec.PublicKey,
 	sig *bbn.BIP340Signature,
@@ -124,10 +123,9 @@ func (tx *BTCSlashingTx) VerifySignature(
 	if err != nil {
 		return err
 	}
-	return btcstaking.VerifyTransactionSigWithOutputData(
+	return btcstaking.VerifyTransactionSigWithOutput(
 		msgTx,
-		fundingPkScript,
-		fundingAmount,
+		fundingOut,
 		slashingPkScriptPath,
 		pk,
 		*sig,
@@ -165,8 +163,7 @@ func (tx *BTCSlashingTx) EncSign(
 // EncVerifyAdaptorSignature verifies an adaptor signature on the slashing tx
 // with the finality provider's public key as encryption key
 func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
-	stakingPkScript []byte,
-	stakingAmount int64,
+	fundingOut *wire.TxOut,
 	slashingPkScriptPath []byte,
 	pk *btcec.PublicKey,
 	encKey *asig.EncryptionKey,
@@ -176,10 +173,9 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
 	if err != nil {
 		return err
 	}
-	return btcstaking.EncVerifyTransactionSigWithOutputData(
+	return btcstaking.EncVerifyTransactionSigWithOutput(
 		msgTx,
-		stakingPkScript,
-		stakingAmount,
+		fundingOut,
 		slashingPkScriptPath,
 		pk,
 		encKey,
@@ -211,8 +207,7 @@ func (tx *BTCSlashingTx) ParseEncVerifyAdaptorSignatures(
 			return nil, err
 		}
 		err = tx.EncVerifyAdaptorSignature(
-			fundingOut.PkScript,
-			fundingOut.Value,
+			fundingOut,
 			slashingSpendInfo.GetPkScriptPath(),
 			pk.MustToBTCPK(),
 			encKey,

@@ -314,8 +314,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	err = req.SlashingTx.VerifySignature(
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		slashingSpendInfo.GetPkScriptPath(),
 		stakerPk,
 		req.DelegatorSlashingSig,
@@ -414,8 +413,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	err = req.UnbondingSlashingTx.VerifySignature(
-		unbondingInfo.UnbondingOutput.PkScript,
-		unbondingInfo.UnbondingOutput.Value,
+		unbondingInfo.UnbondingOutput,
 		unbondingSlashingSpendInfo.GetPkScriptPath(),
 		newBTCDel.BtcPk.MustToBTCPK(),
 		req.DelegatorUnbondingSlashingSig,
@@ -569,10 +567,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		// this fails, it is a programming error
 		panic(err)
 	}
-	if err := btcstaking.VerifyTransactionSigWithOutputData(
+	if err := btcstaking.VerifyTransactionSigWithOutput(
 		unbondingMsgTx,
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		unbondingSpendInfo.GetPkScriptPath(),
 		req.Pk.MustToBTCPK(),
 		*req.UnbondingTxSig,
@@ -660,10 +657,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		// this fails, it is a programming error
 		panic(err)
 	}
-	if err := btcstaking.VerifyTransactionSigWithOutputData(
+	if err := btcstaking.VerifyTransactionSigWithOutput(
 		unbondingMsgTx,
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		unbondingSpendInfo.GetPkScriptPath(),
 		btcDel.BtcPk.MustToBTCPK(),
 		*req.UnbondingTxSig,
