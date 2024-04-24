@@ -87,8 +87,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 				continue
 			}
 			err := btcDel.BtcUndelegation.SlashingTx.EncVerifyAdaptorSignature(
-				unbondingInfo.UnbondingOutput.PkScript,
-				unbondingInfo.UnbondingOutput.Value,
+				unbondingInfo.UnbondingOutput,
 				slashingSpendInfo.GetPkScriptPath(),
 				orderedCovenantPKs[i].MustToBTCPK(),
 				encKey,
@@ -98,8 +97,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 
 			covSig := covSigsForFP[i].Decrypt(decKey)
 			err = btcDel.BtcUndelegation.SlashingTx.VerifySignature(
-				unbondingInfo.UnbondingOutput.PkScript,
-				unbondingInfo.UnbondingOutput.Value,
+				unbondingInfo.UnbondingOutput,
 				slashingSpendInfo.GetPkScriptPath(),
 				orderedCovenantPKs[i].MustToBTCPK(),
 				bbn.NewBIP340SignatureFromBTCSig(covSig),

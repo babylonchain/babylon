@@ -139,8 +139,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 				continue
 			}
 			err := btcDel.SlashingTx.EncVerifyAdaptorSignature(
-				stakingInfo.StakingOutput.PkScript,
-				stakingInfo.StakingOutput.Value,
+				stakingInfo.StakingOutput,
 				slashingSpendInfo.GetPkScriptPath(),
 				orderedCovenantPKs[i].MustToBTCPK(),
 				encKey,

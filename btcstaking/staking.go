@@ -575,28 +575,6 @@ func VerifyTransactionSigWithOutput(
 		return fmt.Errorf("funding output must not be nil")
 	}
 
-	return VerifyTransactionSigWithOutputData(
-		transaction,
-		fundingOutput.PkScript,
-		fundingOutput.Value,
-		script,
-		pubKey,
-		signature,
-	)
-}
-
-// VerifyTransactionSigWithOutputData verifies that:
-// - provided transaction has exactly one input
-// - provided signature is valid schnorr BIP340 signature
-// - provided signature is signing whole provided transaction	(SigHashDefault)
-func VerifyTransactionSigWithOutputData(
-	transaction *wire.MsgTx,
-	fundingOutputPkScript []byte,
-	fundingOutputValue int64,
-	script []byte,
-	pubKey *btcec.PublicKey,
-	signature []byte) error {
-
 	if transaction == nil {
 		return fmt.Errorf("tx to verify not be nil")
 	}
@@ -612,8 +590,8 @@ func VerifyTransactionSigWithOutputData(
 	tapLeaf := txscript.NewBaseTapLeaf(script)
 
 	inputFetcher := txscript.NewCannedPrevOutputFetcher(
-		fundingOutputPkScript,
-		fundingOutputValue,
+		fundingOutput.PkScript,
+		fundingOutput.Value,
 	)
 
 	sigHashes := txscript.NewTxSigHashes(transaction, inputFetcher)
@@ -641,14 +619,13 @@ func VerifyTransactionSigWithOutputData(
 	return nil
 }
 
-// EncVerifyTransactionSigWithOutputData verifies that:
+// EncVerifyTransactionSigWithOutput verifies that:
 // - provided transaction has exactly one input
 // - provided signature is valid adaptor signature
 // - provided signature is signing whole provided transaction (SigHashDefault)
-func EncVerifyTransactionSigWithOutputData(
+func EncVerifyTransactionSigWithOutput(
 	transaction *wire.MsgTx,
-	fundingOutputPkScript []byte,
-	fundingOutputValue int64,
+	fundingOut *wire.TxOut,
 	script []byte,
 	pubKey *btcec.PublicKey,
 	encKey *asig.EncryptionKey,
@@ -669,8 +646,8 @@ func EncVerifyTransactionSigWithOutputData(
 	tapLeaf := txscript.NewBaseTapLeaf(script)
 
 	inputFetcher := txscript.NewCannedPrevOutputFetcher(
-		fundingOutputPkScript,
-		fundingOutputValue,
+		fundingOut.PkScript,
+		fundingOut.Value,
 	)
 
 	sigHashes := txscript.NewTxSigHashes(transaction, inputFetcher)
