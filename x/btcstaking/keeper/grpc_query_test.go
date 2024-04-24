@@ -177,7 +177,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// covenant and slashing addr
-		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
+		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
@@ -216,6 +216,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 					[]bbn.BIP340PubKey{*fp.BtcPk},
 					delSK,
 					covenantSKs,
+					covenantPKs,
 					covenantQuorum,
 					slashingAddress.EncodeAddress(),
 					startHeight, endHeight, 10000,
@@ -379,7 +380,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// covenant and slashing addr
-		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
+		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 
@@ -421,6 +422,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 					[]bbn.BIP340PubKey{*fpBTCPK},
 					delSK,
 					covenantSKs,
+					covenantPKs,
 					covenantQuorum,
 					slashingAddress.EncodeAddress(),
 					1, 1000, 10000,
@@ -497,7 +499,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, ckptKeeper)
 
 		// covenant and slashing addr
-		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
+		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
@@ -529,6 +531,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 				[]bbn.BIP340PubKey{*fp.BtcPk},
 				delSK,
 				covenantSKs,
+				covenantPKs,
 				covenantQuorum,
 				slashingAddress.EncodeAddress(),
 				startHeight, endHeight, 10000,

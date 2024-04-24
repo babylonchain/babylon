@@ -106,6 +106,7 @@ func GenRandomBTCDelegation(
 	fpBTCPKs []bbn.BIP340PubKey,
 	delSK *btcec.PrivateKey,
 	covenantSKs []*btcec.PrivateKey,
+	covenantPks []*btcec.PublicKey,
 	covenantQuorum uint32,
 	slashingAddress string,
 	startHeight, endHeight, totalSat uint64,
@@ -115,11 +116,7 @@ func GenRandomBTCDelegation(
 	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
-	// list of covenant PKs
-	covenantBTCPKs := []*btcec.PublicKey{}
-	for _, covenantSK := range covenantSKs {
-		covenantBTCPKs = append(covenantBTCPKs, covenantSK.PubKey())
-	}
+
 	// list of finality provider PKs
 	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(fpBTCPKs)
 	if err != nil {
@@ -147,7 +144,7 @@ func GenRandomBTCDelegation(
 		net,
 		delSK,
 		fpPKs,
-		covenantBTCPKs,
+		covenantPks,
 		covenantQuorum,
 		uint16(endHeight-startHeight),
 		int64(totalSat),
@@ -211,7 +208,7 @@ func GenRandomBTCDelegation(
 		net,
 		delSK,
 		fpPKs,
-		covenantBTCPKs,
+		covenantPks,
 		covenantQuorum,
 		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
 		w+1,

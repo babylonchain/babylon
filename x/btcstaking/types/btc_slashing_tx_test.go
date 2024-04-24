@@ -189,9 +189,10 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingPkScriptPath, delSK)
 		require.NoError(t, err)
 
+		covenantSigners := covenantSKs[:covenantQuorum]
 		// get covenant Schnorr signatures
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
-			covenantSKs,
+			covenantSigners,
 			fpPKs,
 			stakingMsgTx,
 			slashingPkScriptPath,
@@ -205,6 +206,10 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// finality provider's PK are verified
 		orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
 		for i := range covSigsForFP {
+			if covSigsForFP[i] == nil {
+				continue
+			}
+
 			err := slashingTx.EncVerifyAdaptorSignature(
 				testStakingInfo.StakingInfo.StakingOutput.PkScript,
 				testStakingInfo.StakingInfo.StakingOutput.Value,

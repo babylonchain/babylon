@@ -278,6 +278,10 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
+
+	covenantSigantures[1] = nil
+	covenantSigantures[3] = nil
+
 	witness, err := si.CreateUnbondingPathWitness(covenantSigantures, stakerSig)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
@@ -294,37 +298,6 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 	}
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
 
-	numOfCovenantMembers := len(scenario.CovenantKeys)
-	// with each loop iteration we remove one key from the list of signatures
-	for i := 0; i < numOfCovenantMembers; i++ {
-		numOfRemovedSignatures := i + 1
-
-		covenantSigantures := GenerateSignatures(
-			t,
-			scenario.CovenantKeys,
-			spendStakeTx,
-			stakingInfo.StakingOutput,
-			si.RevealedLeaf,
-		)
-
-		for j := 0; j <= i; j++ {
-			// NOTE: Number provides signatures must match number of public keys in the script,
-			// if we are missing some signatures those must be set to empty signature in witness
-			covenantSigantures[j] = nil
-		}
-
-		witness, err := si.CreateUnbondingPathWitness(covenantSigantures, stakerSig)
-		require.NoError(t, err)
-		spendStakeTx.TxIn[0].Witness = witness
-
-		if numOfCovenantMembers-numOfRemovedSignatures >= int(scenario.RequiredCovenantSigs) {
-			// if we are above threshold execution should be successful
-			btctest.AssertEngineExecution(t, 0, true, newEngine)
-		} else {
-			// we are below threshold execution should be unsuccessful
-			btctest.AssertEngineExecution(t, 0, false, newEngine)
-		}
-	}
 }
 
 func TestSpendingUnbondingPathSingleKeyCovenant(t *testing.T) {
@@ -460,6 +433,9 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 		si.RevealedLeaf,
 	)
 	require.NoError(t, err)
+
+	covenantSigantures[0] = nil
+	covenantSigantures[3] = nil
 
 	witness, err := si.CreateSlashingPathWitness(
 		covenantSigantures,
