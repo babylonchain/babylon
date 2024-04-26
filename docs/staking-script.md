@@ -31,15 +31,15 @@ The protocol has the following important properties:
    multiple PoS chains and earn multiple PoS yields
 
 
-In the entire Bitcoin staking process, two parties are involved: one is called 
+In the entire Bitcoin staking process, two parties are involved: one is called
 the Bitcoin Staker, and the other is called the Finality Provider.
 
-- **Bitcoin Staker**: A Bitcoin Staker is a person who owns Bitcoin and chooses 
+- **Bitcoin Staker**: A Bitcoin Staker is a person who owns Bitcoin and chooses
 to lock up their Bitcoin for a set period of time to secure a PoS chain.
-- **Finality Provider**: A Finality Provider is the an entity that votes 
+- **Finality Provider**: A Finality Provider is the an entity that votes
 in the finality round to provide security assurance to the PoS chain.
 
-The Bitcoin staker can choose a specific Finality Provider to delegate 
+The Bitcoin staker can choose a specific Finality Provider to delegate
 their voting power derived from their locked Bitcoin.
 
 The key to making all these possible is special constructions of BTC
@@ -188,7 +188,7 @@ before the timelock expires. It commits to a script of the form:
 ```
 <StakerPk> OP_CHECKSIGVERIFY
 <CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
-<CovenantThreshold> OP_GREATERTHANOREQUAL
+<CovenantThreshold> OP_NUMEQUAL
 ```
 
 where:
@@ -212,7 +212,7 @@ delegators in the case of double signing. It commits to a script:
 <StakerPk> OP_CHECKSIGVERIFY
 <FinalityProviderPk> OP_CHECKSIGVERIFY
 <CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
-<CovenantThreshold> OP_GREATERTHANOREQUAL
+<CovenantThreshold> OP_NUMEQUAL
 ```
 
 where:
@@ -290,7 +290,7 @@ delegators in the case of double signing. It commits to a script:
 <StakerPk> OP_CHECKSIGVERIFY
 <FinalityProviderPk> OP_CHECKSIGVERIFY
 <CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
-<CovenantThreshold> OP_GREATERTHANOREQUAL
+<CovenantThreshold> OP_NUMEQUAL
 ```
 
 where:

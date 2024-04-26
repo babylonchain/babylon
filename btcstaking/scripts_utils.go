@@ -11,7 +11,8 @@ import (
 )
 
 // private helper to assemble multisig script
-// SCRIPT: <Pk1> OP_CHEKCSIG <Pk2> OP_CHECKSIGADD <Pk3> OP_CHECKSIGADD ... <PkN> OP_CHECKSIGADD <threshold> OP_GREATERTHANOREQUAL OP_VERIFY
+// if `withVerify` is ture script will end with OP_NUMEQUALVERIFY otherwise with OP_NUMEQUAL
+// SCRIPT: <Pk1> OP_CHEKCSIG <Pk2> OP_CHECKSIGADD <Pk3> OP_CHECKSIGADD ... <PkN> OP_CHECKSIGADD <threshold> OP_NUMEQUALVERIFY (or OP_NUMEQUAL)
 func assembleMultiSigScript(
 	pubkeys []*btcec.PublicKey,
 	threshold uint32,

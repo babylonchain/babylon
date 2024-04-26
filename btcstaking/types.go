@@ -258,12 +258,12 @@ type babylonScriptPaths struct {
 	timeLockPathScript []byte
 	// unbondingPathScript is the script path for on-demand early unbonding
 	// <Staker_PK> OP_CHECKSIGVERIFY
-	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_GREATERTHANOREQUAL OP_VERIFY
+	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_NUMEQUAL
 	unbondingPathScript []byte
 	// slashingPathScript is the script path for slashing
 	// <Staker_PK> OP_CHECKSIGVERIFY
-	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_GREATERTHANOREQUAL OP_VERIFY
-	// <FP_PK1> OP_CHECKSIG ... <FP_PKN> OP_CHECKSIGADD 1 OP_GREATERTHANOREQUAL OP_VERIFY
+	// <FP_PK1> OP_CHECKSIG ... <FP_PKN> OP_CHECKSIGADD 1 OP_NUMEQUALVERIFY
+	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_NUMEQUAL
 	slashingPathScript []byte
 }
 
