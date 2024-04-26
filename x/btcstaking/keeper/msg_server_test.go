@@ -864,7 +864,7 @@ func createNDelegationsForFinalityProvider(
 ) []*types.BTCDelegation {
 	var delegations []*types.BTCDelegation
 	for i := 0; i < numDelegations; i++ {
-		covenatnSks, _, err := datagen.GenRandomBTCKeyPairs(r, int(quorum))
+		covenatnSks, covenantPks, err := datagen.GenRandomBTCKeyPairs(r, int(quorum))
 		require.NoError(t, err)
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -882,6 +882,7 @@ func createNDelegationsForFinalityProvider(
 			[]bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 			delSK,
 			covenatnSks,
+			covenantPks,
 			quorum,
 			slashingAddress.EncodeAddress(),
 			0,
