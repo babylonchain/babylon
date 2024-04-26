@@ -18,7 +18,6 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -870,7 +869,6 @@ func createNDelegationsForFinalityProvider(
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 
-		net := &chaincfg.SimNetParams
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
 
@@ -879,6 +877,7 @@ func createNDelegationsForFinalityProvider(
 		del, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
+			net,
 			[]bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 			delSK,
 			covenatnSks,

@@ -61,7 +61,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 		require.NoError(t, err)
 
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.RegressionNetParams)
 		require.NoError(t, err)
 
 		startHeight := datagen.RandomInt(r, 100) + 1
@@ -76,6 +76,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 			del, err := datagen.GenRandomBTCDelegation(
 				r,
 				t,
+				&chaincfg.RegressionNetParams,
 				[]bbn.BIP340PubKey{*fp.BtcPk},
 				delSK,
 				covenantSKs,
@@ -144,6 +145,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 		delWithBadFp, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
+			&chaincfg.RegressionNetParams,
 			[]bbn.BIP340PubKey{*notInGenFp.BtcPk},
 			delSK,
 			covenantSKs,
