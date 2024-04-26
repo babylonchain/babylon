@@ -38,7 +38,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)
 
-		// (5, 5) covenant committee
+		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 		require.NoError(t, err)
 		covenantQuorum := uint32(3)
