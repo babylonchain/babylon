@@ -38,8 +38,15 @@ message FinalityProvider {
     // the finality provider is slashed.
     // if it's 0 then the finality provider is not slashed
     uint64 slashed_btc_height = 9;
+    // activated_babylon_height indicates the babylon height when
+    // the finality provider enters the active set.
+    // A finality provider is activated if it is
+    // if it's 0 then the finality provider is not activated,
+    // and the value will be updated if it enters the active
+    // set again
+    uint64 activated_babylon_height = 10;
     // jailed defines whether the finality provider has been jailed
-    bool jailed = 10;
+    bool jailed = 11;
 }
 
 // FinalityProviderWithMeta wraps the FinalityProvider with metadata.
