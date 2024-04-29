@@ -560,6 +560,9 @@ func checkTxBeforeSigning(txToSign *wire.MsgTx, fundingTx *wire.MsgTx, fundingOu
 	return nil
 }
 
+// getSigHash returns the sig hash of the given tx spending the given tx output
+// via the given script path
+// signatures over this tx have to be signed over the message being the sig hash
 func getSigHash(transaction *wire.MsgTx, fundingOutput *wire.TxOut, script []byte) ([]byte, error) {
 	if fundingOutput == nil {
 		return nil, fmt.Errorf("funding output must not be nil")
