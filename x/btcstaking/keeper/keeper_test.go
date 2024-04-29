@@ -24,6 +24,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	net = &chaincfg.SimNetParams
+)
+
 type Helper struct {
 	t testing.TB
 

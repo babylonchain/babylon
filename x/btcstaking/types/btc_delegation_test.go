@@ -112,6 +112,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		btcDel, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
+			&chaincfg.SimNetParams,
 			fpBTCPKs,
 			delSK,
 			covenantSigners,

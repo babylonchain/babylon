@@ -7,7 +7,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
@@ -178,7 +177,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
 
@@ -213,6 +212,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
 					t,
+					net,
 					[]bbn.BIP340PubKey{*fp.BtcPk},
 					delSK,
 					covenantSKs,
@@ -381,7 +381,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
 
 		slashingChangeLockTime := uint16(101)
@@ -419,6 +419,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
 					t,
+					net,
 					[]bbn.BIP340PubKey{*fpBTCPK},
 					delSK,
 					covenantSKs,
@@ -500,7 +501,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
 		slashingChangeLockTime := uint16(101)
 
@@ -528,6 +529,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
 				t,
+				net,
 				[]bbn.BIP340PubKey{*fp.BtcPk},
 				delSK,
 				covenantSKs,

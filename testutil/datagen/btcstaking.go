@@ -103,6 +103,7 @@ func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnS
 func GenRandomBTCDelegation(
 	r *rand.Rand,
 	t *testing.T,
+	btcNet *chaincfg.Params,
 	fpBTCPKs []bbn.BIP340PubKey,
 	delSK *btcec.PrivateKey,
 	covenantSKs []*btcec.PrivateKey,
@@ -113,7 +114,6 @@ func GenRandomBTCDelegation(
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) (*bstypes.BTCDelegation, error) {
-	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
 
@@ -141,7 +141,7 @@ func GenRandomBTCDelegation(
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
 		r,
 		t,
-		net,
+		btcNet,
 		delSK,
 		fpPKs,
 		covenantPks,
@@ -205,7 +205,7 @@ func GenRandomBTCDelegation(
 	unbondingSlashingInfo := GenBTCUnbondingSlashingInfo(
 		r,
 		t,
-		net,
+		btcNet,
 		delSK,
 		fpPKs,
 		covenantPks,
