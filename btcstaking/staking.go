@@ -506,22 +506,7 @@ func EncSignTxWithOneScriptSpendInputStrict(
 
 	fundingOutput := fundingTx.TxOut[fundingOutputIdx]
 
-	tapLeaf := txscript.NewBaseTapLeaf(signedScriptPath)
-
-	inputFetcher := txscript.NewCannedPrevOutputFetcher(
-		fundingOutput.PkScript,
-		fundingOutput.Value,
-	)
-
-	sigHashes := txscript.NewTxSigHashes(txToSign, inputFetcher)
-
-	sigHash, err := txscript.CalcTapscriptSignaturehash(
-		sigHashes,
-		txscript.SigHashDefault,
-		txToSign,
-		0,
-		inputFetcher,
-		tapLeaf)
+	sigHash, err := getSigHash(txToSign, fundingOutput, signedScriptPath)
 	if err != nil {
 		return nil, err
 	}
