@@ -293,7 +293,7 @@ func NewBabylonApp(
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
-	// we could also take it from global object which should be initilised in rootCmd
+	// we could also take it from global object which should be initialised in rootCmd
 	// but this way it makes babylon app more testable
 	btcConfig := bbn.ParseBtcOptionsFromConfig(appOpts)
 	powLimit := btcConfig.PowLimit()
@@ -747,7 +747,7 @@ func NewBabylonApp(
 	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
 
-	// Create static IBC router, add ibc-tranfer module route, then set and seal it
+	// Create static IBC router, add ibc-transfer module route, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(zctypes.ModuleName, zoneConciergeStack).
