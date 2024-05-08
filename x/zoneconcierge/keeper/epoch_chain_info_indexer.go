@@ -125,7 +125,6 @@ func (k Keeper) recordEpochChainInfoProofs(ctx context.Context, epochNumber uint
 			k.setEpochChainInfo(ctx, chainID, epochNumber, chainInfo)
 		}
 	}
-
 }
 
 // epochChainInfoStore stores each epoch's latest ChainInfo for a CZ

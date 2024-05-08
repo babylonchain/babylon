@@ -55,6 +55,9 @@ func (k Keeper) getFinalizedInfo(
 		return nil, err
 	}
 
+	// get proof that the epoch is sealed
+	proofEpochSealed := k.getSealedEpochProof(ctx, epochNum)
+
 	// assign raw checkpoint
 	rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, epochNum)
 	if err != nil {
@@ -68,12 +71,6 @@ func (k Keeper) getFinalizedInfo(
 		return nil, fmt.Errorf("empty bestSubmissionBtcInfo")
 	}
 	btcSubmissionKey := &bestSubmissionBtcInfo.SubmissionKey
-
-	// proof that the epoch is sealed
-	proofEpochSealed, err := k.ProveEpochSealed(ctx, epochNum)
-	if err != nil {
-		return nil, err
-	}
 
 	// proof that the epoch's checkpoint is submitted to BTC
 	// i.e., the two `TransactionInfo`s for the checkpoint
