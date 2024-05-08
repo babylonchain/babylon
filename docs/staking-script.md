@@ -34,8 +34,10 @@ The protocol has the following important properties:
 In the entire Bitcoin staking process, two parties are involved: one is called
 the Bitcoin Staker, and the other is called the Finality Provider.
 
-- **Bitcoin Staker**: A Bitcoin Staker is a person who owns Bitcoin and chooses
-to lock up their Bitcoin for a set period of time to secure a PoS chain.
+- **Bitcoin Staker**: A Bitcoin Staker is an entity identified by `<StakerPk>`
+staking scripts. Given that staking transaction can be funded from arbitrary
+unspent transaction output, this makes staker controller of the stake during
+the staking duration.
 - **Finality Provider**: A Finality Provider is the an entity that votes
 in the finality round to provide security assurance to the PoS chain.
 
