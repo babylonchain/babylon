@@ -41,10 +41,7 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 	headersToBroadcast := h.k.getHeadersToBroadcast(ctx)
 
 	// send BTC timestamp to all open channels with ZoneConcierge
-	// TODO: BroadcastBTCTimestamps is non-deterministic due to generating proofs
-	// which are affected by pruning. Re-enable after improving BroadcastBTCTimestamps
-	// methods
-	// h.k.BroadcastBTCTimestamps(ctx, epoch, headersToBroadcast)
+	h.k.BroadcastBTCTimestamps(ctx, epoch, headersToBroadcast)
 
 	// Update the last broadcasted segment
 	h.k.setLastSentSegment(ctx, &types.BTCChainSegment{
