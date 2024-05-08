@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"context"
+	"fmt"
+
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,7 +13,7 @@ import (
 )
 
 // GetEpochChainInfo gets the latest chain info of a given epoch for a given chain ID
-func (k Keeper) GetEpochChainInfo(ctx context.Context, chainID string, epochNumber uint64) (*types.ChainInfo, error) {
+func (k Keeper) GetEpochChainInfo(ctx context.Context, chainID string, epochNumber uint64) (*types.ChainInfoWithProof, error) {
 	if !k.EpochChainInfoExists(ctx, chainID, epochNumber) {
 		return nil, types.ErrEpochChainInfoNotFound
 	}
@@ -19,7 +21,7 @@ func (k Keeper) GetEpochChainInfo(ctx context.Context, chainID string, epochNumb
 	store := k.epochChainInfoStore(ctx, chainID)
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	epochChainInfoBytes := store.Get(epochNumberBytes)
-	var chainInfo types.ChainInfo
+	var chainInfo types.ChainInfoWithProof
 	k.cdc.MustUnmarshal(epochChainInfoBytes, &chainInfo)
 	return &chainInfo, nil
 }
@@ -36,10 +38,11 @@ func (k Keeper) GetEpochHeaders(ctx context.Context, chainID string, epochNumber
 	headers := []*types.IndexedHeader{}
 
 	// find the last timestamped header of this chain in the epoch
-	epochChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNumber)
+	epochChainInfoWithProof, err := k.GetEpochChainInfo(ctx, chainID, epochNumber)
 	if err != nil {
 		return nil, err
 	}
+	epochChainInfo := epochChainInfoWithProof.ChainInfo
 	// it's possible that this epoch's snapshot is not updated for many epochs
 	// this implies that this epoch does not timestamp any header for this chain at all
 	if epochChainInfo.LatestHeader.BabylonEpoch < epochNumber {
@@ -79,15 +82,34 @@ func (k Keeper) recordEpochChainInfo(ctx context.Context, chainID string, epochN
 		k.Logger(sdk.UnwrapSDKContext(ctx)).Debug("chain info does not exist yet, nothing to record")
 		return
 	}
+	chainInfoWithProof := &types.ChainInfoWithProof{
+		ChainInfo:          chainInfo,
+		ProofHeaderInEpoch: nil,
+	}
+
+	// if there is a CZ header checkpointed in this finalised epoch,
+	// add this CZ header and corresponding proofs to the BTC timestamp
+	epoch := k.GetEpoch(ctx)
+	if chainInfo.LatestHeader.BabylonEpoch == epoch.EpochNumber {
+		// get proofCZHeaderInEpoch
+		proofCZHeaderInEpoch, err := k.ProveCZHeaderInEpoch(ctx, chainInfo.LatestHeader, epoch)
+		if err != nil {
+			// only programming error is possible here
+			panic(fmt.Errorf("failed to generate proofCZHeaderInEpoch for chain %s: %w", chainID, err))
+		}
+
+		chainInfoWithProof.ProofHeaderInEpoch = proofCZHeaderInEpoch
+	}
+
 	// NOTE: we can record epoch chain info without ancestor since IBC connection can be established at any height
 	store := k.epochChainInfoStore(ctx, chainID)
-	store.Set(sdk.Uint64ToBigEndian(epochNumber), k.cdc.MustMarshal(chainInfo))
+	store.Set(sdk.Uint64ToBigEndian(epochNumber), k.cdc.MustMarshal(chainInfoWithProof))
 }
 
 // epochChainInfoStore stores each epoch's latest ChainInfo for a CZ
 // prefix: EpochChainInfoKey || chainID
 // key: epochNumber
-// value: ChainInfo
+// value: ChainInfoWithProof
 func (k Keeper) epochChainInfoStore(ctx context.Context, chainID string) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	epochChainInfoStore := prefix.NewStore(storeAdapter, types.EpochChainInfoKey)

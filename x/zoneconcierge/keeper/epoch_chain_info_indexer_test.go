@@ -39,7 +39,8 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		hooks.AfterEpochEnds(ctx, epochNum)
 
 		// check if the chain info of this epoch is recorded or not
-		chainInfo, err := zcKeeper.GetEpochChainInfo(ctx, czChainID, epochNum)
+		chainInfoWithProof, err := zcKeeper.GetEpochChainInfo(ctx, czChainID, epochNum)
+		chainInfo := chainInfoWithProof.ChainInfo
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numHeaders, chainInfo.TimestampedHeadersCount)
@@ -91,8 +92,9 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
 
-			// simulate the scenario that a random epoch has ended
-			hooks.AfterEpochEnds(ctx, epochNum)
+			// simulate the scenario that a random epoch has sealed
+			err := hooks.AfterRawCheckpointSealed(ctx, epochNum)
+			require.NoError(t, err)
 			// prepare epochNum for the next request
 			epochNumList = append(epochNumList, epochNum+datagen.RandomInt(r, 10)+1)
 		}

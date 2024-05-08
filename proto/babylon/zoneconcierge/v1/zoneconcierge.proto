@@ -72,6 +72,16 @@ message ChainInfo {
   uint64 timestamped_headers_count = 4;
 }
 
+// ChainInfoWithProof is the chain info with a proof that the latest header in
+// the chain info is included in the epoch
+message ChainInfoWithProof {
+  ChainInfo chain_info = 1;
+  // proof_header_in_epoch is an inclusion proof that the latest_header in chain_info
+  // is committed  to `app_hash` of the sealer header of latest_header.babylon_epoch
+  // this field is optional
+  tendermint.crypto.ProofOps proof_header_in_epoch = 2;
+}
+
 // FinalizedChainInfo is the information of a CZ that is BTC-finalised
 message FinalizedChainInfo {
   // chain_id is the ID of the chain

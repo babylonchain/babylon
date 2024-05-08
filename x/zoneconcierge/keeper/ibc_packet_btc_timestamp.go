@@ -48,7 +48,8 @@ func (k Keeper) getChainID(ctx context.Context, channel channeltypes.IdentifiedC
 func (k Keeper) getFinalizedInfo(
 	ctx context.Context,
 	epochNum uint64,
-	headersToBroadcast []*btclctypes.BTCHeaderInfo) (*finalizedInfo, error) {
+	headersToBroadcast []*btclctypes.BTCHeaderInfo,
+) (*finalizedInfo, error) {
 	finalizedEpochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, epochNum)
 	if err != nil {
 		return nil, err
@@ -122,9 +123,9 @@ func (k Keeper) createBTCTimestamp(
 	// NOTE: it's possible that this chain does not have chain info at the moment
 	// In this case, skip sending BTC timestamp for this chain at this epoch
 	epochNum := finalizedInfo.EpochInfo.EpochNumber
-	finalizedChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNum)
+	epochChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNum)
 	if err != nil {
-		return nil, fmt.Errorf("no finalizedChainInfo for chain %s at epoch %d", chainID, epochNum)
+		return nil, fmt.Errorf("no epochChainInfo for chain %s at epoch %d", chainID, epochNum)
 	}
 
 	// construct BTC timestamp from everything
@@ -144,15 +145,10 @@ func (k Keeper) createBTCTimestamp(
 
 	// if there is a CZ header checkpointed in this finalised epoch,
 	// add this CZ header and corresponding proofs to the BTC timestamp
-	if finalizedChainInfo.LatestHeader.BabylonEpoch == epochNum {
-		// get proofCZHeaderInEpoch
-		proofCZHeaderInEpoch, err := k.ProveCZHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader, finalizedInfo.EpochInfo)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate proofCZHeaderInEpoch for chain %s: %w", chainID, err)
-		}
-
-		btcTimestamp.Header = finalizedChainInfo.LatestHeader
-		btcTimestamp.Proof.ProofCzHeaderInEpoch = proofCZHeaderInEpoch
+	epochOfHeader := epochChainInfo.ChainInfo.LatestHeader.BabylonEpoch
+	if epochOfHeader == epochNum {
+		btcTimestamp.Header = epochChainInfo.ChainInfo.LatestHeader
+		btcTimestamp.Proof.ProofCzHeaderInEpoch = epochChainInfo.ProofHeaderInEpoch
 	}
 
 	return btcTimestamp, nil

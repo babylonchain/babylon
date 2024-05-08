@@ -135,8 +135,8 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 
 func (h Hooks) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error { return nil }
 
+func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error    { return nil }
 func (h Hooks) AfterRawCheckpointConfirmed(ctx context.Context, epoch uint64) error { return nil }
-
 func (h Hooks) AfterRawCheckpointForgotten(ctx context.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
 	return nil
 }
