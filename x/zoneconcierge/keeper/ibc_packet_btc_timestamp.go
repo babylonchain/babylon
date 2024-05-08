@@ -57,6 +57,9 @@ func (k Keeper) getFinalizedInfo(
 
 	// get proof that the epoch is sealed
 	proofEpochSealed := k.getSealedEpochProof(ctx, epochNum)
+	if proofEpochSealed == nil {
+		panic(err) // only programming error
+	}
 
 	// assign raw checkpoint
 	rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, epochNum)
