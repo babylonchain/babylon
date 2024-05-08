@@ -93,8 +93,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
 
 			// simulate the scenario that a random epoch has sealed
-			err := hooks.AfterRawCheckpointSealed(ctx, epochNum)
-			require.NoError(t, err)
+			hooks.AfterEpochEnds(ctx, epochNum)
 			// prepare epochNum for the next request
 			epochNumList = append(epochNumList, epochNum+datagen.RandomInt(r, 10)+1)
 		}

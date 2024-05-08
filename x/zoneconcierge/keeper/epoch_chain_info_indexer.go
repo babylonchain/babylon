@@ -26,6 +26,11 @@ func (k Keeper) GetEpochChainInfo(ctx context.Context, chainID string, epochNumb
 	return &chainInfo, nil
 }
 
+func (k Keeper) setEpochChainInfo(ctx context.Context, chainID string, epochNumber uint64, chainInfo *types.ChainInfoWithProof) {
+	store := k.epochChainInfoStore(ctx, chainID)
+	store.Set(sdk.Uint64ToBigEndian(epochNumber), k.cdc.MustMarshal(chainInfo))
+}
+
 // EpochChainInfoExists checks if the latest chain info exists of a given epoch for a given chain ID
 func (k Keeper) EpochChainInfoExists(ctx context.Context, chainID string, epochNumber uint64) bool {
 	store := k.epochChainInfoStore(ctx, chainID)
@@ -87,23 +92,40 @@ func (k Keeper) recordEpochChainInfo(ctx context.Context, chainID string, epochN
 		ProofHeaderInEpoch: nil,
 	}
 
-	// if there is a CZ header checkpointed in this finalised epoch,
-	// add this CZ header and corresponding proofs to the BTC timestamp
-	epoch := k.GetEpoch(ctx)
-	if chainInfo.LatestHeader.BabylonEpoch == epoch.EpochNumber {
-		// get proofCZHeaderInEpoch
-		proofCZHeaderInEpoch, err := k.ProveCZHeaderInEpoch(ctx, chainInfo.LatestHeader, epoch)
+	// NOTE: we can record epoch chain info without ancestor since IBC connection can be established at any height
+	k.setEpochChainInfo(ctx, chainID, epochNumber, chainInfoWithProof)
+}
+
+// recordEpochChainInfo records the chain info for a given epoch number of given chain ID
+// where the latest chain info is retrieved from the chain info indexer
+func (k Keeper) recordEpochChainInfoProofs(ctx context.Context, epochNumber uint64) {
+	curEpoch := k.GetEpoch(ctx)
+	chainIDs := k.GetAllChainIDs(ctx)
+
+	// save all inclusion proofs
+	for _, chainID := range chainIDs {
+		// retrieve chain info with empty proof
+		chainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNumber)
 		if err != nil {
-			// only programming error is possible here
-			panic(fmt.Errorf("failed to generate proofCZHeaderInEpoch for chain %s: %w", chainID, err))
+			panic(err) // only programming error
 		}
 
-		chainInfoWithProof.ProofHeaderInEpoch = proofCZHeaderInEpoch
+		lastHeaderInEpoch := chainInfo.ChainInfo.LatestHeader
+		if lastHeaderInEpoch.BabylonEpoch == curEpoch.EpochNumber {
+			// get proofCZHeaderInEpoch
+			proofCZHeaderInEpoch, err := k.ProveCZHeaderInEpoch(ctx, lastHeaderInEpoch, curEpoch)
+			if err != nil {
+				// only programming error is possible here
+				panic(fmt.Errorf("failed to generate proofCZHeaderInEpoch for chain %s: %w", chainID, err))
+			}
+
+			chainInfo.ProofHeaderInEpoch = proofCZHeaderInEpoch
+
+			// set chain info with proof back
+			k.setEpochChainInfo(ctx, chainID, epochNumber, chainInfo)
+		}
 	}
 
-	// NOTE: we can record epoch chain info without ancestor since IBC connection can be established at any height
-	store := k.epochChainInfoStore(ctx, chainID)
-	store.Set(sdk.Uint64ToBigEndian(epochNumber), k.cdc.MustMarshal(chainInfoWithProof))
 }
 
 // epochChainInfoStore stores each epoch's latest ChainInfo for a CZ

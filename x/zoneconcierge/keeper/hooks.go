@@ -20,12 +20,17 @@ var _ epochingtypes.EpochingHooks = Hooks{}
 
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
-// AfterRawCheckpointSealed is triggered upon an epoch has ended
-func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
+func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// upon an epoch has ended, index the current chain info for each CZ
+	// TODO: do this together when epoch is sealed?
 	for _, chainID := range h.k.GetAllChainIDs(ctx) {
 		h.k.recordEpochChainInfo(ctx, chainID, epoch)
 	}
+}
+
+func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
+	// upon a raw checkpoint is sealed, index the current chain info for each consumer
+	h.k.recordEpochChainInfoProofs(ctx, epoch)
 
 	return nil
 }
@@ -58,6 +63,5 @@ func (h Hooks) AfterRawCheckpointBlsSigVerified(ctx context.Context, ckpt *check
 	return nil
 }
 
-func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64)                            {}
 func (h Hooks) AfterEpochBegins(ctx context.Context, epoch uint64)                          {}
 func (h Hooks) BeforeSlashThreshold(ctx context.Context, valSet epochingtypes.ValidatorSet) {}
