@@ -92,7 +92,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
 
-			// simulate the scenario that a random epoch has sealed
+			// simulate the scenario that a random epoch has ended
 			hooks.AfterEpochEnds(ctx, epochNum)
 			// prepare epochNum for the next request
 			epochNumList = append(epochNumList, epochNum+datagen.RandomInt(r, 10)+1)
