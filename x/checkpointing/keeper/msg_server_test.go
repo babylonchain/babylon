@@ -136,6 +136,17 @@ func FuzzWrappedCreateValidator_InsufficientBalance(f *testing.F) {
 	})
 }
 
+func TestBreak(t *testing.T) {
+	valAddr, err := sdk.ValAddressFromBech32("bbnvaloper1rdtrljjhwk9ypc64hu6vv24ku64nvxdzf9785s")
+	require.NoError(t, err)
+
+	accAddr := sdk.AccAddress(valAddr)
+	valAgain := sdk.ValAddress(accAddr)
+	require.Equal(t, valAddr.String(), valAgain.String())
+
+	require.Equal(t, "x", accAddr.String())
+}
+
 // FuzzWrappedCreateValidator tests adding new validators via
 // MsgWrappedCreateValidator, which first registers BLS pubkey
 // and then unwrapped into MsgCreateValidator and enqueued into
