@@ -51,7 +51,7 @@ transactions using BTC scripts.
 ## Preliminary
 
 Babylon interaction with Bitcoin is heavily based on Bitcoin's
-[Taproot upgrade](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawik).
+[Taproot upgrade](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki).
 This design choice was made due to the heavy usage of
 [Schnorr signatures](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki)
 that were introduced through the Taproot upgrade.
