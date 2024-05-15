@@ -1,11 +1,12 @@
 package app
 
 import (
-	"cosmossdk.io/log"
 	"encoding/json"
+	"testing"
+
+	"cosmossdk.io/log"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	dbm "github.com/cosmos/cosmos-db"
-	"testing"
 )
 
 // GenesisState of the blockchain is represented here as a map of raw json
@@ -30,7 +31,7 @@ func NewDefaultGenesisState(t *testing.T) GenesisState {
 		map[int64]bool{},
 		0,
 		nil,
-		EmptyAppOptions{},
+		TestAppOptions(),
 		[]wasmkeeper.Option{})
 	return tempApp.DefaultGenesis()
 }

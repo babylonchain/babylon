@@ -82,7 +82,7 @@ func Test_CmdCreateAddWithoutGentx(t *testing.T) {
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.EmptyAppOptions{},
+		AppOpts:            app.TestAppOptions(),
 	})
 	gentxModule := bbn.BasicModuleManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 	appCodec := bbn.AppCodec()
@@ -124,7 +124,7 @@ func Test_CmdAddBlsWithGentx(t *testing.T) {
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.EmptyAppOptions{},
+		AppOpts:            app.TestAppOptions(),
 	})
 
 	gentxModule := bbn.BasicModuleManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)

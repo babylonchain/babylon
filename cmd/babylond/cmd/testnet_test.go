@@ -33,7 +33,7 @@ func Test_TestnetCmd(t *testing.T) {
 		DB:                 dbm.NewMemDB(),
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.EmptyAppOptions{},
+		AppOpts:            app.TestAppOptions(),
 	})
 	err = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())
 	require.NoError(t, err)
