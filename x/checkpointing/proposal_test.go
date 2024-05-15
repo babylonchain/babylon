@@ -10,6 +10,7 @@ import (
 
 	"testing"
 
+	"cosmossdk.io/core/comet"
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -21,6 +22,7 @@ import (
 	cbftt "github.com/cometbft/cometbft/abci/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tendermintTypes "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	protoio "github.com/cosmos/gogoproto/io"
@@ -122,6 +124,19 @@ func genNTestValidators(t *testing.T, n int) []TestValidator {
 		})
 	}
 
+	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
+	sort.SliceStable(vals, func(i, j int) bool {
+		if vals[i].Power == vals[j].Power {
+			valAddress1, err := sdk.ValAddressFromBech32(vals[i].Keys.ValidatorAddress)
+			require.NoError(t, err)
+			valAddress2, err := sdk.ValAddressFromBech32(vals[j].Keys.ValidatorAddress)
+			require.NoError(t, err)
+			return bytes.Compare(valAddress1, valAddress2) == -1
+		}
+		return vals[i].Power > vals[j].Power
+	})
+
 	return vals
 }
 
@@ -186,15 +201,12 @@ func genVoteExt(
 	return extSignBytes
 }
 
-func requestPrepareProposal(height int64, votes []cbftt.ExtendedVoteInfo) *cbftt.RequestPrepareProposal {
+func requestPrepareProposal(height int64, commitInfo cbftt.ExtendedCommitInfo) *cbftt.RequestPrepareProposal {
 	return &cbftt.RequestPrepareProposal{
-		MaxTxBytes: 10000,
-		Txs:        [][]byte{},
-		LocalLastCommit: cbftt.ExtendedCommitInfo{
-			Round: 0,
-			Votes: votes,
-		},
-		Height: height,
+		MaxTxBytes:      10000,
+		Txs:             [][]byte{},
+		LocalLastCommit: commitInfo,
+		Height:          height,
 	}
 }
 
@@ -266,6 +278,7 @@ func generateNValidatorAndVoteExtensions(t *testing.T, n int, bh *checkpointingt
 		extensions = append(extensions, ve)
 		power += validator.Power
 	}
+
 	return &ValidatorsAndExtensions{
 		Vals:       validators,
 		Extensions: extensions,
@@ -364,7 +377,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				bh := randomBlockHash()
 				// each validator has the same voting power
 				numValidators := 9
-				invalidValidBlsSig := numValidators/3 - 1
+				invalidBlsSig := numValidators/3 - 1
 
 				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, numValidators, &bh, ec.Epoch.EpochNumber)
 
@@ -373,7 +386,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 					validator := val
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
 
-					if i < invalidValidBlsSig {
+					if i < invalidBlsSig {
 						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(checkpointingtypes.ErrInvalidBlsSignature).AnyTimes()
 					} else {
 						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
@@ -478,9 +491,13 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				mem,
 				nil,
 			)
-			prepareProposalFn := h.PrepareProposal()
 
-			prop, err := prepareProposalFn(ec.Ctx, requestPrepareProposal(ec.Ctx.HeaderInfo().Height, scenario.Extensions))
+			commitInfo, blockInfo := extendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: scenario.Extensions})
+			scenario.Extensions = commitInfo.Votes
+			ec.Ctx = ec.Ctx.WithCometInfo(blockInfo)
+
+			req := requestPrepareProposal(ec.Ctx.HeaderInfo().Height, commitInfo)
+			prop, err := h.PrepareProposal()(ec.Ctx, req)
 			if tt.expectError {
 				require.Error(t, err)
 			} else {
@@ -494,4 +511,38 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			}
 		})
 	}
+}
+
+func extendedCommitToLastCommit(ec cbftt.ExtendedCommitInfo) (cbftt.ExtendedCommitInfo, comet.BlockInfo) {
+	// sort the extended commit info
+	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
+	sort.SliceStable(ec.Votes, func(i, j int) bool {
+		if ec.Votes[i].Validator.Power == ec.Votes[j].Validator.Power {
+			return bytes.Compare(ec.Votes[i].Validator.Address, ec.Votes[j].Validator.Address) == -1
+		}
+		return ec.Votes[i].Validator.Power > ec.Votes[j].Validator.Power
+	})
+
+	// convert the extended commit info to last commit info
+	lastCommit := cbftt.CommitInfo{
+		Round: ec.Round,
+		Votes: make([]cbftt.VoteInfo, len(ec.Votes)),
+	}
+
+	for i, vote := range ec.Votes {
+		lastCommit.Votes[i] = cbftt.VoteInfo{
+			Validator: cbftt.Validator{
+				Address: vote.Validator.Address,
+				Power:   vote.Validator.Power,
+			},
+		}
+	}
+
+	return ec, baseapp.NewBlockInfo(
+		nil,
+		nil,
+		nil,
+		lastCommit,
+	)
 }

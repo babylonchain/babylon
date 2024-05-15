@@ -138,25 +138,6 @@ func (h *Helper) Error(err error) {
 	require.Error(h.t, err)
 }
 
-// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
-// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
-type extendedVoteInfos []abci.ExtendedVoteInfo
-
-func (v extendedVoteInfos) Len() int {
-	return len(v)
-}
-
-func (v extendedVoteInfos) Less(i, j int) bool {
-	if v[i].Validator.Power == v[j].Validator.Power {
-		return bytes.Compare(v[i].Validator.Address, v[j].Validator.Address) == -1
-	}
-	return v[i].Validator.Power > v[j].Validator.Power
-}
-
-func (v extendedVoteInfos) Swap(i, j int) {
-	v[i], v[j] = v[j], v[i]
-}
-
 func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash checkpointingtypes.BlockHash, valSet *datagen.GenesisValidators) ([]abci.ExtendedVoteInfo, error) {
 	valPrivKey := valSet.GetValPrivKeys()
 	blsPrivKeys := valSet.GetBLSPrivKeys()
@@ -216,7 +197,14 @@ func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash c
 		extendedVotes = append(extendedVotes, veInfo)
 	}
 
-	sort.Sort(extendedVoteInfos(extendedVotes))
+	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
+	sort.SliceStable(extendedVotes, func(i, j int) bool {
+		if extendedVotes[i].Validator.Power == extendedVotes[j].Validator.Power {
+			return bytes.Compare(extendedVotes[i].Validator.Address, extendedVotes[j].Validator.Address) == -1
+		}
+		return extendedVotes[i].Validator.Power > extendedVotes[j].Validator.Power
+	})
 
 	return extendedVotes, nil
 }
