@@ -10,7 +10,7 @@ the Bitcoin transactions specified by the Bitcoin Staking protocol.
 ## Prerequisites
 
 - [Scripts doc](staking-script.md) - document which defines how different
-Babylon scripts look like
+Bitcoin Staking scripts look like
 - [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)-
 a document specifying how to spend taproot outputs
 
@@ -50,7 +50,7 @@ This key is described in the
 [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs)
 specification.
 
-Using this key as an internal public key disables spending from taproot output
+The use of this key as an internal public key disables spending from taproot output
 through the key spending path.
 The construction of this key can be found [here](../btcstaking/types.go?plain=1#L27).
 
@@ -58,13 +58,14 @@ The construction of this key can be found [here](../btcstaking/types.go?plain=1#
 
 ### Staking transaction
 
-A staking transaction is a transaction that allows staker entry into the system.
+A staker enters the system through the creation of a staking transaction
+which locks Bitcoin in the Bitcoin Staking script.
 
 #### Requirements
 
 For the transaction to be considered a valid staking transaction, it must:
 - have a taproot output which has the key spending path disabled
-and commit to a script tree composed of three scripts:
+and commits to a script tree composed of three scripts::
 timelock script, unbonding script, slashing script.
 This output is henceforth known as the `staking_output` and
 the value in this output is known as `staking_amount`
@@ -160,7 +161,7 @@ member required to authorize spending using `unbonding_script` or `slashing_scri
 
 #### Building OP_RETRUN and staking output implementation
 
-Babylon staking library exposes [BuildV0IdentifiableStakingOutputsAndTx](../btcstaking/identifiable_staking.go?plain=1#L231)
+The Babylon staking library exposes the [BuildV0IdentifiableStakingOutputsAndTx](../btcstaking/identifiable_staking.go?plain=1#L231)
 function with the following signature:
 
 ```go
