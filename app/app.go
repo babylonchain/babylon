@@ -156,12 +156,6 @@ const (
 	// environmental variables - https://github.com/cosmos/cosmos-sdk/pull/10950
 	BabylonAppEnvPrefix = ""
 
-	// TODO review possible capabilities
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	wasmCapabilities = "iterator,stargate,cosmwasm_1_1,cosmwasm_1_2,babylon"
-
 	// According to https://github.com/CosmWasm/wasmd#genesis-configuration chains
 	// using smart contracts should configure proper gas limits per block.
 	// https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc
@@ -172,6 +166,12 @@ const (
 )
 
 var (
+	// TODO review possible capabilities
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
+	wasmCapabilities = []string{"iterator", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "babylon"}
+
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
