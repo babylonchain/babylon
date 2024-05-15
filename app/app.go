@@ -387,12 +387,15 @@ func NewBabylonApp(
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
-	// set handlers of vote extension
+	// set vote extension
 	voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &checkpointingKeeper)
-	voteExtHandler.SetHandlers(bApp)
+	bApp.SetExtendVoteHandler(voteExtHandler.ExtendVote())
+	bApp.SetVerifyVoteExtensionHandler(voteExtHandler.VerifyVoteExtension())
+	// set proposal extension
 	proposalHandler := checkpointing.NewProposalHandler(
 		logger, &checkpointingKeeper, bApp.Mempool(), bApp)
-	proposalHandler.SetHandlers(bApp)
+	bApp.SetPrepareProposal(proposalHandler.PrepareProposal())
+	bApp.SetProcessProposal(proposalHandler.ProcessProposal())
 
 	tkeys := storetypes.NewTransientStoreKeys(
 		paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
