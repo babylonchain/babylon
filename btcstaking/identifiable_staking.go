@@ -26,7 +26,7 @@ const (
 
 type IdentifiableStakingInfo struct {
 	StakingOutput         *wire.TxOut
-	scriptHolder          *taprootScriptHolder
+	ScriptHolder          *taprootScriptHolder
 	timeLockPathLeafHash  chainhash.Hash
 	unbondingPathLeafHash chainhash.Hash
 	slashingPathLeafHash  chainhash.Hash
@@ -218,7 +218,7 @@ func BuildV0IdentifiableStakingOutputs(
 
 	return &IdentifiableStakingInfo{
 		StakingOutput:         info.StakingOutput,
-		scriptHolder:          info.scriptHolder,
+		ScriptHolder:          info.ScriptHolder,
 		timeLockPathLeafHash:  info.timeLockPathLeafHash,
 		unbondingPathLeafHash: info.unbondingPathLeafHash,
 		slashingPathLeafHash:  info.slashingPathLeafHash,
@@ -259,15 +259,15 @@ func BuildV0IdentifiableStakingOutputsAndTx(
 }
 
 func (i *IdentifiableStakingInfo) TimeLockPathSpendInfo() (*SpendInfo, error) {
-	return i.scriptHolder.scriptSpendInfoByName(i.timeLockPathLeafHash)
+	return i.ScriptHolder.scriptSpendInfoByName(i.timeLockPathLeafHash)
 }
 
 func (i *IdentifiableStakingInfo) UnbondingPathSpendInfo() (*SpendInfo, error) {
-	return i.scriptHolder.scriptSpendInfoByName(i.unbondingPathLeafHash)
+	return i.ScriptHolder.scriptSpendInfoByName(i.unbondingPathLeafHash)
 }
 
 func (i *IdentifiableStakingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
-	return i.scriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
+	return i.ScriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
 }
 
 type ParsedV0StakingTx struct {

@@ -30,10 +30,9 @@ func assembleMultiSigScript(
 	}
 
 	builder.AddInt64(int64(threshold))
+	builder.AddOp(txscript.OP_GREATERTHANOREQUAL)
 	if withVerify {
-		builder.AddOp(txscript.OP_NUMEQUALVERIFY)
-	} else {
-		builder.AddOp(txscript.OP_NUMEQUAL)
+		builder.AddOp(txscript.OP_VERIFY)
 	}
 
 	return builder.Script()

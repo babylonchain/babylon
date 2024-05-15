@@ -24,10 +24,10 @@ const (
 )
 
 var (
-	unspendableKeyPathKey = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+	unspendableKeyPathKey = UnspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
 )
 
-func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
+func UnspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
 	keyBytes, err := hex.DecodeString(keyHex)
 
 	if err != nil {
@@ -43,7 +43,7 @@ func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
 	return *pubKey
 }
 
-func unspendableKeyPathInternalPubKey() btcec.PublicKey {
+func UnspendableKeyPathInternalPubKey() btcec.PublicKey {
 	return unspendableKeyPathKey
 }
 
@@ -105,7 +105,7 @@ func DeriveTaprootPkScript(
 
 type taprootScriptHolder struct {
 	internalPubKey *btcec.PublicKey
-	scriptTree     *txscript.IndexedTapScriptTree
+	ScriptTree     *txscript.IndexedTapScriptTree
 }
 
 func newTaprootScriptHolder(
@@ -118,7 +118,7 @@ func newTaprootScriptHolder(
 
 	if len(scripts) == 0 {
 		return &taprootScriptHolder{
-			scriptTree: txscript.NewIndexedTapScriptTree(0),
+			ScriptTree: txscript.NewIndexedTapScriptTree(0),
 		}, nil
 	}
 
@@ -142,24 +142,24 @@ func newTaprootScriptHolder(
 		tapLeafs[i] = tapLeaf
 	}
 
-	scriptTree := txscript.AssembleTaprootScriptTree(tapLeafs...)
+	ScriptTree := txscript.AssembleTaprootScriptTree(tapLeafs...)
 
 	return &taprootScriptHolder{
 		internalPubKey: internalPubKey,
-		scriptTree:     scriptTree,
+		ScriptTree:     ScriptTree,
 	}, nil
 }
 
 func (t *taprootScriptHolder) scriptSpendInfoByName(
 	leafHash chainhash.Hash,
 ) (*SpendInfo, error) {
-	scriptIdx, ok := t.scriptTree.LeafProofIndex[leafHash]
+	scriptIdx, ok := t.ScriptTree.LeafProofIndex[leafHash]
 
 	if !ok {
 		return nil, fmt.Errorf("script not found in script tree")
 	}
 
-	merkleProof := t.scriptTree.LeafMerkleProofs[scriptIdx]
+	merkleProof := t.ScriptTree.LeafMerkleProofs[scriptIdx]
 
 	return &SpendInfo{
 		ControlBlock: merkleProof.ToControlBlock(t.internalPubKey),
@@ -169,7 +169,7 @@ func (t *taprootScriptHolder) scriptSpendInfoByName(
 
 func (t *taprootScriptHolder) taprootPkScript(net *chaincfg.Params) ([]byte, error) {
 	return DeriveTaprootPkScript(
-		t.scriptTree,
+		t.ScriptTree,
 		t.internalPubKey,
 		net,
 	)
@@ -182,7 +182,7 @@ func (t *taprootScriptHolder) taprootPkScript(net *chaincfg.Params) ([]byte, err
 // 3. Staker can spend with finality provider and covenant cooperation any time.
 type StakingInfo struct {
 	StakingOutput         *wire.TxOut
-	scriptHolder          *taprootScriptHolder
+	ScriptHolder          *taprootScriptHolder
 	timeLockPathLeafHash  chainhash.Hash
 	unbondingPathLeafHash chainhash.Hash
 	slashingPathLeafHash  chainhash.Hash
@@ -342,7 +342,7 @@ func BuildStakingInfo(
 	stakingAmount btcutil.Amount,
 	net *chaincfg.Params,
 ) (*StakingInfo, error) {
-	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
+	unspendableKeyPathKey := UnspendableKeyPathInternalPubKey()
 
 	babylonScripts, err := newBabylonScriptPaths(
 		stakerKey,
@@ -384,7 +384,7 @@ func BuildStakingInfo(
 
 	return &StakingInfo{
 		StakingOutput:         stakingOutput,
-		scriptHolder:          sh,
+		ScriptHolder:          sh,
 		timeLockPathLeafHash:  timeLockLeafHash,
 		unbondingPathLeafHash: unbondingPathLeafHash,
 		slashingPathLeafHash:  slashingLeafHash,
@@ -392,15 +392,15 @@ func BuildStakingInfo(
 }
 
 func (i *StakingInfo) TimeLockPathSpendInfo() (*SpendInfo, error) {
-	return i.scriptHolder.scriptSpendInfoByName(i.timeLockPathLeafHash)
+	return i.ScriptHolder.scriptSpendInfoByName(i.timeLockPathLeafHash)
 }
 
 func (i *StakingInfo) UnbondingPathSpendInfo() (*SpendInfo, error) {
-	return i.scriptHolder.scriptSpendInfoByName(i.unbondingPathLeafHash)
+	return i.ScriptHolder.scriptSpendInfoByName(i.unbondingPathLeafHash)
 }
 
 func (i *StakingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
-	return i.scriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
+	return i.ScriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
 }
 
 // Unbonding script has 2 spending paths:
@@ -408,7 +408,7 @@ func (i *StakingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
 // 2. Staker can spend with finality provider and covenant cooperation any time.
 type UnbondingInfo struct {
 	UnbondingOutput      *wire.TxOut
-	scriptHolder         *taprootScriptHolder
+	ScriptHolder         *taprootScriptHolder
 	timeLockPathLeafHash chainhash.Hash
 	slashingPathLeafHash chainhash.Hash
 }
@@ -422,7 +422,7 @@ func BuildUnbondingInfo(
 	unbondingAmount btcutil.Amount,
 	net *chaincfg.Params,
 ) (*UnbondingInfo, error) {
-	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
+	unspendableKeyPathKey := UnspendableKeyPathInternalPubKey()
 
 	babylonScripts, err := newBabylonScriptPaths(
 		stakerKey,
@@ -462,18 +462,18 @@ func BuildUnbondingInfo(
 
 	return &UnbondingInfo{
 		UnbondingOutput:      unbondingOutput,
-		scriptHolder:         sh,
+		ScriptHolder:         sh,
 		timeLockPathLeafHash: timeLockLeafHash,
 		slashingPathLeafHash: slashingLeafHash,
 	}, nil
 }
 
 func (i *UnbondingInfo) TimeLockPathSpendInfo() (*SpendInfo, error) {
-	return i.scriptHolder.scriptSpendInfoByName(i.timeLockPathLeafHash)
+	return i.ScriptHolder.scriptSpendInfoByName(i.timeLockPathLeafHash)
 }
 
 func (i *UnbondingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
-	return i.scriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
+	return i.ScriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
 }
 
 // IsRateValid checks if the given rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
@@ -510,7 +510,7 @@ func BuildRelativeTimelockTaprootScript(
 	lockTime uint16,
 	net *chaincfg.Params,
 ) (*RelativeTimeLockTapScriptInfo, error) {
-	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
+	unspendableKeyPathKey := UnspendableKeyPathInternalPubKey()
 
 	script, err := buildTimeLockScript(pk, lockTime)
 
@@ -528,7 +528,7 @@ func BuildRelativeTimelockTaprootScript(
 	}
 
 	// there is only one script path in tree, so we can use index 0
-	proof := sh.scriptTree.LeafMerkleProofs[0]
+	proof := sh.ScriptTree.LeafMerkleProofs[0]
 
 	spendInfo := &SpendInfo{
 		ControlBlock: proof.ToControlBlock(&unspendableKeyPathKey),
@@ -536,7 +536,7 @@ func BuildRelativeTimelockTaprootScript(
 	}
 
 	taprootAddress, err := DeriveTaprootAddress(
-		sh.scriptTree,
+		sh.ScriptTree,
 		&unspendableKeyPathKey,
 		net,
 	)
