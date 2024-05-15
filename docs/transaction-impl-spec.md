@@ -1,12 +1,14 @@
-# Lock only network transactions implementation spec
+# Observable Staking Transactions Specification
 
 ## Introduction
-In lock only network there is no Babylon chain. Users lock their bitcoins on BTC
-network using special BTC transactions. The purpose of this doc is to precisely
-define those transactions.
 
+A lock-only network involves users locking their Bitcoin using the self-custodial
+Bitcoin Staking script without a Babylon chain operating.
+In this document, we precisely define how one can construct
+the Bitcoin transactions specified by the Bitcoin Staking protocol.
 
 ## Prerequisites
+
 - [Scripts doc](staking-script.md) - document which defines how different
 Babylon scripts look like
 - [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)-
@@ -14,39 +16,45 @@ a document specifying how to spend taproot outputs
 
 ## System parameters
 
-At different times, as perceived by BTC height, there is a different set of
-parameters which must be followed when constructing following transactions.
-In this document, those parameters will be referred to as `global_parameters.
+The lock-only staking system is governed by a set of parameters that specify
+what constitutes a valid staking transaction. Based on those,
+an observer of the Bitcoin ledger can precisely identify which transactions
+are valid staking transactions and whether they should be considered active stake.
+These parameters are different depending on the Bitcoin height a transaction is
+included in and a constructor of a Bitcoin Staking transaction should take them into
+account before propagating a transaction to Bitcoin.
+For the rest of the document, we will refer to those parameters as `global_parameters`.
 
-More details about parameters can be found [here](https://github.com/babylonchain/phase1-devnet/tree/main/parameters)
+More details about parameters can be found in the
+[parameters spec](https://github.com/babylonchain/networks/tree/main/bbn-test-4/parameters).
 
 ## Taproot outputs
 
-Taproot outputs are outputs whose locking script is elliptic curve point `Q`
+Taproot outputs are outputs whose locking script is an elliptic curve point `Q`
 created as follows:
 ```
 Q = P + hash(P||m)G
 ```
 where:
-- `P` is internal public key
+- `P` is the internal public key
 - `m` is the root of a Merkle tree whose leaves consist of a version number and a
 script
 
-In Babylon transactions, internal public key is chosen as:
+For Bitcoin Staking transactions, the internal public key is chosen as:
 
 ```
 P = lift_x(0x50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0)
 ```
 
-This key is described in [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs)
+This key is described in the
+[BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs)
 specification.
 
 Using this key as an internal public key disables spending from taproot output
-through key spending path.
+through the key spending path.
+The construction of this key can be found [here](../btcstaking/types.go?plain=1#L27).
 
-Construction of this key can be found [here](../btcstaking/types.go?plain=1#L27)
-
-## Locking network special transactions
+## Observable Staking Transactions
 
 ### Staking transaction
 
@@ -55,19 +63,21 @@ A staking transaction is a transaction that allows staker entry into the system.
 #### Requirements
 
 For the transaction to be considered a valid staking transaction, it must:
-- have output which is taproot output. This taproot output must have disabled
-key spending path, and commit to a script tree composed of three scripts:
-timelock script, unbonding script, slashing script. This output is henceforth known as
-`staking_output` and value in this output is known as `staking_amount`
-- have OP_RETURN output which contains: `global_parameters.tag`,
+- have a taproot output which has the key spending path disabled
+and commit to a script tree composed of three scripts:
+timelock script, unbonding script, slashing script.
+This output is henceforth known as the `staking_output` and
+the value in this output is known as `staking_amount`
+- have `OP_RETURN` output which contains: `global_parameters.tag`,
  `version`, `staker_pk`,`finality_provider_pk`, `staking_time`
-- all the values must be valid for `global_parameters` which are applicable at
-height when the staking transaction was included in the BTC ledger.
+- all the values must be valid for the `global_parameters` which are applicable at
+the height in which the staking transaction is included in the BTC ledger.
 
 
 #### OP_RETURN output description
 
-Data in op_return output can be described by the following struct:
+Data in the OP_RETURN output is described by the following struct:
+
 ```go
 type V0OpReturnData struct {
 	MagicBytes                []byte
@@ -77,19 +87,20 @@ type V0OpReturnData struct {
 	StakingTime               []byte
 }
 ```
-and its implementation can be found [here](../btcstaking/identifiable_staking.go?pain=1#L52)
+The implementation of the struct can be found [here](../btcstaking/identifiable_staking.go?pain=1#L52)
 
 Fields description:
-`MagicBytes` - 4 byte, tag that will be used to identify output among other
-outputs on the BTC ledger. It can be retrieved from `global_parameters.tag`.
-`Version` - 1 byte, current version of the op_return output
-`StakerPublicKey` - 32 byte, staker public key. The same key must be used in
-scripts used to create the taproot output in the staking transaction.
-`FinalityProviderPublicKey` - 32 byte, finality provider public key. The same key
-must be used in scripts used to create the taproot output in the
+- `MagicBytes` - 4 bytes, tag which is used to identify the staking transaction
+among other transactions in the Bitcoin ledger.
+It is specified in the `global_parameters.Tag` field.
+- `Version` - 1 byte, current version of the OP_RETURN output
+- `StakerPublicKey` - 32 bytes, staker public key. The same key must be used in
+the scripts used to create the taproot output in the staking transaction.
+- `FinalityProviderPublicKey` - 32 bytes, finality provider public key. The same key
+must be used in the scripts used to create the taproot output in the
 staking transaction.
-`StakingTime` - 2 byte big-endian unsigned number, staking time.
-The same timelock time be mus be used in scripts used to create the taproot
+- `StakingTime` - 2 bytes big-endian unsigned number, staking time.
+The same timelock time must be used in scripts used to create the taproot
 output in the staking transaction.
 
 
@@ -98,15 +109,17 @@ This data is serialized as follows:
 SerializedStakingData = MagicBytes || Version || StakerPublicKey || FinalityProviderPublicKey || StakingTime
 ```
 
-To transform this data into op_return data:
+To transform this data into OP_RETURN data:
+
 ```
 StakingDataPkScript = 0x6a || 0x47 || SerializedStakingData
-where:
-0x6a - is byte marker representing OP_RETURN op code
-0x47 - is byte marker representing OP_DATA_71 op code, which pushed 71 bytes onto the stack
 ```
 
-The final op_return output will have the following shape:
+where:
+- 0x6a - is byte marker representing OP_RETURN op code
+- 0x47 - is byte marker representing OP_DATA_71 op code, which pushed 71 bytes onto the stack
+
+The final OP_RETURN output will have the following shape:
 ```
 TxOut {
  Value: 0,
@@ -126,28 +139,29 @@ Staking output should commit to three scripts:
 
 Data needed to create `staking_output`:
 - `staker_public_key` - chosen by the user sending the staking transaction. It
-will be used in every script. This key needs to be put in the op_return output
+will be used in every script. This key needs to be put in the OP_RETURN output
 in the staking transaction.
 - `finality_provider_public_key` - chosen by the user sending the staking
-transaction. It will be used as `<FinalityPk>` in `slashing_script`. In lock
+transaction. It will be used as `<FinalityPk>` in `slashing_script`. In the
 lock-only network there is no slashing, so this key has mostly informative purposes.
-This key needs to be put in the op_return output in the staking transaction.
+This key needs to be put in the OP_RETURN output of the staking transaction.
 - `staking_time` - chosen by the user sending the staking transaction. It will
-used as locking time in the `time_lock` script. It must be valid `uint16` number,
-in range `global_parameters.min_staking_time <= staking_time <= global_parameters.max_staking_time`.
-It needs to be put in the op_return output in the staking transaction.
+be used as locking time in the `timelock_script`. It must be a valid `uint16` number,
+in the range `global_parameters.min_staking_time <= staking_time <= global_parameters.max_staking_time`.
+It needs to be put in the OP_RETURN output of the staking transaction.
 - `covenant_committee_public_keys` - it can be retrieved from
-`global_parameters.covenant_pks`.
+`global_parameters.covenant_pks`. It is set of covenant committee public keys which
+will be put in `unbonding_script` and `slashing_script`.
 - `covenant_committee_quorum` - it can be retrieved from
-`global_parameters.covenant_quorum`
+`global_parameters.covenant_quorum`. It is quorum of covenant committee
+member required to authorize spending using `unbonding_script` or `slashing_script`
 - `staking_amout` - chosen by the user, it will be placed in `staking_output.value`
 - `btc_network` - btc network on which staking transactions will take place
 
 #### Building OP_RETRUN and staking output implementation
-Babylon staking library exposes [BuildV0IdentifiableStakingOutputsAndTx](../btcstaking/identifiable_staking.go?plain=1#L231)
-function.
 
-This functions has following signature:
+Babylon staking library exposes [BuildV0IdentifiableStakingOutputsAndTx](../btcstaking/identifiable_staking.go?plain=1#L231)
+function with the following signature:
 
 ```go
 func BuildV0IdentifiableStakingOutputsAndTx(
@@ -162,44 +176,45 @@ func BuildV0IdentifiableStakingOutputsAndTx(
 ) (*IdentifiableStakingInfo, *wire.MsgTx, error)
 ```
 
-and enables the caller to create valid outputs as well as unfunded and not-signed
-valid staking transaction.
+It enables the caller to create valid outputs to put inside an unfunded and not-signed
+staking transaction.
 
-Suggested way of creating and sending staking transaction using bitcoind is:
+The suggested way of creating and sending a staking transaction using
+[bitcoind](https://github.com/bitcoin/bitcoin) is:
 1. create `staker_key` in the bitcoind wallet
-2. create unfunded and not signed staking transaction using `BuildV0IdentifiableStakingOutputsAndTx`
-function
-3. serialize unfunded and not signed staking transaction, to `staking_transaction_hex`
-4. call `bitcoin-cli fundrawtransaction "staking_transaction_hex"`. Bitcoind wallet
-will automatically choose unspent outputs to fund this transaction. This call will
-return `funded_staking_transaction_hex`
+2. create unfunded and not signed staking transaction using
+the `BuildV0IdentifiableStakingOutputsAndTx` function
+3. serialize the unfunded and not signed staking transaction to `staking_transaction_hex`
+4. call `bitcoin-cli fundrawtransaction "staking_transaction_hex"` to
+retrieve `funded_staking_transaction_hex`.
+The bitcoind wallet will automatically choose unspent outputs to fund this transaction.
 5. call `bitcoin-cli signrawtransactionwithwallet "funded_staking_transaction_hex"`.
-This call will sign all inputs to transaction and return `signed_staking_transaction_hex`
+This call will sign all inputs of the transaction and return `signed_staking_transaction_hex`.
 6. call `bitcoin-cli sendrawtransaction "signed_staking_transaction_hex"`
 
 ### Unbonding transaction
 
-An unbonding transaction is a transaction which allows the staker early exit
-from the system.
+The unbonding transaction allows the staker to on-demand unbond their
+locked Bitcoin stake prior to its original timelock expiration.
 
 #### Requirements
 
 For the transaction to be considered a valid unbonding transaction, it must:
 - have exactly one input and one output
-- input must be valid staking output
-- output must be taproot output. This taproot output must have disabled
+- input must be valid a staking output
+- output must be a taproot output. This taproot output must have disabled
 the key spending path, and committed to script tree composed of two scripts:
-timelock script, slashing script. This output is henceforth known as
-`unbonding_output`
-- timelock in time lock script must be equal to `global_parameters.unbonding_time`
-- value in unbonding output must be equal to `staking_output.value - global_parameters.unbonding_fee`
+the timelock script and the slashing script. This output is henceforth known
+as the `unbonding_output`
+- timelock in the time lock script must be equal to `global_parameters.unbonding_time`
+- value in the unbonding output must be equal to `staking_output.value - global_parameters.unbonding_fee`
 
 #### Building Unbonding output
 
-Babylon staking library exposes [BuildUnbondingInfo](../btcstaking/types.go?plain=1#416)
-function which build valid unbonding output
-
-This function has following signature:
+The Babylon Bitcoin staking library exposes
+the [BuildUnbondingInfo](../btcstaking/types.go?plain=1#416)
+function which builds a valid unbonding output.
+It has the following signature:
 
 ```go
 func BuildUnbondingInfo(
@@ -214,7 +229,7 @@ func BuildUnbondingInfo(
 ```
 
 where:
-- `stakerKey`-must be the same key as the staker key in `staking_transaction`
+- `stakerKey`- must be the same key as the staker key in `staking_transaction`
 - `fpKeys` - must contain one key, which is the same finality provider key used
 in `staking_transaction`
 - `covenantKeys`- are the same covenant keys as used in `staking_transaction`
@@ -224,21 +239,21 @@ in `staking_transaction`
 
 ## Spending taproot outputs
 
-To create transactions which spends from taproot outputs, either staking output
+To create transactions which spend from taproot outputs, either staking output
 or unbonding output, providing signatures satisfying the script is not enough.
 
-Spender must also provide:
-- whole script which is being spend
-- control block which contains: leaf version, internal public key and proof of
-inclusion of given script in script tree
+The spender must also provide:
+- the whole script which is being spent
+- the control block which contains: leaf version, internal public key, and proof of
+inclusion of the given script in the script tree
 
 Given that creating scripts is deterministic for given data, it is possible to
-avoid storing scripts by re-building scripts when need arises.
+avoid storing scripts by re-building scripts when the need arises.
 
 ### Re-creating script and control block
 
-To build script and control block necessary to spend from staking output through
-timelock script following function could be implemented
+To build the script and control block necessary to spend from a staking output through the
+timelock script, the following function could be implemented
 
 ```go
 import (
@@ -290,14 +305,15 @@ func buildTimelockScriptAndControlBlock(
 
 ```
 
-Returned script and control block can be used either to build witness directly
-or to put them in PSBT which can be used to create witness by Bitcoind.
+The returned script and control block can be used to either build the witness directly
+or to put them in a PSBT which can be used by bitcoind to create the witness.
 
 ### Creating PSBT to get signature for given taproot path from Bitcoind
 
-To avoid creating signatures/witness manually Bitcoind [walletprocesspsbt](https://developer.bitcoin.org/reference/rpc/walletprocesspsbt.html)
-can be used. To use this Bitcoind endpoint to get signature/witness wallet must
-maintain one of the keys used in script.
+To avoid creating signatures/witness manually,
+Bitcoind's [walletprocesspsbt](https://developer.bitcoin.org/reference/rpc/walletprocesspsbt.html)
+can be used. To use this Bitcoind endpoint to get signature/witness the wallet must
+maintain one of the keys used in the script.
 
 Example of creating psbt to sign unbonding transaction using unbonding script from
 staking output:
@@ -347,12 +363,10 @@ func BuildPsbtForSigningUnbondingTransaciton(
 
 ```
 
-Given that to spend through unbonding script requires more than staker signature,
-`walletprocesspsbt` endpoint will produce new psbt with staker signature attached.
+Given that to spend through the unbonding script requires more than the
+staker's signature, the `walletprocesspsbt` endpoint will produce a new psbt
+with the staker signature attached.
 
-If timelock path, which requires only staker signature, would be used
-`walletprocesspsbt` would produce whole witness required to send transaction to
-the BTC network.
-
-
-
+In the case of a timelock path which requires only the staker's signature,
+`walletprocesspsbt` would produce the whole witness required to send the
+transaction to the BTC network.
