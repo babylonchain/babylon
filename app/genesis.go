@@ -3,10 +3,6 @@ package app
 import (
 	"encoding/json"
 	"testing"
-
-	"cosmossdk.io/log"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	dbm "github.com/cosmos/cosmos-db"
 )
 
 // GenesisState of the blockchain is represented here as a map of raw json
@@ -23,15 +19,6 @@ func NewDefaultGenesisState(t *testing.T) GenesisState {
 	t.Helper()
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	// note, this is not necessary when using app wiring, as depinject can be directly used (see root_v2.go)
-	tempApp := NewBabylonApp(
-		log.NewNopLogger(),
-		dbm.NewMemDB(),
-		nil,
-		true,
-		map[int64]bool{},
-		0,
-		nil,
-		TmpAppOptions(),
-		[]wasmkeeper.Option{})
+	tempApp := NewTmpBabylonApp()
 	return tempApp.DefaultGenesis()
 }

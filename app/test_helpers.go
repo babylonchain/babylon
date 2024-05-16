@@ -358,19 +358,6 @@ func initAccountWithCoins(app *BabylonApp, ctx sdk.Context, addr sdk.AccAddress,
 	}
 }
 
-// TmpAppOptions returns an app option with tmp dir and btc network
-func TmpAppOptions() simsutils.AppOptionsMap {
-	dir, err := os.MkdirTemp("", "babylon-test-app")
-	if err != nil {
-		panic(err)
-	}
-	appOpts := simsutils.AppOptionsMap{
-		flags.FlagHome:       dir,
-		"btc-config.network": string(bbn.BtcSimnet),
-	}
-	return appOpts
-}
-
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
 func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.ResponseFinalizeBlock, error) {
 	tx, err := simsutils.GenSignedMockTx(
