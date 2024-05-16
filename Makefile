@@ -421,14 +421,14 @@ init-testnet-dirs:
 
 # localnet-start-nodes will boot the nodes described in the docker-compose.yml file
 localnet-start-nodes: init-testnet-dirs
-	docker-compose up -d
+	docker compose up -d
 
 # localnet-start will run a with 4 nodes with 4 nodes, a bitcoin instance, and a vigilante instance
 localnet-start: localnet-stop build-docker localnet-start-nodes
 
 # localnet-stop will stop all localnets running
 localnet-stop:
-	docker-compose down
+	docker compose down
 
 build-test-wasm:
 	docker run --rm -v "$(WASM_DIR)":/code \

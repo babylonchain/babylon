@@ -31,7 +31,7 @@ func NewDefaultGenesisState(t *testing.T) GenesisState {
 		map[int64]bool{},
 		0,
 		nil,
-		TestAppOptions(),
+		TmpAppOptions(),
 		[]wasmkeeper.Option{})
 	return tempApp.DefaultGenesis()
 }

@@ -917,6 +917,17 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		h := testhelper.NewHelperWithValSet(t, valSet, privSigner)
 		h1 := testhelper.NewHelperWithValSet(t, valSet, privSigner)
 
+		// Execute block for both apps
+		ctx, err := h.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		ctx1, err := h1.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		// Given that there is no transactions and the data in db is the same
+		// app hash produced by both apps should be the same
+		appHash1 := hex.EncodeToString(ctx.BlockHeader().AppHash)
+		appHash2 := hex.EncodeToString(ctx1.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
+
 		// Default params are the same in both apps
 		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
 		maxFinalityProviders := int32(h.App.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
@@ -960,16 +971,14 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		}
 
 		// Execute block for both apps
-		ctx, err := h.ApplyEmptyBlockWithVoteExtension(r)
+		ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-
-		ctx1, err := h1.ApplyEmptyBlockWithVoteExtension(r)
+		ctx1, err = h1.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-
 		// Given that there is no transactions and the data in db is the same
 		// app hash produced by both apps should be the same
-		appHash1 := hex.EncodeToString(ctx.BlockHeader().AppHash)
-		appHash2 := hex.EncodeToString(ctx1.BlockHeader().AppHash)
+		appHash1 = hex.EncodeToString(ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(ctx1.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
 	})
 }

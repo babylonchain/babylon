@@ -358,23 +358,9 @@ func initAccountWithCoins(app *BabylonApp, ctx sdk.Context, addr sdk.AccAddress,
 	}
 }
 
-// EmptyAppOptions is a stub implementing AppOptions
-type EmptyAppOptions struct{}
-
-// Get implements AppOptions
-func (ao EmptyAppOptions) Get(o string) interface{} {
-	// some defaults required for app.toml config
-
-	if o == "btc-config.network" {
-		return string(bbn.BtcSimnet)
-	}
-
-	return nil
-}
-
-// TestAppOptions returns an app option with tmp dir and btc network
-func TestAppOptions() simsutils.AppOptionsMap {
-	dir, err := os.MkdirTemp("", "babylon")
+// TmpAppOptions returns an app option with tmp dir and btc network
+func TmpAppOptions() simsutils.AppOptionsMap {
+	dir, err := os.MkdirTemp("", "babylon-test-app")
 	if err != nil {
 		panic(err)
 	}

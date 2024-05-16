@@ -96,7 +96,7 @@ func generateTestGenesisState(t *testing.T, home string, n int) (*app.BabylonApp
 		DB:                 dbm.NewMemDB(),
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.TestAppOptions(),
+		AppOpts:            app.TmpAppOptions(),
 	})
 
 	_ = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())

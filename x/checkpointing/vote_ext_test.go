@@ -101,8 +101,9 @@ func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
 	})
 }
 
-// FuzzAddBLSSigVoteExtension_EmptyVoteExtensions tests resilience against
-// empty vote extensions
+// FuzzAddBLSSigVoteExtension_EmptyVoteExtensions tests proposals with empty
+// or invalid vote extensions will be rejected PrepareProposal and ProcessProposal.
+// NOTE: empty vote extension will be rejected at VerifyVoteExtension step now
 func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -113,7 +114,6 @@ func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
 		require.NoError(t, err)
 		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
 		ek := helper.App.EpochingKeeper
-		ck := helper.App.CheckpointingKeeper
 
 		epoch := ek.GetEpoch(helper.Ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
@@ -121,19 +121,15 @@ func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
 		// go to block 10, ensure the checkpoint is finalized
 		interval := ek.GetParams(helper.Ctx).EpochInterval
 		for i := uint64(0); i < interval-2; i++ {
-			_, err := helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+			_, err := helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
 		// height 11, i.e., 1st block of next epoch
+		// proposal will be rejected as it contains empty vote extension
+		// since Cosmos SDK v0.50.5 proposal with empty/invalid vote extension
+		// will be rejected by both PrepareProposal and ProcessProposal
 		_, err = helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
-		require.NoError(t, err)
-
-		epoch = ek.GetEpoch(helper.Ctx)
-		require.Equal(t, uint64(2), epoch.EpochNumber)
-
-		ckpt, err := ck.GetRawCheckpoint(helper.Ctx, epoch.EpochNumber-1)
-		require.NoError(t, err)
-		require.Equal(t, types.Sealed, ckpt.Status)
+		require.Error(t, err)
 	})
 }
 

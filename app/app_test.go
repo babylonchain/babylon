@@ -22,7 +22,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            TestAppOptions(),
+		AppOpts:            TmpAppOptions(),
 	})
 
 	for acc := range BlockedAddresses() {
@@ -57,7 +57,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		map[int64]bool{},
 		0,
 		signer,
-		TestAppOptions(),
+		TmpAppOptions(),
 		EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})
@@ -80,7 +80,7 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            TestAppOptions(),
+		AppOpts:            TmpAppOptions(),
 	})
 
 	// make sure the upgrade keeper has version map in state
