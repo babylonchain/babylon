@@ -1,18 +1,57 @@
 package helper
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
+	"sort"
 
+	"cosmossdk.io/core/comet"
 	"cosmossdk.io/core/header"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 )
+
+// adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+func ExtendedCommitToLastCommit(ec abci.ExtendedCommitInfo) (abci.ExtendedCommitInfo, comet.BlockInfo) {
+	// sort the extended commit info
+	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
+	sort.SliceStable(ec.Votes, func(i, j int) bool {
+		if ec.Votes[i].Validator.Power == ec.Votes[j].Validator.Power {
+			return bytes.Compare(ec.Votes[i].Validator.Address, ec.Votes[j].Validator.Address) == -1
+		}
+		return ec.Votes[i].Validator.Power > ec.Votes[j].Validator.Power
+	})
+
+	// convert the extended commit info to last commit info
+	lastCommit := abci.CommitInfo{
+		Round: ec.Round,
+		Votes: make([]abci.VoteInfo, len(ec.Votes)),
+	}
+
+	for i, vote := range ec.Votes {
+		lastCommit.Votes[i] = abci.VoteInfo{
+			Validator: abci.Validator{
+				Address: vote.Validator.Address,
+				Power:   vote.Validator.Power,
+			},
+		}
+	}
+
+	return ec, baseapp.NewBlockInfo(
+		nil,
+		nil,
+		nil,
+		lastCommit,
+	)
+}
 
 func (h *Helper) genAndApplyEmptyBlock() error {
 	prevHeight := h.App.LastBlockHeight()
@@ -80,6 +119,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 	if err != nil {
 		return emptyCtx, err
 	}
+	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
 
 	// 2. create new header
 	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
@@ -95,6 +135,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 			Hash: datagen.GenRandomByteArray(r, 32),
 		},
 	}
+
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
@@ -103,7 +144,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
-		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
+		LocalLastCommit: extendedCommitInfo,
 		Height:          newHeight,
 	})
 	if err != nil {

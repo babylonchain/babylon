@@ -10,11 +10,11 @@ import (
 
 	"testing"
 
-	"cosmossdk.io/core/comet"
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/testutil/mocks"
 	"github.com/babylonchain/babylon/x/checkpointing"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -22,7 +22,6 @@ import (
 	cbftt "github.com/cometbft/cometbft/abci/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tendermintTypes "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	protoio "github.com/cosmos/gogoproto/io"
@@ -492,7 +491,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				nil,
 			)
 
-			commitInfo, blockInfo := extendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: scenario.Extensions})
+			commitInfo, blockInfo := helper.ExtendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: scenario.Extensions})
 			scenario.Extensions = commitInfo.Votes
 			ec.Ctx = ec.Ctx.WithCometInfo(blockInfo)
 
@@ -511,38 +510,4 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			}
 		})
 	}
-}
-
-func extendedCommitToLastCommit(ec cbftt.ExtendedCommitInfo) (cbftt.ExtendedCommitInfo, comet.BlockInfo) {
-	// sort the extended commit info
-	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
-	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
-	sort.SliceStable(ec.Votes, func(i, j int) bool {
-		if ec.Votes[i].Validator.Power == ec.Votes[j].Validator.Power {
-			return bytes.Compare(ec.Votes[i].Validator.Address, ec.Votes[j].Validator.Address) == -1
-		}
-		return ec.Votes[i].Validator.Power > ec.Votes[j].Validator.Power
-	})
-
-	// convert the extended commit info to last commit info
-	lastCommit := cbftt.CommitInfo{
-		Round: ec.Round,
-		Votes: make([]cbftt.VoteInfo, len(ec.Votes)),
-	}
-
-	for i, vote := range ec.Votes {
-		lastCommit.Votes[i] = cbftt.VoteInfo{
-			Validator: cbftt.Validator{
-				Address: vote.Validator.Address,
-				Power:   vote.Validator.Power,
-			},
-		}
-	}
-
-	return ec, baseapp.NewBlockInfo(
-		nil,
-		nil,
-		nil,
-		lastCommit,
-	)
 }

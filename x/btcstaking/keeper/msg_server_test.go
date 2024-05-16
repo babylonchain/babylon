@@ -908,7 +908,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(1)
+		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(2)
 		require.NoError(t, err)
 
 		var expectedProviderData map[string]*ExpectedProviderData = make(map[string]*ExpectedProviderData)
@@ -916,16 +916,20 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		// Create two test apps from the same set of validators
 		h := testhelper.NewHelperWithValSet(t, valSet, privSigner)
 		h1 := testhelper.NewHelperWithValSet(t, valSet, privSigner)
+		// app hash should be same at the beginning
+		appHash1 := hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 := hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
 
 		// Execute block for both apps
-		ctx, err := h.ApplyEmptyBlockWithVoteExtension(r)
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-		ctx1, err := h1.ApplyEmptyBlockWithVoteExtension(r)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
 		// Given that there is no transactions and the data in db is the same
 		// app hash produced by both apps should be the same
-		appHash1 := hex.EncodeToString(ctx.BlockHeader().AppHash)
-		appHash2 := hex.EncodeToString(ctx1.BlockHeader().AppHash)
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
 
 		// Default params are the same in both apps
@@ -971,14 +975,14 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		}
 
 		// Execute block for both apps
-		ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-		ctx1, err = h1.ApplyEmptyBlockWithVoteExtension(r)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
 		// Given that there is no transactions and the data in db is the same
 		// app hash produced by both apps should be the same
-		appHash1 = hex.EncodeToString(ctx.BlockHeader().AppHash)
-		appHash2 = hex.EncodeToString(ctx1.BlockHeader().AppHash)
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
 	})
 }
