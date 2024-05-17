@@ -5,20 +5,11 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
-
-	"time"
-
 	"testing"
+	"time"
 
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/testutil/helper"
-	"github.com/babylonchain/babylon/testutil/mocks"
-	"github.com/babylonchain/babylon/x/checkpointing"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	et "github.com/babylonchain/babylon/x/epoching/types"
 	cbftt "github.com/cometbft/cometbft/abci/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tendermintTypes "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -28,6 +19,14 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/testutil/helper"
+	"github.com/babylonchain/babylon/testutil/mocks"
+	"github.com/babylonchain/babylon/x/checkpointing"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	et "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 type TestValidator struct {
@@ -141,8 +140,9 @@ func genNTestValidators(t *testing.T, n int) []TestValidator {
 
 func setupSdkCtx(height int64) sdk.Context {
 	return sdk.Context{}.WithHeaderInfo(header.Info{
-		Height: height,
-		Time:   time.Now(),
+		Height:  height,
+		Time:    time.Now(),
+		ChainID: "test",
 	}).WithConsensusParams(tendermintTypes.ConsensusParams{
 		Abci: &tendermintTypes.ABCIParams{
 			VoteExtensionsEnableHeight: 1,
