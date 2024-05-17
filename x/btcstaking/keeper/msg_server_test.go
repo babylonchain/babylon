@@ -9,14 +9,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/babylon/x/btcstaking/keeper"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
-	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -25,6 +17,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
+	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/babylonchain/babylon/x/btcstaking/keeper"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
+	etypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 func FuzzMsgCreateFinalityProvider(f *testing.F) {
@@ -911,7 +912,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(2)
 		require.NoError(t, err)
 
-		var expectedProviderData map[string]*ExpectedProviderData = make(map[string]*ExpectedProviderData)
+		var expectedProviderData = make(map[string]*ExpectedProviderData)
 
 		// Create two test apps from the same set of validators
 		h := testhelper.NewHelperWithValSet(t, valSet, privSigner)

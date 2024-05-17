@@ -7,9 +7,6 @@ require (
 	github.com/btcsuite/btcd v0.24.0
 	github.com/cometbft/cometbft v0.38.6
 	github.com/cometbft/cometbft-db v0.9.1 // indirect
-	// TODO: the current cosmos-sdk version is a non-released version, which is
-	// to fix the gasLimit problem
-	// should be replaced by a released version if there's any
 	github.com/cosmos/cosmos-sdk v0.50.6
 	github.com/cosmos/relayer/v2 v2.5.1
 	github.com/gorilla/mux v1.8.1

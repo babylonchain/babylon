@@ -69,7 +69,7 @@ func (h *Helper) genAndApplyEmptyBlock() error {
 		NextValidatorsHash: valhash,
 	}
 
-	resp, err := h.App.FinalizeBlock(&abci.RequestFinalizeBlock{
+	_, err = h.App.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height:             newHeader.Height,
 		NextValidatorsHash: newHeader.NextValidatorsHash,
 		Hash:               newHeader.Hash(),
@@ -77,13 +77,6 @@ func (h *Helper) genAndApplyEmptyBlock() error {
 	if err != nil {
 		return err
 	}
-
-	newHeader.AppHash = resp.AppHash
-	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
-		Height:  newHeader.Height,
-		AppHash: resp.AppHash,
-		Hash:    newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto())
 
 	_, err = h.App.Commit()
 	if err != nil {
@@ -136,11 +129,6 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 		},
 	}
 
-	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
-		Height: newHeader.Height,
-		Hash:   newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto())
-
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
@@ -177,8 +165,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height:  newHeader.Height,
 		AppHash: resp.AppHash,
-		Hash:    newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto())
+	})
 
 	_, err = h.App.Commit()
 	if err != nil {
