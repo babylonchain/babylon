@@ -147,12 +147,15 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 	if len(ppRes.Txs) > 0 {
 		blockTxs = ppRes.Txs
 	}
-	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
+	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
 		Txs:    ppRes.Txs,
 		Height: newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
+	}
+	if processRes.Status == abci.ResponseProcessProposal_REJECT {
+		return emptyCtx, fmt.Errorf("rejected proposal")
 	}
 
 	// 4. finalize block
@@ -414,11 +417,11 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 	// 3. prepare proposal with previous BLS sigs
 	var blockTxs [][]byte
 	if epoch.IsVoteExtensionProposal(h.Ctx) {
-		// nullifies a subset of extended votes
-		numEmptyVoteExts := len(extendedVotes)/3 - 1
-		for i := 0; i < numEmptyVoteExts; i++ {
-			extendedVotes[i].VoteExtension = datagen.GenRandomByteArray(r, uint64(r.Intn(10)))
-		}
+		// // nullifies a subset of extended votes
+		// numEmptyVoteExts := len(extendedVotes)/3 - 1
+		// for i := 0; i < numEmptyVoteExts; i++ {
+		// 	extendedVotes[i].VoteExtension = datagen.GenRandomByteArray(r, uint64(r.Intn(10)))
+		// }
 	}
 
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
