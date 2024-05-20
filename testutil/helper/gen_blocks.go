@@ -108,7 +108,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 	// 1. get previous vote extensions
 	prevEpoch := epoch.EpochNumber
 	blockHash := datagen.GenRandomBlockHash(r)
-	extendedVotes, err := h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys)
+	extendedVotes, err := h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys, 0)
 	if err != nil {
 		return emptyCtx, err
 	}
@@ -198,7 +198,7 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 	// 1. get previous vote extensions
 	prevEpoch := epoch.EpochNumber
 	blockHash := datagen.GenRandomBlockHash(r)
-	extendedVotes, err := h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys)
+	extendedVotes, err := h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys, 0)
 	if err != nil {
 		return emptyCtx, err
 	}
@@ -391,12 +391,25 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 	// 1. get previous vote extensions
 	prevEpoch := epoch.EpochNumber
 	blockHash := datagen.GenRandomBlockHash(r)
-	extendedVotes, err := h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys)
+	extendedVotes, err := h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys, 0)
 	if err != nil {
 		return emptyCtx, err
 	}
 	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
 	_, lastCommitInfo, cometInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
+
+	if epoch.IsVoteExtensionProposal(h.Ctx) {
+		// makes a super minority of vote extensions to be invalid, while signatures
+		// over them are still valid
+		// In this case the proposal has to be still valid
+		numInvalidVotes := len(extendedVotes)/3 - 1
+		extendedVotes, err = h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys, numInvalidVotes)
+		if err != nil {
+			return emptyCtx, err
+		}
+		extendedCommitInfo = abci.ExtendedCommitInfo{Votes: extendedVotes}
+		_, lastCommitInfo, cometInfo = ExtendedCommitToLastCommit(extendedCommitInfo)
+	}
 
 	// 2. create new header
 	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
@@ -412,6 +425,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 			Hash: datagen.GenRandomByteArray(r, 32),
 		},
 	}
+
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
@@ -419,13 +433,6 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 
 	// 3. prepare proposal with previous BLS sigs
 	var blockTxs [][]byte
-	if epoch.IsVoteExtensionProposal(h.Ctx) {
-		// nullifies a subset of extended votes
-		numEmptyVoteExts := len(extendedVotes)/3 - 1
-		for i := 0; i < numEmptyVoteExts; i++ {
-			extendedVotes[i].VoteExtension = datagen.GenRandomByteArray(r, uint64(r.Intn(10)))
-		}
-	}
 
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
 		LocalLastCommit: extendedCommitInfo,
