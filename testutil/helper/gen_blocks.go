@@ -412,6 +412,17 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 			}
 		}
 	}
+
+	// sort the extended votes
+	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
+	sort.SliceStable(extendedVotes, func(i, j int) bool {
+		if extendedVotes[i].Validator.Power == extendedVotes[j].Validator.Power {
+			return bytes.Compare(extendedVotes[i].Validator.Address, extendedVotes[j].Validator.Address) == -1
+		}
+		return extendedVotes[i].Validator.Power > extendedVotes[j].Validator.Power
+	})
+
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
 		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
 		Height:          newHeight,
