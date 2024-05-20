@@ -19,13 +19,31 @@ import (
 	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
+
+func TestMultisigAcc(t *testing.T) {
+	pvk1 := secp256k1.GenPrivKey()
+	pk1 := pvk1.PubKey()
+	pvk2 := secp256k1.GenPrivKey()
+	pk2 := pvk2.PubKey()
+	require.NotEqual(t, pvk1, pvk2)
+
+	multiPubKey := multisig.NewLegacyAminoPubKey(1, []cryptotypes.PubKey{pk1, pk2})
+	multiSdkAddr := sdk.AccAddress(multiPubKey.Address().Bytes())
+	multiAcc := authtypes.NewBaseAccount(multiSdkAddr, multiPubKey, 0, 0)
+
+	require.Equal(t, multiAcc.GetAddress().String(), sdk.AccAddress(multiPubKey.Address()).String())
+}
 
 func FuzzMsgCreateFinalityProvider(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
