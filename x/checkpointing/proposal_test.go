@@ -491,9 +491,9 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				nil,
 			)
 
-			commitInfo, blockInfo := helper.ExtendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: scenario.Extensions})
+			commitInfo, _, cometInfo := helper.ExtendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: scenario.Extensions})
 			scenario.Extensions = commitInfo.Votes
-			ec.Ctx = ec.Ctx.WithCometInfo(blockInfo)
+			ec.Ctx = ec.Ctx.WithCometInfo(cometInfo)
 
 			req := requestPrepareProposal(ec.Ctx.HeaderInfo().Height, commitInfo)
 			prop, err := h.PrepareProposal()(ec.Ctx, req)

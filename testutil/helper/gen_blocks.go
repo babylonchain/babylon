@@ -19,7 +19,7 @@ import (
 )
 
 // adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
-func ExtendedCommitToLastCommit(ec abci.ExtendedCommitInfo) (abci.ExtendedCommitInfo, comet.BlockInfo) {
+func ExtendedCommitToLastCommit(ec abci.ExtendedCommitInfo) (abci.ExtendedCommitInfo, abci.CommitInfo, comet.BlockInfo) {
 	// sort the extended commit info
 	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
 	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
@@ -45,7 +45,7 @@ func ExtendedCommitToLastCommit(ec abci.ExtendedCommitInfo) (abci.ExtendedCommit
 		}
 	}
 
-	return ec, baseapp.NewBlockInfo(
+	return ec, lastCommit, baseapp.NewBlockInfo(
 		nil,
 		nil,
 		nil,
@@ -113,7 +113,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 		return emptyCtx, err
 	}
 	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
-	_, lastCommitInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
+	_, lastCommitInfo, cometInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
 
 	// 2. create new header
 	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
@@ -132,7 +132,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(lastCommitInfo)
+	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(cometInfo)
 
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
@@ -148,8 +148,9 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 		blockTxs = ppRes.Txs
 	}
 	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
-		Txs:    ppRes.Txs,
-		Height: newHeight,
+		ProposedLastCommit: lastCommitInfo,
+		Txs:                ppRes.Txs,
+		Height:             newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
@@ -202,7 +203,7 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 		return emptyCtx, err
 	}
 	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
-	_, lastCommitInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
+	_, lastCommitInfo, cometInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
 
 	// 2. create new header
 	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
@@ -221,7 +222,7 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(lastCommitInfo)
+	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(cometInfo)
 
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
@@ -237,8 +238,9 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 		blockTxs = ppRes.Txs
 	}
 	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
-		Txs:    ppRes.Txs,
-		Height: newHeight,
+		ProposedLastCommit: lastCommitInfo,
+		Txs:                ppRes.Txs,
+		Height:             newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
@@ -293,7 +295,7 @@ func (h *Helper) ApplyEmptyBlockWithInvalidVoteExtensions(r *rand.Rand) (sdk.Con
 		return emptyCtx, err
 	}
 	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
-	_, lastCommitInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
+	_, lastCommitInfo, cometInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
 
 	res, err := h.App.VerifyVoteExtension(&abci.RequestVerifyVoteExtension{
 		Hash:          blockHash,
@@ -321,7 +323,7 @@ func (h *Helper) ApplyEmptyBlockWithInvalidVoteExtensions(r *rand.Rand) (sdk.Con
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(lastCommitInfo)
+	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(cometInfo)
 
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
@@ -337,8 +339,9 @@ func (h *Helper) ApplyEmptyBlockWithInvalidVoteExtensions(r *rand.Rand) (sdk.Con
 		blockTxs = ppRes.Txs
 	}
 	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
-		Txs:    ppRes.Txs,
-		Height: newHeight,
+		ProposedLastCommit: lastCommitInfo,
+		Txs:                ppRes.Txs,
+		Height:             newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
@@ -393,7 +396,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 		return emptyCtx, err
 	}
 	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
-	_, lastCommitInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
+	_, lastCommitInfo, cometInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
 
 	// 2. create new header
 	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
@@ -412,16 +415,16 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(lastCommitInfo)
+	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(cometInfo)
 
 	// 3. prepare proposal with previous BLS sigs
 	var blockTxs [][]byte
 	if epoch.IsVoteExtensionProposal(h.Ctx) {
-		// // nullifies a subset of extended votes
-		// numEmptyVoteExts := len(extendedVotes)/3 - 1
-		// for i := 0; i < numEmptyVoteExts; i++ {
-		// 	extendedVotes[i].VoteExtension = datagen.GenRandomByteArray(r, uint64(r.Intn(10)))
-		// }
+		// nullifies a subset of extended votes
+		numEmptyVoteExts := len(extendedVotes)/3 - 1
+		for i := 0; i < numEmptyVoteExts; i++ {
+			extendedVotes[i].VoteExtension = datagen.GenRandomByteArray(r, uint64(r.Intn(10)))
+		}
 	}
 
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
@@ -434,8 +437,9 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 	blockTxs = ppRes.Txs
 
 	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
-		Txs:    blockTxs,
-		Height: newHeight,
+		ProposedLastCommit: lastCommitInfo,
+		Txs:                blockTxs,
+		Height:             newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
