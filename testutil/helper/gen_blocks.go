@@ -263,7 +263,7 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 	return h.Ctx, nil
 }
 
-func (h *Helper) ApplyEmptyBlockWithInvalidBLSSig(r *rand.Rand) (sdk.Context, error) {
+func (h *Helper) ApplyEmptyBlockWithInvalidVoteExtensions(r *rand.Rand) (sdk.Context, error) {
 	emptyCtx := sdk.Context{}
 	if h.App.LastBlockHeight() == 0 {
 		if err := h.genAndApplyEmptyBlock(); err != nil {
@@ -361,7 +361,7 @@ func (h *Helper) ApplyEmptyBlockWithInvalidBLSSig(r *rand.Rand) (sdk.Context, er
 	return h.Ctx, nil
 }
 
-func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.Context, error) {
+func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk.Context, error) {
 	emptyCtx := sdk.Context{}
 	if h.App.LastBlockHeight() == 0 {
 		if err := h.genAndApplyEmptyBlock(); err != nil {
@@ -409,16 +409,6 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 			extendedVotes[i].VoteExtension = datagen.GenRandomByteArray(r, uint64(r.Intn(10)))
 		}
 	}
-
-	// sort the extended votes
-	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
-	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
-	sort.SliceStable(extendedVotes, func(i, j int) bool {
-		if extendedVotes[i].Validator.Power == extendedVotes[j].Validator.Power {
-			return bytes.Compare(extendedVotes[i].Validator.Address, extendedVotes[j].Validator.Address) == -1
-		}
-		return extendedVotes[i].Validator.Power > extendedVotes[j].Validator.Power
-	})
 
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
 		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
