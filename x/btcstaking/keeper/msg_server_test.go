@@ -9,14 +9,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/babylon/x/btcstaking/keeper"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
-	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -25,6 +17,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
+	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/babylonchain/babylon/x/btcstaking/keeper"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
+	etypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 func FuzzMsgCreateFinalityProvider(f *testing.F) {
@@ -908,14 +909,29 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(1)
+		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(2)
 		require.NoError(t, err)
 
-		var expectedProviderData map[string]*ExpectedProviderData = make(map[string]*ExpectedProviderData)
+		var expectedProviderData = make(map[string]*ExpectedProviderData)
 
 		// Create two test apps from the same set of validators
 		h := testhelper.NewHelperWithValSet(t, valSet, privSigner)
 		h1 := testhelper.NewHelperWithValSet(t, valSet, privSigner)
+		// app hash should be same at the beginning
+		appHash1 := hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 := hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
+
+		// Execute block for both apps
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		// Given that there is no transactions and the data in db is the same
+		// app hash produced by both apps should be the same
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
 
 		// Default params are the same in both apps
 		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
@@ -960,16 +976,14 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		}
 
 		// Execute block for both apps
-		ctx, err := h.ApplyEmptyBlockWithVoteExtension(r)
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-
-		ctx1, err := h1.ApplyEmptyBlockWithVoteExtension(r)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-
 		// Given that there is no transactions and the data in db is the same
 		// app hash produced by both apps should be the same
-		appHash1 := hex.EncodeToString(ctx.BlockHeader().AppHash)
-		appHash2 := hex.EncodeToString(ctx1.BlockHeader().AppHash)
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
 	})
 }

@@ -6,7 +6,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/wasmbinding/bindings"
 	lcKeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"

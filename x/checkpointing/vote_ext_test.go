@@ -76,9 +76,9 @@ func FuzzAddBLSSigVoteExtension_InsufficientVotingPower(f *testing.F) {
 	})
 }
 
-// FuzzAddBLSSigVoteExtension_InvalidBLSSig tests adding BLS signatures
-// with invalid BLS signature
-func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
+// FuzzAddBLSSigVoteExtension_InvalidVoteExtensions tests adding BLS signatures
+// with invalid BLS signatures
+func FuzzAddBLSSigVoteExtension_InvalidVoteExtensions(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -91,7 +91,7 @@ func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
 
 		interval := ek.GetParams(helper.Ctx).EpochInterval
 		for i := uint64(0); i < interval-1; i++ {
-			_, err := helper.ApplyEmptyBlockWithInvalidBLSSig(r)
+			_, err := helper.ApplyEmptyBlockWithInvalidVoteExtensions(r)
 			if i < interval-2 {
 				require.NoError(t, err)
 			} else {
@@ -101,9 +101,9 @@ func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
 	})
 }
 
-// FuzzAddBLSSigVoteExtension_EmptyVoteExtensions tests resilience against
-// empty vote extensions
-func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
+// FuzzAddBLSSigVoteExtension_SomeInvalidVoteExtensions tests resilience
+// of ProcessProposal against invalid vote extensions
+func FuzzAddBLSSigVoteExtension_SomeInvalidVoteExtensions(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -121,11 +121,11 @@ func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
 		// go to block 10, ensure the checkpoint is finalized
 		interval := ek.GetParams(helper.Ctx).EpochInterval
 		for i := uint64(0); i < interval-2; i++ {
-			_, err := helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+			_, err := helper.ApplyEmptyBlockWithSomeInvalidVoteExtensions(r)
 			require.NoError(t, err)
 		}
 		// height 11, i.e., 1st block of next epoch
-		_, err = helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+		_, err = helper.ApplyEmptyBlockWithSomeInvalidVoteExtensions(r)
 		require.NoError(t, err)
 
 		epoch = ek.GetEpoch(helper.Ctx)
@@ -235,7 +235,7 @@ func FuzzExtendVote_NotInValidatorSet(f *testing.F) {
 		// go to block 10, reaching epoch boundary
 		interval := ek.GetParams(helper.Ctx).EpochInterval
 		for i := uint64(0); i < interval-2; i++ {
-			_, err := helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+			_, err := helper.ApplyEmptyBlockWithSomeInvalidVoteExtensions(r)
 			require.NoError(t, err)
 		}
 

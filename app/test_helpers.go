@@ -358,20 +358,6 @@ func initAccountWithCoins(app *BabylonApp, ctx sdk.Context, addr sdk.AccAddress,
 	}
 }
 
-// EmptyAppOptions is a stub implementing AppOptions
-type EmptyAppOptions struct{}
-
-// Get implements AppOptions
-func (ao EmptyAppOptions) Get(o string) interface{} {
-	// some defaults required for app.toml config
-
-	if o == "btc-config.network" {
-		return string(bbn.BtcSimnet)
-	}
-
-	return nil
-}
-
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
 func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.ResponseFinalizeBlock, error) {
 	tx, err := simsutils.GenSignedMockTx(

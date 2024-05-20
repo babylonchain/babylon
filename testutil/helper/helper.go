@@ -2,6 +2,8 @@ package helper
 
 import (
 	"bytes"
+	"fmt"
+	"sort"
 	"testing"
 
 	"cosmossdk.io/core/header"
@@ -137,7 +139,17 @@ func (h *Helper) Error(err error) {
 	require.Error(h.t, err)
 }
 
-func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash checkpointingtypes.BlockHash, valSet *datagen.GenesisValidators) ([]abci.ExtendedVoteInfo, error) {
+func (h *Helper) getExtendedVotesFromValSet(
+	epochNum uint64,
+	height uint64,
+	blockHash checkpointingtypes.BlockHash,
+	valSet *datagen.GenesisValidators,
+	numInvalidVotes int,
+) ([]abci.ExtendedVoteInfo, error) {
+	if len(valSet.Keys) < numInvalidVotes {
+		return nil, fmt.Errorf("number of invalid votes is more than the validator set size")
+	}
+
 	valPrivKey := valSet.GetValPrivKeys()
 	blsPrivKeys := valSet.GetBLSPrivKeys()
 	genesisKeys := valSet.GetGenesisKeys()
@@ -165,6 +177,10 @@ func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash c
 			Round:     int64(0),
 			ChainId:   h.App.ChainID(),
 		}
+		if i < numInvalidVotes {
+			cve.Extension = []byte("doesn't matter")
+		}
+
 		var cveBuffer bytes.Buffer
 		err = protoio.NewDelimitedWriter(&cveBuffer).WriteMsg(&cve)
 		if err != nil {
@@ -195,6 +211,15 @@ func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash c
 		}
 		extendedVotes = append(extendedVotes, veInfo)
 	}
+
+	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
+	sort.SliceStable(extendedVotes, func(i, j int) bool {
+		if extendedVotes[i].Validator.Power == extendedVotes[j].Validator.Power {
+			return bytes.Compare(extendedVotes[i].Validator.Address, extendedVotes[j].Validator.Address) == -1
+		}
+		return extendedVotes[i].Validator.Power > extendedVotes[j].Validator.Power
+	})
 
 	return extendedVotes, nil
 }

@@ -41,7 +41,7 @@ func Test_CmdCreateBls(t *testing.T) {
 		DB:                 dbm.NewMemDB(),
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            app.EmptyAppOptions{},
+		AppOpts:            app.TmpAppOptions(),
 	})
 	err = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())
 	require.NoError(t, err)
