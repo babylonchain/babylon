@@ -113,6 +113,7 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 		return emptyCtx, err
 	}
 	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
+	_, lastCommitInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
 
 	// 2. create new header
 	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
@@ -128,6 +129,10 @@ func (h *Helper) ApplyEmptyBlockWithVoteExtension(r *rand.Rand) (sdk.Context, er
 			Hash: datagen.GenRandomByteArray(r, 32),
 		},
 	}
+	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
+		Height: newHeader.Height,
+		Hash:   newHeader.Hash(),
+	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(lastCommitInfo)
 
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
@@ -193,6 +198,8 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 	if err != nil {
 		return emptyCtx, err
 	}
+	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
+	_, lastCommitInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
 
 	// 2. create new header
 	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
@@ -211,7 +218,7 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto())
+	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(lastCommitInfo)
 
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
@@ -282,6 +289,8 @@ func (h *Helper) ApplyEmptyBlockWithInvalidVoteExtensions(r *rand.Rand) (sdk.Con
 	if err != nil {
 		return emptyCtx, err
 	}
+	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
+	_, lastCommitInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
 
 	res, err := h.App.VerifyVoteExtension(&abci.RequestVerifyVoteExtension{
 		Hash:          blockHash,
@@ -309,12 +318,12 @@ func (h *Helper) ApplyEmptyBlockWithInvalidVoteExtensions(r *rand.Rand) (sdk.Con
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto())
+	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(lastCommitInfo)
 
 	// 3. prepare proposal with previous BLS sigs
 	blockTxs := [][]byte{}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
-		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
+		LocalLastCommit: extendedCommitInfo,
 		Height:          newHeight,
 	})
 	if err != nil {
@@ -380,6 +389,8 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 	if err != nil {
 		return emptyCtx, err
 	}
+	extendedCommitInfo := abci.ExtendedCommitInfo{Votes: extendedVotes}
+	_, lastCommitInfo := ExtendedCommitToLastCommit(extendedCommitInfo)
 
 	// 2. create new header
 	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
@@ -398,7 +409,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
 		Height: newHeader.Height,
 		Hash:   newHeader.Hash(),
-	}).WithBlockHeader(*newHeader.ToProto())
+	}).WithBlockHeader(*newHeader.ToProto()).WithCometInfo(lastCommitInfo)
 
 	// 3. prepare proposal with previous BLS sigs
 	var blockTxs [][]byte
@@ -411,7 +422,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeInvalidVoteExtensions(r *rand.Rand) (sdk
 	}
 
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
-		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
+		LocalLastCommit: extendedCommitInfo,
 		Height:          newHeight,
 	})
 	if err != nil {
