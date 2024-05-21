@@ -13,6 +13,10 @@ import (
 	"github.com/vulpine-io/io-test/v1/pkg/iotest"
 )
 
+// TODO: possible improvements
+// test KeyGen, PubGen, RandGen give consistent results with deterministic randomness source
+// test compare signatures against btcec
+
 func FuzzSignAndVerify(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 

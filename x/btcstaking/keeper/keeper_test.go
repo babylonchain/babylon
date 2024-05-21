@@ -6,7 +6,6 @@ import (
 
 	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -14,7 +13,6 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -111,14 +109,9 @@ func (h *Helper) GenAndApplyCustomParams(
 }
 
 func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider {
-	fpBTCSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fpBBNSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
-	require.NoError(t, err)
-	msr, _, err := eots.NewMasterRandPair(r)
-	require.NoError(t, err)
-
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
 	require.NoError(t, err)
 
 	return &types.FinalityProvider{
@@ -131,34 +124,22 @@ func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider 
 }
 
 func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
-	fpBTCSK, fpBTCPK, err := datagen.GenRandomBTCKeyPair(r)
+	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	fpBBNSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
 	h.NoError(err)
-	msr, _, err := eots.NewMasterRandPair(r)
-	h.NoError(err)
-
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, fpBTCSK, fpBBNSK, msr)
-	h.NoError(err)
-
-	registeredEpoch := uint64(10)
-	fp.RegisteredEpoch = registeredEpoch
-
-	h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: registeredEpoch}).Times(1)
-
 	msgNewFp := types.MsgCreateFinalityProvider{
-		Signer:        datagen.GenRandomAccount().Address,
-		Description:   fp.Description,
-		Commission:    fp.Commission,
-		BabylonPk:     fp.BabylonPk,
-		BtcPk:         fp.BtcPk,
-		Pop:           fp.Pop,
-		MasterPubRand: fp.MasterPubRand,
+		Signer:      datagen.GenRandomAccount().Address,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BabylonPk:   fp.BabylonPk,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	h.NoError(err)
-	return fpBTCSK, fpBTCPK, fp
+	return fpSK, fpPK, fp
 }
 
 func (h *Helper) CreateDelegationCustom(
