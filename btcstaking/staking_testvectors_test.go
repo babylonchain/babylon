@@ -75,19 +75,19 @@ func ReadTestCases() *TestCases {
 }
 
 type Parameters struct {
-	CovenantPublicKeys   []string `json:"covenant_public_keys"`
-	CovenantQuorum       int      `json:"covenant_quorum"`
-	FinalityProviderKeys []string `json:"finality_provider_public_keys"`
-	StakerPublicKey      string   `json:"staker_public_key"`
-	StakingTime          int      `json:"staking_time"`
-	StakingValue         int      `json:"staking_value"`
-	StakingTxHash        string   `json:"staking_tx_hash"`
-	StakingOutputIndex   int      `json:"staking_output_index"`
-	UnbondingTxVersion   int      `json:"unbonding_tx_version"`
-	UnbondingTime        int      `json:"unbonding_time"`
-	UnbondingFee         int      `json:"unbonding_fee"`
-	MagicBytes           string   `json:"magic_bytes"`
-	Network              string   `json:"network"`
+	CovenantPublicKeys         []string `json:"covenant_public_keys"`
+	CovenantQuorum             int      `json:"covenant_quorum"`
+	FinalityProviderPublicKeys []string `json:"finality_provider_public_keys"`
+	StakerPublicKey            string   `json:"staker_public_key"`
+	StakingTime                int      `json:"staking_time"`
+	StakingValue               int      `json:"staking_value"`
+	StakingTxHash              string   `json:"staking_tx_hash"`
+	StakingOutputIndex         int      `json:"staking_output_index"`
+	UnbondingTxVersion         int      `json:"unbonding_tx_version"`
+	UnbondingTime              int      `json:"unbonding_time"`
+	UnbondingFee               int      `json:"unbonding_fee"`
+	MagicBytes                 string   `json:"magic_bytes"`
+	Network                    string   `json:"network"`
 }
 
 type Expected struct {
@@ -103,9 +103,9 @@ type Expected struct {
 }
 
 type TestCase struct {
-	Description string     `json:"name"`
-	Parameters  Parameters `json:"parameters"`
-	Expected    Expected   `json:"expected"`
+	Description string      `json:"name"`
+	Parameters  *Parameters `json:"parameters"`
+	Expected    *Expected   `json:"expected"`
 }
 
 type TestCases struct {
@@ -113,25 +113,25 @@ type TestCases struct {
 }
 
 type ParsedParams struct {
-	CovenantPublicKeys   []*btcec.PublicKey
-	CovenantQuorum       uint32
-	FinalityProviderKeys []*btcec.PublicKey
-	StakerPublicKey      *btcec.PublicKey
-	StakingTime          uint16
-	StakingValue         btcutil.Amount
-	StakingTxHash        *chainhash.Hash
-	StakingOutputIndex   uint32
-	UnbondingTxVersion   uint32
-	UnbondingTime        uint16
-	UnbondingFee         btcutil.Amount
-	MagicBytes           []byte
-	Network              *chaincfg.Params
+	CovenantPublicKeys         []*btcec.PublicKey
+	CovenantQuorum             uint32
+	FinalityProviderPublicKeys []*btcec.PublicKey
+	StakerPublicKey            *btcec.PublicKey
+	StakingTime                uint16
+	StakingValue               btcutil.Amount
+	StakingTxHash              *chainhash.Hash
+	StakingOutputIndex         uint32
+	UnbondingTxVersion         uint32
+	UnbondingTime              uint16
+	UnbondingFee               btcutil.Amount
+	MagicBytes                 []byte
+	Network                    *chaincfg.Params
 }
 
 // function which parses Parameters
 func parseTestParams(t *testing.T, p *Parameters) (*ParsedParams, error) {
 	covenantKeys := keysToPubKeys(t, p.CovenantPublicKeys)
-	finalityKeys := keysToPubKeys(t, p.FinalityProviderKeys)
+	finalityKeys := keysToPubKeys(t, p.FinalityProviderPublicKeys)
 	stakerPk := keysToPubKeys(t, []string{p.StakerPublicKey})[0]
 
 	stakingTxHash, err := chainhash.NewHashFromStr(p.StakingTxHash)
@@ -150,19 +150,19 @@ func parseTestParams(t *testing.T, p *Parameters) (*ParsedParams, error) {
 	}
 
 	return &ParsedParams{
-		CovenantPublicKeys:   covenantKeys,
-		CovenantQuorum:       uint32(p.CovenantQuorum),
-		FinalityProviderKeys: finalityKeys,
-		StakerPublicKey:      stakerPk,
-		StakingTime:          uint16(p.StakingTime),
-		StakingValue:         btcutil.Amount(p.StakingValue),
-		StakingTxHash:        stakingTxHash,
-		StakingOutputIndex:   uint32(p.StakingOutputIndex),
-		UnbondingTxVersion:   uint32(p.UnbondingTxVersion),
-		UnbondingTime:        uint16(p.UnbondingTime),
-		UnbondingFee:         btcutil.Amount(p.UnbondingFee),
-		MagicBytes:           magicBytes,
-		Network:              network,
+		CovenantPublicKeys:         covenantKeys,
+		CovenantQuorum:             uint32(p.CovenantQuorum),
+		FinalityProviderPublicKeys: finalityKeys,
+		StakerPublicKey:            stakerPk,
+		StakingTime:                uint16(p.StakingTime),
+		StakingValue:               btcutil.Amount(p.StakingValue),
+		StakingTxHash:              stakingTxHash,
+		StakingOutputIndex:         uint32(p.StakingOutputIndex),
+		UnbondingTxVersion:         uint32(p.UnbondingTxVersion),
+		UnbondingTime:              uint16(p.UnbondingTime),
+		UnbondingFee:               btcutil.Amount(p.UnbondingFee),
+		MagicBytes:                 magicBytes,
+		Network:                    network,
 	}, nil
 }
 
@@ -171,7 +171,7 @@ func TestVectorsCompatiblity(t *testing.T) {
 
 	for _, tc := range cases.Test {
 		t.Logf("Running test case: %s", tc.Description)
-		parsedParams, err := parseTestParams(t, &tc.Parameters)
+		parsedParams, err := parseTestParams(t, tc.Parameters)
 
 		if err != nil {
 			require.NoError(t, fmt.Errorf("error parsing test parameters for case %s: %w", tc.Description, err))
@@ -179,7 +179,7 @@ func TestVectorsCompatiblity(t *testing.T) {
 
 		info, err := btcstaking.BuildStakingInfo(
 			parsedParams.StakerPublicKey,
-			parsedParams.FinalityProviderKeys,
+			parsedParams.FinalityProviderPublicKeys,
 			parsedParams.CovenantPublicKeys,
 			parsedParams.CovenantQuorum,
 			parsedParams.StakingTime,
@@ -211,7 +211,7 @@ func TestVectorsCompatiblity(t *testing.T) {
 
 		ubInfo, err := btcstaking.BuildUnbondingInfo(
 			parsedParams.StakerPublicKey,
-			parsedParams.FinalityProviderKeys,
+			parsedParams.FinalityProviderPublicKeys,
 			parsedParams.CovenantPublicKeys,
 			parsedParams.CovenantQuorum,
 			parsedParams.UnbondingTime,
@@ -262,7 +262,7 @@ func TestVectorsCompatiblity(t *testing.T) {
 			data, err := btcstaking.NewV0OpReturnDataFromParsed(
 				parsedParams.MagicBytes,
 				parsedParams.StakerPublicKey,
-				parsedParams.FinalityProviderKeys[0],
+				parsedParams.FinalityProviderPublicKeys[0],
 				parsedParams.StakingTime,
 			)
 
@@ -393,19 +393,19 @@ func GenerateTestCase(
 	}
 
 	params := Parameters{
-		CovenantPublicKeys:   covenantKeys,
-		CovenantQuorum:       covenantQuorum,
-		FinalityProviderKeys: finalityKeys,
-		StakerPublicKey:      stakerKeys[0],
-		StakingTime:          stakingTime,
-		StakingValue:         stakingAmout,
-		StakingTxHash:        eh.String(),
-		StakingOutputIndex:   0,
-		UnbondingTxVersion:   2,
-		UnbondingTime:        unbondingTime,
-		UnbondingFee:         unbondingFee,
-		MagicBytes:           hex.EncodeToString(magicBytes),
-		Network:              "mainnet",
+		CovenantPublicKeys:         covenantKeys,
+		CovenantQuorum:             covenantQuorum,
+		FinalityProviderPublicKeys: finalityKeys,
+		StakerPublicKey:            stakerKeys[0],
+		StakingTime:                stakingTime,
+		StakingValue:               stakingAmout,
+		StakingTxHash:              eh.String(),
+		StakingOutputIndex:         0,
+		UnbondingTxVersion:         2,
+		UnbondingTime:              unbondingTime,
+		UnbondingFee:               unbondingFee,
+		MagicBytes:                 hex.EncodeToString(magicBytes),
+		Network:                    "mainnet",
 	}
 
 	expected := Expected{
@@ -422,8 +422,8 @@ func GenerateTestCase(
 
 	tc := TestCase{
 		Description: desc,
-		Parameters:  params,
-		Expected:    expected,
+		Parameters:  &params,
+		Expected:    &expected,
 	}
 
 	marshaled, err := json.MarshalIndent(&tc, "", "")
