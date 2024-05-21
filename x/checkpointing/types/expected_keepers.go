@@ -14,7 +14,6 @@ import (
 type EpochingKeeper interface {
 	GetEpoch(ctx context.Context) *epochingtypes.Epoch
 	EnqueueMsg(ctx context.Context, msg epochingtypes.QueuedMessage)
-	GetAppHash(ctx context.Context, height uint64) ([]byte, error)
 	GetValidatorSet(ctx context.Context, epochNumer uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64
 	CheckMsgCreateValidator(ctx context.Context, msg *stakingtypes.MsgCreateValidator) error

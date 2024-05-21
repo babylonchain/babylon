@@ -27,8 +27,7 @@ var (
 	SlashedValidatorSetKey = []byte{0x17} // key prefix for slashed validator set
 	ValidatorLifecycleKey  = []byte{0x18} // key prefix for validator life cycle
 	DelegationLifecycleKey = []byte{0x19} // key prefix for delegation life cycle
-	AppHashKey             = []byte{0x20} // key prefix for the app hash
-	ParamsKey              = []byte{0x21} // key prefix for the parameters
+	ParamsKey              = []byte{0x20} // key prefix for the parameters
 )
 
 func KeyPrefix(p string) []byte {
