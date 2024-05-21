@@ -29,8 +29,6 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// record the current AppHash
-	k.RecordAppHash(ctx)
 
 	// if this block is the first block of the next epoch
 	// note that we haven't incremented the epoch number yet

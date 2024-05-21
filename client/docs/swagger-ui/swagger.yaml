@@ -1646,14 +1646,6 @@ paths:
                         epoch's beginning, and
 
                         is set upon the end of this epoch.
-                    app_hash_root_hex:
-                      type: string
-                      description: >-
-                        app_hash_root is the Merkle root of all AppHashs in this
-                        epoch
-
-                        It will be used for proving a block is in an epoch as
-                        hex string.
                     sealer_app_hash_hex:
                       type: string
                       description: >-
@@ -2006,14 +1998,6 @@ paths:
                       beginning, and
 
                       is set upon the end of this epoch.
-                  app_hash_root_hex:
-                    type: string
-                    description: >-
-                      app_hash_root is the Merkle root of all AppHashs in this
-                      epoch
-
-                      It will be used for proving a block is in an epoch as hex
-                      string.
                   sealer_app_hash_hex:
                     type: string
                     description: >-
@@ -6498,14 +6482,6 @@ paths:
                       beginning, and
 
                       is set upon the end of this epoch.
-                  app_hash_root:
-                    type: string
-                    format: byte
-                    title: >-
-                      app_hash_root is the Merkle root of all AppHashs in this
-                      epoch
-
-                      It will be used for proving a block is in an epoch
                   sealer_app_hash:
                     type: string
                     format: byte
@@ -7250,14 +7226,6 @@ paths:
                             epoch's beginning, and
 
                             is set upon the end of this epoch.
-                        app_hash_root:
-                          type: string
-                          format: byte
-                          title: >-
-                            app_hash_root is the Merkle root of all AppHashs in
-                            this epoch
-
-                            It will be used for proving a block is in an epoch
                         sealer_app_hash:
                           type: string
                           format: byte
@@ -9899,11 +9867,6 @@ definitions:
           and
 
           is set upon the end of this epoch.
-      app_hash_root_hex:
-        type: string
-        description: |-
-          app_hash_root is the Merkle root of all AppHashs in this epoch
-          It will be used for proving a block is in an epoch as hex string.
       sealer_app_hash_hex:
         type: string
         description: |-
@@ -10041,11 +10004,6 @@ definitions:
               beginning, and
 
               is set upon the end of this epoch.
-          app_hash_root_hex:
-            type: string
-            description: |-
-              app_hash_root is the Merkle root of all AppHashs in this epoch
-              It will be used for proving a block is in an epoch as hex string.
           sealer_app_hash_hex:
             type: string
             description: |-
@@ -10218,13 +10176,6 @@ definitions:
                 beginning, and
 
                 is set upon the end of this epoch.
-            app_hash_root_hex:
-              type: string
-              description: >-
-                app_hash_root is the Merkle root of all AppHashs in this epoch
-
-                It will be used for proving a block is in an epoch as hex
-                string.
             sealer_app_hash_hex:
               type: string
               description: >-
@@ -11422,12 +11373,6 @@ definitions:
           and
 
           is set upon the end of this epoch.
-      app_hash_root:
-        type: string
-        format: byte
-        title: |-
-          app_hash_root is the Merkle root of all AppHashs in this epoch
-          It will be used for proving a block is in an epoch
       sealer_app_hash:
         type: string
         format: byte
@@ -11833,12 +11778,6 @@ definitions:
               beginning, and
 
               is set upon the end of this epoch.
-          app_hash_root:
-            type: string
-            format: byte
-            title: |-
-              app_hash_root is the Merkle root of all AppHashs in this epoch
-              It will be used for proving a block is in an epoch
           sealer_app_hash:
             type: string
             format: byte
@@ -13169,12 +13108,6 @@ definitions:
               beginning, and
 
               is set upon the end of this epoch.
-          app_hash_root:
-            type: string
-            format: byte
-            title: |-
-              app_hash_root is the Merkle root of all AppHashs in this epoch
-              It will be used for proving a block is in an epoch
           sealer_app_hash:
             type: string
             format: byte
@@ -13663,14 +13596,6 @@ definitions:
                     beginning, and
 
                     is set upon the end of this epoch.
-                app_hash_root:
-                  type: string
-                  format: byte
-                  title: >-
-                    app_hash_root is the Merkle root of all AppHashs in this
-                    epoch
-
-                    It will be used for proving a block is in an epoch
                 sealer_app_hash:
                   type: string
                   format: byte

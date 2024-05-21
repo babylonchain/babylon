@@ -200,17 +200,14 @@ message EpochResponse {
   // finalised. The last_block_time field is nil in the epoch's beginning, and
   // is set upon the end of this epoch.
   google.protobuf.Timestamp last_block_time = 4 [ (gogoproto.stdtime) = true ];
-  // app_hash_root is the Merkle root of all AppHashs in this epoch
-  // It will be used for proving a block is in an epoch as hex string.
-  string app_hash_root_hex = 5;
   // sealer is the last block of the sealed epoch
   // sealer_app_hash points to the sealer but stored in the 1st header
   // of the next epoch as hex string.
-  string sealer_app_hash_hex = 6;
+  string sealer_app_hash_hex = 5;
   // sealer_block_hash is the hash of the sealer
   // the validator set has generated a BLS multisig on the hash,
   // i.e., hash of the last block in the epoch as hex string.
-  string sealer_block_hash = 7;
+  string sealer_block_hash = 6;
 }
 
 // QueuedMessageResponse is a message that can change the validator set and is delayed

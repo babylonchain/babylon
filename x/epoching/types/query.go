@@ -11,7 +11,6 @@ func (e *Epoch) ToResponse() *EpochResponse {
 		CurrentEpochInterval: e.CurrentEpochInterval,
 		FirstBlockHeight:     e.FirstBlockHeight,
 		LastBlockTime:        e.LastBlockTime,
-		AppHashRootHex:       hex.EncodeToString(e.AppHashRoot),
 		SealerAppHashHex:     hex.EncodeToString(e.SealerAppHash),
 		SealerBlockHash:      hex.EncodeToString(e.SealerBlockHash),
 	}

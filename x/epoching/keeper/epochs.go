@@ -6,7 +6,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
-	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -71,13 +70,6 @@ func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
 	// record last block header
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	epoch.LastBlockTime = &header.Time
-	// calculate and record the Merkle root
-	appHashes, err := k.GetAllAppHashesForEpoch(ctx, epoch)
-	if err != nil {
-		return err
-	}
-	appHashRoot := merkle.HashFromByteSlices(appHashes)
-	epoch.AppHashRoot = appHashRoot
 	// save back to KVStore
 	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
 	return nil
