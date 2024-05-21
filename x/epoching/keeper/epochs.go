@@ -60,9 +60,10 @@ func (k Keeper) GetHistoricalEpoch(ctx context.Context, epochNumber uint64) (*ty
 	return epoch, err
 }
 
-// RecordLastHeaderAndAppHashRoot records the last header and Merkle root of all AppHashs
-// for the current epoch, and stores the epoch metadata to KVStore
-func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
+// RecordLastHeaderTime records the last header's timestamp for the current
+// epoch, and stores the epoch metadata to KVStore
+// The timestamp is used for unbonding delegations once the epoch is timestamped
+func (k Keeper) RecordLastHeaderTime(ctx context.Context) error {
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
 		return errorsmod.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
