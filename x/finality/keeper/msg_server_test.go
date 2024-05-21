@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
-	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -45,17 +44,8 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// create and register a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		fpBBNSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
 		require.NoError(t, err)
-		msr, _, err := eots.NewMasterRandPair(r)
-		require.NoError(t, err)
-		fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
-		require.NoError(t, err)
-
-		// randomise registered epoch for this finality provider
-		registeredEpoch := datagen.RandomInt(r, 10) + 10
-		fp.RegisteredEpoch = registeredEpoch
-
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
 		require.NoError(t, err)
@@ -159,19 +149,11 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
-
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fpBBNSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
 	require.NoError(t, err)
-	msr, _, err := eots.NewMasterRandPair(r)
-	require.NoError(t, err)
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
-	require.NoError(t, err)
-	fp.RegisteredEpoch = 10
-	bsKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).AnyTimes()
-
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
 	require.NoError(t, err)

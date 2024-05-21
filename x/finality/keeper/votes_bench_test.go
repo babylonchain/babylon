@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"cosmossdk.io/core/header"
-	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -30,15 +29,10 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	// create a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(b, err)
-	fpBBNSK, _, err := datagen.GenRandomSecp256k1KeyPair(r)
-	require.NoError(b, err)
-	msr, _, err := eots.NewMasterRandPair(r)
-	require.NoError(b, err)
-	fp, err := datagen.GenRandomCustomFinalityProvider(r, btcSK, fpBBNSK, msr)
-	require.NoError(b, err)
-
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+	require.NoError(b, err)
 
 	// register the finality provider
 	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()

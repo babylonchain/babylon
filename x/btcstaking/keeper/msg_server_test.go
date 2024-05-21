@@ -54,13 +54,12 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: 10}).Times(1)
 
 			msg := &types.MsgCreateFinalityProvider{
-				Signer:        datagen.GenRandomAccount().Address,
-				Description:   fp.Description,
-				Commission:    fp.Commission,
-				BabylonPk:     fp.BabylonPk,
-				BtcPk:         fp.BtcPk,
-				Pop:           fp.Pop,
-				MasterPubRand: fp.MasterPubRand,
+				Signer:      datagen.GenRandomAccount().Address,
+				Description: fp.Description,
+				Commission:  fp.Commission,
+				BabylonPk:   fp.BabylonPk,
+				BtcPk:       fp.BtcPk,
+				Pop:         fp.Pop,
 			}
 			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.NoError(t, err)
@@ -76,13 +75,12 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		// duplicated finality providers should not pass
 		for _, fp2 := range fps {
 			msg := &types.MsgCreateFinalityProvider{
-				Signer:        datagen.GenRandomAccount().Address,
-				Description:   fp2.Description,
-				Commission:    fp2.Commission,
-				BabylonPk:     fp2.BabylonPk,
-				BtcPk:         fp2.BtcPk,
-				Pop:           fp2.Pop,
-				MasterPubRand: fp2.MasterPubRand,
+				Signer:      datagen.GenRandomAccount().Address,
+				Description: fp2.Description,
+				Commission:  fp2.Commission,
+				BabylonPk:   fp2.BabylonPk,
+				BtcPk:       fp2.BtcPk,
+				Pop:         fp2.Pop,
 			}
 			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)

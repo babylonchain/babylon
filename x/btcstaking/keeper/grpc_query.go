@@ -189,7 +189,6 @@ func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.
 				BtcPk:                finalityProvider.BtcPk,
 				Height:               req.Height,
 				VotingPower:          votingPower,
-				MasterPubRand:        finalityProvider.MasterPubRand,
 				SlashedBabylonHeight: finalityProvider.SlashedBabylonHeight,
 				SlashedBtcHeight:     finalityProvider.SlashedBtcHeight,
 				RegisteredEpoch:      finalityProvider.RegisteredEpoch,

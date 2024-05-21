@@ -179,6 +179,54 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
 
+// CommitPubRandList commits a list of EOTS public randomness
+func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommitPubRandList) (*types.MsgCommitPubRandListResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// ensure the request contains enough number of public randomness
+	minPubRand := ms.GetParams(ctx).MinPubRand
+	givenPubRand := len(req.PubRandList)
+	if uint64(givenPubRand) < minPubRand {
+		return nil, types.ErrTooFewPubRand.Wrapf("required minimum: %d, actual: %d", minPubRand, givenPubRand)
+	}
+
+	// ensure the finality provider is registered
+	if req.FpBtcPk == nil {
+		return nil, types.ErrInvalidPubRand.Wrap("empty finality provider public key")
+	}
+	fpBTCPKBytes := req.FpBtcPk.MustMarshal()
+	if !ms.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPKBytes) {
+		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
+	}
+
+	// this finality provider has not commit any public randomness,
+	// commit the given public randomness list and return
+	if ms.IsFirstPubRand(ctx, req.FpBtcPk) {
+		ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
+		return &types.MsgCommitPubRandListResponse{}, nil
+	}
+
+	// ensure height and req.StartHeight do not overlap, i.e., height < req.StartHeight
+	height, _, err := ms.GetLastPubRand(ctx, req.FpBtcPk)
+	if err != nil {
+		return nil, err
+	}
+	if height >= req.StartHeight {
+		return nil, types.ErrInvalidPubRand.Wrapf("the start height (%d) has overlap with the height of the highest public randomness (%d)", req.StartHeight, height)
+	}
+
+	// verify signature over the list
+	if err := req.VerifySig(); err != nil {
+		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)
+	}
+
+	// all good, commit the given public randomness list
+	ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
+	return &types.MsgCommitPubRandListResponse{}, nil
+}
+
 // slashFinalityProvider slashes a finality provider with the given evidence
 // including setting its voting power to zero, extracting its BTC SK,
 // and emit an event

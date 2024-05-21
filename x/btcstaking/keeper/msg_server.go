@@ -8,7 +8,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
-	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -81,20 +80,13 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, types.ErrFpRegistered
 	}
 
-	// ensure the master public randomness is valid
-	if _, err := eots.NewMasterPublicRandFromBase58(req.MasterPubRand); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
-		Description:     req.Description,
-		Commission:      req.Commission,
-		BabylonPk:       req.BabylonPk,
-		BtcPk:           req.BtcPk,
-		Pop:             req.Pop,
-		MasterPubRand:   req.MasterPubRand,
-		RegisteredEpoch: ms.ckptKeeper.GetEpoch(ctx).EpochNumber,
+		Description: req.Description,
+		Commission:  req.Commission,
+		BabylonPk:   req.BabylonPk,
+		BtcPk:       req.BtcPk,
+		Pop:         req.Pop,
 	}
 	ms.SetFinalityProvider(ctx, &fp)
 
