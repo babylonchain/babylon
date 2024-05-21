@@ -77,12 +77,6 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, bstypes.ErrFpAlreadySlashed
 	}
 
-	// ensure the finality provider's registered epoch is already finalised by BTC timestamping
-	finalizedEpoch := ms.BTCStakingKeeper.GetLastFinalizedEpoch(ctx)
-	if finalizedEpoch < fp.RegisteredEpoch {
-		return nil, bstypes.ErrFpNotBTCTimestamped
-	}
-
 	// ensure the finality provider has voting power at this height
 	if req.FpBtcPk == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
@@ -103,15 +97,18 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
-	// derive public randomness at this height from the master public randomness
-	pubRand := fp.MustGetPubRand(req.BlockHeight)
+	// ensure the finality provider has committed public randomness
+	pubRand, err := ms.GetPubRand(ctx, fpPK, req.BlockHeight)
+	if err != nil {
+		return nil, types.ErrPubRandNotFound
+	}
 
 	// verify EOTS signature w.r.t. public randomness
 	fpBTCPK, err := fpPK.ToBTCPK()
 	if err != nil {
 		return nil, err
 	}
-	if err := eots.Verify(fpBTCPK, pubRand, req.MsgToSign(), req.FinalitySig.ToModNScalar()); err != nil {
+	if err := eots.Verify(fpBTCPK, pubRand.ToFieldVal(), req.MsgToSign(), req.FinalitySig.ToModNScalar()); err != nil {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the EOTS signature is invalid: %v", err)
 	}
 
@@ -127,7 +124,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		evidence := &types.Evidence{
 			FpBtcPk:              req.FpBtcPk,
 			BlockHeight:          req.BlockHeight,
-			MasterPubRand:        fp.MasterPubRand,
+			PubRand:              pubRand,
 			CanonicalAppHash:     indexedBlock.AppHash,
 			CanonicalFinalitySig: nil,
 			ForkAppHash:          req.BlockAppHash,

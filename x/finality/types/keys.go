@@ -17,7 +17,8 @@ const (
 var (
 	BlockKey                = []byte{0x01} // key prefix for blocks
 	VoteKey                 = []byte{0x02} // key prefix for votes
-	ParamsKey               = []byte{0x03} // key prefix for the parameters
-	EvidenceKey             = []byte{0x04} // key prefix for evidences
-	NextHeightToFinalizeKey = []byte{0x05} // key prefix for next height to finalise
+	PubRandKey              = []byte{0x03} // key prefix for public randomness
+	ParamsKey               = []byte{0x04} // key prefix for the parameters
+	EvidenceKey             = []byte{0x05} // key prefix for evidences
+	NextHeightToFinalizeKey = []byte{0x06} // key prefix for next height to finalise
 )

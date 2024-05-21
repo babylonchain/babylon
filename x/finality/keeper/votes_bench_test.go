@@ -40,6 +40,13 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	// mock voting power
 	bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Any()).Return(uint64(1)).AnyTimes()
 
+	// commit enough public randomness
+	// TODO: generalise commit public randomness to allow arbitrary benchtime
+	srList, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, 0, 100000)
+	require.NoError(b, err)
+	_, err = ms.CommitPubRandList(ctx, msg)
+	require.NoError(b, err)
+
 	// Start the CPU profiler
 	cpuProfileFile := "/tmp/finality-submit-finality-sig-cpu.pprof"
 	f, err := os.Create(cpuProfileFile)
@@ -61,8 +68,7 @@ func benchmarkAddFinalitySig(b *testing.B) {
 		height := uint64(i)
 
 		// generate a vote
-		sr, _, err := msr.DeriveRandPair(uint32(height))
-		require.NoError(b, err)
+		sr := srList[height]
 		blockHash := datagen.GenRandomByteArray(r, 32)
 		signer := datagen.GenRandomAccount().Address
 		msg, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, height, blockHash)

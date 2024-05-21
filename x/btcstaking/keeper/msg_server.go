@@ -186,7 +186,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// Ensure all finality providers are known to Babylon, are not slashed,
 	// and their registered epochs are finalised
-	lastFinalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
 	for _, fpBTCPK := range req.FpBtcPkList {
 		// get this finality provider
 		fp, err := ms.GetFinalityProvider(ctx, fpBTCPK)
@@ -196,10 +195,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		// ensure the finality provider is not slashed
 		if fp.IsSlashed() {
 			return nil, types.ErrFpAlreadySlashed
-		}
-		// ensure the finality provider's registered epoch is finalised
-		if lastFinalizedEpoch < fp.RegisteredEpoch {
-			return nil, types.ErrFpNotBTCTimestamped
 		}
 	}
 
