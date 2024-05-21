@@ -43,6 +43,8 @@ func TestMultisigAcc(t *testing.T) {
 	multiAcc := authtypes.NewBaseAccount(multiSdkAddr, multiPubKey, 0, 0)
 
 	require.Equal(t, multiAcc.GetAddress().String(), sdk.AccAddress(multiPubKey.Address()).String())
+	v := multiAcc.GetPubKey().(*multisig.LegacyAminoPubKey)
+	require.Equal(t, len(v.PubKeys), 2)
 }
 
 func FuzzMsgCreateFinalityProvider(f *testing.F) {
