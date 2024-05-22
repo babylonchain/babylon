@@ -16,6 +16,18 @@ message IndexedBlock {
     bool finalized = 3;
 }
 
+// IndexedBlock is a commitment to a series of public randomness
+// currently, the commitment is a root of a Merkle tree tha includes
+// a series of public randomness
+message PubRandCommit {
+    // start_height is the height of the first commitment
+    uint64 start_height = 1;
+    // num_pub_rand is the number of committed public randomness
+    uint64 num_pub_rand = 2;
+    // commitment is the value of the commitment
+    bytes commitment = 3;
+}
+
 // Evidence is the evidence that a finality provider has signed finality
 // signatures with correct public randomness on two conflicting Babylon headers
 message Evidence {

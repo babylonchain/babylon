@@ -33,13 +33,13 @@ func PubGen(k *PrivateKey) *PublicKey {
 
 // RandGen returns the value to be used as random value when signing, and the associated public value.
 func RandGen(randSource io.Reader) (*PrivateRand, *PublicRand, error) {
-	pk, err := KeyGen(randSource)
+	sk, err := KeyGen(randSource)
 	if err != nil {
 		return nil, nil, err
 	}
 	var j secp256k1.JacobianPoint
-	pk.PubKey().AsJacobian(&j)
-	return &pk.Key, &j.X, nil
+	sk.PubKey().AsJacobian(&j)
+	return &sk.Key, &j.X, nil
 }
 
 // hash function is used for hashing the message input for all functions of the library.

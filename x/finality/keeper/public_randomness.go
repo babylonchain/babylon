@@ -12,21 +12,85 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// SetPubRandList sets a list of public randomness starting from a given startHeight
-// for a given finality provider
-func (k Keeper) SetPubRandList(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	cacheCtx, writeCache := sdkCtx.CacheContext()
+/*
+	Public randomness commitment storage
+*/
 
-	// write to a KV store cache
-	store := k.pubRandFpStore(cacheCtx, fpBtcPK)
-	for i, pr := range pubRandList {
-		height := startHeight + uint64(i)
-		store.Set(sdk.Uint64ToBigEndian(height), pr)
+func (k Keeper) IsFirstPubRandCommit(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) bool {
+	store := k.pubRandCommitFpStore(ctx, fpBtcPK)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	// if the iterator is not valid, then this finality provider does not commit any randomness
+	return !iter.Valid()
+}
+
+// GetPubRandCommitForHeight finds the public randomness commitment that includes the given
+// height for the given finality provider
+func (k Keeper) GetPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.PubRandCommit, error) {
+	store := k.pubRandCommitFpStore(ctx, fpBtcPK)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	var prCommit types.PubRandCommit
+	for ; iter.Valid(); iter.Next() {
+		k.cdc.MustUnmarshal(iter.Value(), &prCommit)
+		if prCommit.IsInRange(height) {
+			return &prCommit, nil
+		}
+	}
+	return nil, types.ErrPubRandNotFound
+}
+
+// SetPubRandCommit adds the given public randomness commitment for the given public key
+func (k Keeper) SetPubRandCommit(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, prCommit *types.PubRandCommit) {
+	store := k.pubRandCommitFpStore(ctx, fpBtcPK)
+	prcBytes := k.cdc.MustMarshal(prCommit)
+	store.Set(sdk.Uint64ToBigEndian(prCommit.StartHeight), prcBytes)
+}
+
+// GetLastPubRandCommit retrieves the last public randomness commitment of the given finality provider
+func (k Keeper) GetLastPubRandCommit(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) *types.PubRandCommit {
+	store := k.pubRandCommitFpStore(ctx, fpBtcPK)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	if !iter.Valid() {
+		// this finality provider does not commit any randomness
+		return nil
 	}
 
-	// atomically write the new public randomness back to KV store
-	writeCache()
+	var prCommit types.PubRandCommit
+	k.cdc.MustUnmarshal(iter.Value(), &prCommit)
+	return &prCommit
+}
+
+// pubRandCommitFpStore returns the KVStore of the commitment of public randomness
+// prefix: PubRandKey
+// key: (finality provider PK || block height of the commitment)
+// value: PubRandCommit
+func (k Keeper) pubRandCommitFpStore(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) prefix.Store {
+	store := k.pubRandCommitStore(ctx)
+	return prefix.NewStore(store, fpBtcPK.MustMarshal())
+}
+
+// pubRandCommitStore returns the KVStore of the public randomness commitments
+// prefix: PubRandKey
+// key: (prefix)
+// value: PubRandCommit
+func (k Keeper) pubRandCommitStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.PubRandCommitKey)
+}
+
+/*
+	Public randomness storage
+*/
+
+// SetPubRand sets a public randomness at a given height for a given finality provider
+func (k Keeper) SetPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64, pubRand bbn.SchnorrPubRand) {
+	store := k.pubRandFpStore(ctx, fpBtcPK)
+	store.Set(sdk.Uint64ToBigEndian(height), pubRand)
 }
 
 func (k Keeper) HasPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
@@ -43,18 +107,11 @@ func (k Keeper) GetPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, heigh
 	return bbn.NewSchnorrPubRand(prBytes)
 }
 
-func (k Keeper) IsFirstPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) bool {
-	store := k.pubRandFpStore(ctx, fpBtcPK)
-	iter := store.ReverseIterator(nil, nil)
-
-	// if the iterator is not valid, then this finality provider does not commit any randomness
-	return !iter.Valid()
-}
-
 // GetLastPubRand retrieves the last public randomness committed by the given finality provider
 func (k Keeper) GetLastPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) (uint64, *bbn.SchnorrPubRand, error) {
 	store := k.pubRandFpStore(ctx, fpBtcPK)
 	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
 
 	if !iter.Valid() {
 		// this finality provider does not commit any randomness
@@ -72,7 +129,7 @@ func (k Keeper) GetLastPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) (
 
 // pubRandFpStore returns the KVStore of the public randomness
 // prefix: PubRandKey
-// key: (finality provider || PK block height)
+// key: (finality provider PK || block height)
 // value: PublicRandomness
 func (k Keeper) pubRandFpStore(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) prefix.Store {
 	prefixedStore := k.pubRandStore(ctx)

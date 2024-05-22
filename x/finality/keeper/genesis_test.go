@@ -21,13 +21,12 @@ func TestExportGenesis(t *testing.T) {
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	blkHeight, startHeight, numPubRand := uint64(1), uint64(0), uint64(5)
 
-	srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+	randListInfo, _, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 	require.NoError(t, err)
 
-	sr := srList[startHeight+blkHeight]
 	blockHash := datagen.GenRandomByteArray(r, 32)
 	signer := datagen.GenRandomAccount().Address
-	msgAddFinalitySig, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blkHeight, blockHash)
+	msgAddFinalitySig, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blkHeight, randListInfo, blockHash)
 	require.NoError(t, err)
 
 	allVotes := make([]*types.VoteSig, numPubRand)
@@ -57,7 +56,7 @@ func TestExportGenesis(t *testing.T) {
 		evidence := &types.Evidence{
 			FpBtcPk:              fpBTCPK,
 			BlockHeight:          blkHeight,
-			PubRand:              &msgCommitPubRandList.PubRandList[i],
+			PubRand:              &randListInfo.PRList[i],
 			ForkAppHash:          msgAddFinalitySig.BlockAppHash,
 			ForkFinalitySig:      msgAddFinalitySig.FinalitySig,
 			CanonicalAppHash:     blockHash,
@@ -66,9 +65,9 @@ func TestExportGenesis(t *testing.T) {
 		k.SetEvidence(ctx, evidence)
 		allEvidences[i] = evidence
 
-		// PubRandoms
-		pubRand := msgCommitPubRandList.PubRandList[i]
-		k.SetPubRandList(ctx, fpBTCPK, blkHeight, []bbn.SchnorrPubRand{pubRand})
+		// public randomness
+		pubRand := randListInfo.PRList[i]
+		k.SetPubRand(ctx, fpBTCPK, blkHeight, pubRand)
 		randomness := &types.PublicRandomness{
 			BlockHeight: blkHeight,
 			FpBtcPk:     fpBTCPK,
@@ -79,6 +78,14 @@ func TestExportGenesis(t *testing.T) {
 		// updates the block everytime to make sure something is different.
 		blkHeight++
 	}
+
+	prc := &types.PubRandCommit{
+		StartHeight: startHeight,
+		NumPubRand:  numPubRand,
+		Commitment:  randListInfo.Commitment,
+	}
+	k.SetPubRandCommit(ctx, fpBTCPK, prc)
+
 	require.Equal(t, len(allVotes), int(numPubRand))
 	require.Equal(t, len(allBlocks), int(numPubRand))
 	require.Equal(t, len(allEvidences), int(numPubRand))
@@ -92,4 +99,5 @@ func TestExportGenesis(t *testing.T) {
 	require.Equal(t, allBlocks, gs.IndexedBlocks)
 	require.Equal(t, allEvidences, gs.Evidences)
 	require.Equal(t, allPublicRandomness, gs.PublicRandomness)
+	require.Equal(t, prc, gs.PubRandCommit[0].PubRandCommit)
 }

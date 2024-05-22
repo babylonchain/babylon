@@ -4,8 +4,7 @@ import (
 	fmt "fmt"
 
 	"github.com/babylonchain/babylon/crypto/eots"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -17,48 +16,44 @@ var (
 	_ sdk.Msg = &MsgCommitPubRandList{}
 )
 
-func NewMsgAddFinalitySig(signer string, sk *btcec.PrivateKey, sr *eots.PrivateRand, blockHeight uint64, blockHash []byte) (*MsgAddFinalitySig, error) {
-	msg := &MsgAddFinalitySig{
-		Signer:       signer,
-		FpBtcPk:      bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
-		BlockHeight:  blockHeight,
-		BlockAppHash: blockHash,
-	}
-	msgToSign := msg.MsgToSign()
-	sig, err := eots.Sign(sk, sr, msgToSign)
-	if err != nil {
-		return nil, err
-	}
-	msg.FinalitySig = bbn.NewSchnorrEOTSSigFromModNScalar(sig)
-
-	return msg, nil
-}
-
 func (m *MsgAddFinalitySig) MsgToSign() []byte {
 	return msgToSignForVote(m.BlockHeight, m.BlockAppHash)
 }
 
-func (m *MsgAddFinalitySig) VerifyEOTSSig(pubRand *bbn.SchnorrPubRand) error {
+func (m *MsgAddFinalitySig) VerifyInclusionProof(commitment []byte) error {
+	// verify the proof of inclusion for this public randomness
+	unwrappedProof, err := merkle.ProofFromProto(m.Proof)
+	if err != nil {
+		return ErrInvalidFinalitySig.Wrapf("failed to unwrap proof: %v", err)
+	}
+	if err := unwrappedProof.Verify(commitment, *m.PubRand); err != nil {
+		return ErrInvalidFinalitySig.Wrapf("the inclusion proof of the public randomness is invalid: %v", err)
+	}
+	return nil
+}
+
+func (m *MsgAddFinalitySig) VerifyEOTSSig() error {
 	msgToSign := m.MsgToSign()
 	pk, err := m.FpBtcPk.ToBTCPK()
 	if err != nil {
 		return err
 	}
 
-	return eots.Verify(pk, pubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
+	return eots.Verify(pk, m.PubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
 }
 
-// HashToSign returns a 32-byte hash of (start_height || pub_rand_list)
+// HashToSign returns a 32-byte hash of (start_height || num_pub_rand || commitment)
 // The signature in MsgCommitPubRandList will be on this hash
 func (m *MsgCommitPubRandList) HashToSign() ([]byte, error) {
 	hasher := tmhash.New()
 	if _, err := hasher.Write(sdk.Uint64ToBigEndian(m.StartHeight)); err != nil {
 		return nil, err
 	}
-	for _, pr := range m.PubRandList {
-		if _, err := hasher.Write(pr.MustMarshal()); err != nil {
-			return nil, err
-		}
+	if _, err := hasher.Write(sdk.Uint64ToBigEndian(m.NumPubRand)); err != nil {
+		return nil, err
+	}
+	if _, err := hasher.Write(m.Commitment); err != nil {
+		return nil, err
 	}
 	return hasher.Sum(nil), nil
 }

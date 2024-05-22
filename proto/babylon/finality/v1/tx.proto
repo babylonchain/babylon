@@ -4,6 +4,7 @@ package babylon.finality.v1;
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
 import "gogoproto/gogo.proto";
+import "tendermint/crypto/proof.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
 import "babylon/finality/v1/params.proto";
@@ -30,14 +31,17 @@ message MsgCommitPubRandList {
     bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // start_height is the start block height of the list of public randomness
     uint64 start_height = 3;
-    // pub_rand_list is the list of public randomness
-    repeated bytes pub_rand_list = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
-    // sig is the signature on (start_height || pub_rand_list) signed by 
+    // num_pub_rand is the number of public randomness committed
+    uint64 num_pub_rand = 4;
+    // commitment is the commitment of these public randomness
+    // currently it's the root of the Merkle tree that includes these public randomness
+    bytes commitment = 5;
+    // sig is the signature on (start_height || num_pub_rand || commitment) signed by 
     // SK corresponding to fp_btc_pk. This prevents others to commit public
     // randomness on behalf of fp_btc_pk
     // TODO: another option is to restrict signer to correspond to fp_btc_pk. This restricts
     // the tx submitter to be the holder of fp_btc_pk. Decide this later
-    bytes sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 // MsgCommitPubRandListResponse is the response to the MsgCommitPubRandList message
 message MsgCommitPubRandListResponse{}
@@ -51,13 +55,17 @@ message MsgAddFinalitySig {
     bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // block_height is the height of the voted block
     uint64 block_height = 3;
+    // pub_rand is the public randomness committed at this height
+    bytes pub_rand = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+    // proof is the proof that the given public randomness is committed under the commitment
+    tendermint.crypto.Proof proof = 5;
     // block_app_hash is the AppHash of the voted block
-    bytes block_app_hash = 4;
+    bytes block_app_hash = 6;
     // finality_sig is the finality signature to this block
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the finality provider
-    bytes finality_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+    bytes finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
 }
 // MsgAddFinalitySigResponse is the response to the MsgAddFinalitySig message
 message MsgAddFinalitySigResponse{}

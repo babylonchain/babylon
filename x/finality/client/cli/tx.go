@@ -34,8 +34,8 @@ func GetTxCmd() *cobra.Command {
 
 func NewCommitPubRandListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "commit-pubrand-list [fp_btc_pk] [start_height] [pub_rand1]  [pub_rand2] ... [sig]",
-		Args:  cobra.MinimumNArgs(4),
+		Use:   "commit-pubrand-list [fp_btc_pk] [start_height] [num_pub_rand] [commitment] [sig]",
+		Args:  cobra.MinimumNArgs(5),
 		Short: "Commit a list of public randomness",
 		Long: strings.TrimSpace(
 			`Commit a list of public randomness.`, // TODO: example
@@ -58,28 +58,28 @@ func NewCommitPubRandListCmd() *cobra.Command {
 				return err
 			}
 
-			// get signature
-			sig, err := bbn.NewBIP340SignatureFromHex(args[len(args)-1])
+			numPubRand, err := strconv.ParseUint(args[2], 10, 64)
 			if err != nil {
 				return err
 			}
 
-			// get pub rand list
-			pubRandHexList := args[2 : len(args)-1]
-			pubRandList := []bbn.SchnorrPubRand{}
-			for _, prHex := range pubRandHexList {
-				pr, err := bbn.NewSchnorrPubRandFromHex(prHex)
-				if err != nil {
-					return err
-				}
-				pubRandList = append(pubRandList, *pr)
+			commitment, err := hex.DecodeString(args[3])
+			if err != nil {
+				return err
+			}
+
+			// get signature
+			sig, err := bbn.NewBIP340SignatureFromHex(args[4])
+			if err != nil {
+				return err
 			}
 
 			msg := types.MsgCommitPubRandList{
 				Signer:      clientCtx.FromAddress.String(),
 				FpBtcPk:     fpBTCPK,
 				StartHeight: startHeight,
-				PubRandList: pubRandList,
+				NumPubRand:  numPubRand,
+				Commitment:  commitment,
 				Sig:         sig,
 			}
 

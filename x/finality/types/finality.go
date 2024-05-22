@@ -9,6 +9,29 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (c *PubRandCommit) IsInRange(height uint64) bool {
+	start, end := c.Range()
+	return start <= height && height <= end
+}
+
+func (c *PubRandCommit) GetIndex(height uint64) (uint64, error) {
+	start, end := c.Range()
+	if start <= height && height <= end {
+		return height - start, nil
+	}
+	return 0, ErrPubRandNotFound.Wrapf("the given height (%d) is not in range [%d, %d]", height, start, end)
+}
+
+func (c *PubRandCommit) EndHeight() uint64 {
+	return c.StartHeight + c.NumPubRand - 1
+}
+
+// Range() returns the range of the heights that a public randomness is committed
+// both values are inclusive
+func (c *PubRandCommit) Range() (uint64, uint64) {
+	return c.StartHeight, c.EndHeight()
+}
+
 // msgToSignForVote returns the message for an EOTS signature
 // The EOTS signature on a block will be (blockHeight || blockHash)
 func msgToSignForVote(blockHeight uint64, blockHash []byte) []byte {

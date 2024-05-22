@@ -4,7 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 type SchnorrPubRand []byte
@@ -29,6 +31,13 @@ func NewSchnorrPubRandFromFieldVal(r *btcec.FieldVal) *SchnorrPubRand {
 	prBytes := r.Bytes()
 	pr := SchnorrPubRand(prBytes[:])
 	return &pr
+}
+
+func NewPubRandFromPrivRand(sr *eots.PrivateRand) *SchnorrPubRand {
+	sk := secp256k1.NewPrivateKey(sr)
+	var j secp256k1.JacobianPoint
+	sk.PubKey().AsJacobian(&j)
+	return NewSchnorrPubRandFromFieldVal(&j.X)
 }
 
 func (pr SchnorrPubRand) ToFieldVal() *btcec.FieldVal {
