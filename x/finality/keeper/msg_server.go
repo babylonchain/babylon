@@ -208,6 +208,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	// get last public randomness commitment
+	// TODO: allow committing public randomness earlier than existing ones?
 	lastPrCommit := ms.GetLastPubRandCommit(ctx, req.FpBtcPk)
 
 	// this finality provider has not commit any public randomness,

@@ -163,7 +163,7 @@ func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight ui
 	cmd = append(cmd, "--from=val")
 
 	// gas
-	cmd = append(cmd, "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3")
+	cmd = append(cmd, "--gas=500000")
 
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
