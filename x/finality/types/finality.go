@@ -32,6 +32,13 @@ func (c *PubRandCommit) Range() (uint64, uint64) {
 	return c.StartHeight, c.EndHeight()
 }
 
+func (c *PubRandCommit) ToResponse() *PubRandCommitResponse {
+	return &PubRandCommitResponse{
+		NumPubRand: c.NumPubRand,
+		Commitment: c.Commitment,
+	}
+}
+
 // msgToSignForVote returns the message for an EOTS signature
 // The EOTS signature on a block will be (blockHeight || blockHash)
 func msgToSignForVote(blockHeight uint64, blockHash []byte) []byte {

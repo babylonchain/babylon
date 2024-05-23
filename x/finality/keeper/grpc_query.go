@@ -20,6 +20,7 @@ var _ types.QueryServer = Keeper{}
 
 // ListPublicRandomness returns a list of public randomness committed by a given
 // finality provider
+// TODO: remove public randomness storage?
 func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPublicRandomnessRequest) (*types.QueryListPublicRandomnessResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -49,6 +50,39 @@ func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPu
 	resp := &types.QueryListPublicRandomnessResponse{
 		PubRandMap: pubRandMap,
 		Pagination: pageRes,
+	}
+	return resp, nil
+}
+
+// ListPubRandCommit returns a list of public randomness commitment by a given
+// finality provider
+func (k Keeper) ListPubRandCommit(ctx context.Context, req *types.QueryListPubRandCommitRequest) (*types.QueryListPubRandCommitResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := k.pubRandCommitFpStore(sdkCtx, fpBTCPK)
+	pubRandCommitMap := map[uint64]*types.PubRandCommitResponse{}
+	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
+		height := sdk.BigEndianToUint64(key)
+		var prCommit types.PubRandCommit
+		k.cdc.MustUnmarshal(value, &prCommit)
+		pubRandCommitMap[height] = prCommit.ToResponse()
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryListPubRandCommitResponse{
+		PubRandCommitMap: pubRandCommitMap,
+		Pagination:       pageRes,
 	}
 	return resp, nil
 }

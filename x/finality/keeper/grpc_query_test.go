@@ -178,6 +178,54 @@ func FuzzVotesAtHeight(f *testing.F) {
 	})
 }
 
+func FuzzListPubRandCommit(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		// set random BTC SK PK
+		sk, _, err := datagen.GenRandomBTCKeyPair(r)
+		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey())
+		require.NoError(t, err)
+
+		numPrCommitList := datagen.RandomInt(r, 10) + 1
+		prCommitList := []*types.PubRandCommit{}
+
+		// set a list of random public randomness commitment
+		startHeight := datagen.RandomInt(r, 10) + 1
+		for i := uint64(0); i < numPrCommitList; i++ {
+			numPubRand := datagen.RandomInt(r, 10) + 1
+			randListInfo, err := datagen.GenRandomPubRandList(r, numPubRand)
+			require.NoError(t, err)
+			prCommit := &types.PubRandCommit{
+				StartHeight: startHeight,
+				NumPubRand:  numPubRand,
+				Commitment:  randListInfo.Commitment,
+			}
+			keeper.SetPubRandCommit(ctx, bip340PK, prCommit)
+			prCommitList = append(prCommitList, prCommit)
+
+			startHeight += numPubRand
+		}
+
+		resp, err := keeper.ListPubRandCommit(ctx, &types.QueryListPubRandCommitRequest{
+			FpBtcPkHex: bip340PK.MarshalHex(),
+		})
+		require.NoError(t, err)
+
+		for _, prCommit := range prCommitList {
+			prCommitResp, ok := resp.PubRandCommitMap[prCommit.StartHeight]
+			require.True(t, ok)
+			require.Equal(t, prCommitResp.NumPubRand, prCommit.NumPubRand)
+			require.Equal(t, prCommitResp.Commitment, prCommit.Commitment)
+		}
+	})
+}
+
 func FuzzQueryEvidence(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {

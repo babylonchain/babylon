@@ -347,23 +347,26 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		commit a number of public randomness since activatedHeight
 	*/
 	// commit public randomness list
-	srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpBTCSK, activatedHeight, 100)
+	numPubRand := uint64(100)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpBTCSK, activatedHeight, numPubRand)
 	s.NoError(err)
 	nonValidatorNode.CommitPubRandList(
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
-		msgCommitPubRandList.PubRandList,
+		msgCommitPubRandList.NumPubRand,
+		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
 
 	// ensure public randomness list is eventually committed
 	nonValidatorNode.WaitForNextBlock()
-	var pubRandMap map[uint64]*bbn.SchnorrPubRand
+	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
 	s.Eventually(func() bool {
-		pubRandMap = nonValidatorNode.QueryListPublicRandomness(fp.BtcPk)
-		return len(pubRandMap) > 0
+		prCommitMap = nonValidatorNode.QueryListPubRandCommit(fp.BtcPk)
+		return len(prCommitMap) > 0
 	}, time.Minute, time.Second*5)
-	s.Equal(pubRandMap[activatedHeight].MustMarshal(), msgCommitPubRandList.PubRandList[0].MustMarshal())
+	s.Equal(prCommitMap[activatedHeight].NumPubRand, msgCommitPubRandList.NumPubRand)
+	s.Equal(prCommitMap[activatedHeight].Commitment, msgCommitPubRandList.Commitment)
 
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
@@ -381,13 +384,14 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NoError(err)
 	appHash := blockToVote.AppHash
 
+	idx := 0
 	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
 	// generate EOTS signature
-	sig, err := eots.Sign(fpBTCSK, srList[0], msgToSign)
+	sig, err := eots.Sign(fpBTCSK, randListInfo.SRList[idx], msgToSign)
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature
-	nonValidatorNode.AddFinalitySig(fp.BtcPk, activatedHeight, appHash, eotsSig)
+	nonValidatorNode.AddFinalitySig(fp.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 	// ensure vote is eventually cast
 	nonValidatorNode.WaitForNextBlock()

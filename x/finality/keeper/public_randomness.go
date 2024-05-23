@@ -85,6 +85,7 @@ func (k Keeper) pubRandCommitStore(ctx context.Context) prefix.Store {
 
 /*
 	Public randomness storage
+	TODO: remove public randomness storage?
 */
 
 // SetPubRand sets a public randomness at a given height for a given finality provider

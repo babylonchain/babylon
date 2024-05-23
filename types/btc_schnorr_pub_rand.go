@@ -54,6 +54,10 @@ func (pr SchnorrPubRand) Marshal() ([]byte, error) {
 	return pr, nil
 }
 
+func (pr SchnorrPubRand) MarshalHex() string {
+	return hex.EncodeToString(pr)
+}
+
 func (pr SchnorrPubRand) MustMarshal() []byte {
 	prBytes, err := pr.Marshal()
 	if err != nil {
