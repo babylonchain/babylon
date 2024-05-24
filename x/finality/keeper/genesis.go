@@ -24,10 +24,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.SetSig(ctx, voteSig.BlockHeight, voteSig.FpBtcPk, voteSig.FinalitySig)
 	}
 
-	for _, pubRand := range gs.PublicRandomness {
-		k.SetPubRand(ctx, pubRand.FpBtcPk, pubRand.BlockHeight, *pubRand.PubRand)
-	}
-
 	for _, prc := range gs.PubRandCommit {
 		k.SetPubRandCommit(ctx, prc.FpBtcPk, prc.PubRandCommit)
 	}
@@ -52,23 +48,17 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	pubRandomness, err := k.publicRandomness(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	prCommit, err := k.exportPubRandCommit(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.GenesisState{
-		Params:           k.GetParams(ctx),
-		IndexedBlocks:    blocks,
-		Evidences:        evidences,
-		VoteSigs:         voteSigs,
-		PublicRandomness: pubRandomness,
-		PubRandCommit:    prCommit,
+		Params:        k.GetParams(ctx),
+		IndexedBlocks: blocks,
+		Evidences:     evidences,
+		VoteSigs:      voteSigs,
+		PubRandCommit: prCommit,
 	}, nil
 }
 
@@ -138,36 +128,6 @@ func (k Keeper) voteSigs(ctx context.Context) ([]*types.VoteSig, error) {
 	}
 
 	return voteSigs, nil
-}
-
-// publicRandomness iterates over all commited randoms on the store, parses the finality provider public key
-// and the height from the iterator key and the commited random from the iterator value.
-// This function has high resource consumption and should be only used on export genesis.
-func (k Keeper) publicRandomness(ctx context.Context) ([]*types.PublicRandomness, error) {
-	store := k.pubRandStore(ctx)
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-
-	commtRandoms := make([]*types.PublicRandomness, 0)
-	for ; iter.Valid(); iter.Next() {
-		// key contains the fp and the block height
-		fpBTCPK, blkHeight, err := parsePubKeyAndBlkHeightFromStoreKey(iter.Key())
-		if err != nil {
-			return nil, err
-		}
-		pubRand, err := bbn.NewSchnorrPubRand(iter.Value())
-		if err != nil {
-			return nil, err
-		}
-
-		commtRandoms = append(commtRandoms, &types.PublicRandomness{
-			BlockHeight: blkHeight,
-			FpBtcPk:     fpBTCPK,
-			PubRand:     pubRand,
-		})
-	}
-
-	return commtRandoms, nil
 }
 
 // exportPubRandCommit iterates over all public randomness commitment on the store,

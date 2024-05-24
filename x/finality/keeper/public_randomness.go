@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 
@@ -81,67 +80,4 @@ func (k Keeper) pubRandCommitFpStore(ctx context.Context, fpBtcPK *bbn.BIP340Pub
 func (k Keeper) pubRandCommitStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.PubRandCommitKey)
-}
-
-/*
-	Public randomness storage
-	TODO: remove public randomness storage?
-*/
-
-// SetPubRand sets a public randomness at a given height for a given finality provider
-func (k Keeper) SetPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64, pubRand bbn.SchnorrPubRand) {
-	store := k.pubRandFpStore(ctx, fpBtcPK)
-	store.Set(sdk.Uint64ToBigEndian(height), pubRand)
-}
-
-func (k Keeper) HasPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
-	store := k.pubRandFpStore(ctx, fpBtcPK)
-	return store.Has(sdk.Uint64ToBigEndian(height))
-}
-
-func (k Keeper) GetPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*bbn.SchnorrPubRand, error) {
-	store := k.pubRandFpStore(ctx, fpBtcPK)
-	prBytes := store.Get(sdk.Uint64ToBigEndian(height))
-	if len(prBytes) == 0 {
-		return nil, types.ErrPubRandNotFound
-	}
-	return bbn.NewSchnorrPubRand(prBytes)
-}
-
-// GetLastPubRand retrieves the last public randomness committed by the given finality provider
-func (k Keeper) GetLastPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) (uint64, *bbn.SchnorrPubRand, error) {
-	store := k.pubRandFpStore(ctx, fpBtcPK)
-	iter := store.ReverseIterator(nil, nil)
-	defer iter.Close()
-
-	if !iter.Valid() {
-		// this finality provider does not commit any randomness
-		return 0, nil, types.ErrNoPubRandYet
-	}
-
-	height := sdk.BigEndianToUint64(iter.Key())
-	pubRand, err := bbn.NewSchnorrPubRand(iter.Value())
-	if err != nil {
-		// failing to marshal public randomness in KVStore can only be a programming error
-		panic(fmt.Errorf("failed to unmarshal public randomness in KVStore: %w", err))
-	}
-	return height, pubRand, nil
-}
-
-// pubRandFpStore returns the KVStore of the public randomness
-// prefix: PubRandKey
-// key: (finality provider PK || block height)
-// value: PublicRandomness
-func (k Keeper) pubRandFpStore(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) prefix.Store {
-	prefixedStore := k.pubRandStore(ctx)
-	return prefix.NewStore(prefixedStore, fpBtcPK.MustMarshal())
-}
-
-// pubRandStore returns the KVStore of the public randomness
-// prefix: PubRandKey
-// key: (prefix)
-// value: PublicRandomness
-func (k Keeper) pubRandStore(ctx context.Context) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdapter, types.PubRandKey)
 }

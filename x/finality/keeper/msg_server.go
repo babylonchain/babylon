@@ -106,8 +106,6 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	if err := req.VerifyInclusionProof(prCommit.Commitment); err != nil {
 		return nil, err
 	}
-	// the public randomness is good, set the public randomness
-	ms.SetPubRand(ctx, req.FpBtcPk, req.BlockHeight, *req.PubRand)
 
 	// verify EOTS signature w.r.t. public randomness
 	if err := req.VerifyEOTSSig(); err != nil {

@@ -16,8 +16,8 @@ message IndexedBlock {
     bool finalized = 3;
 }
 
-// IndexedBlock is a commitment to a series of public randomness
-// currently, the commitment is a root of a Merkle tree tha includes
+// PubRandCommit is a commitment to a series of public randomness
+// currently, the commitment is a root of a Merkle tree that includes
 // a series of public randomness
 message PubRandCommit {
     // start_height is the height of the first commitment
@@ -25,6 +25,7 @@ message PubRandCommit {
     // num_pub_rand is the number of committed public randomness
     uint64 num_pub_rand = 2;
     // commitment is the value of the commitment
+    // currently, it is the root of the merkle tree constructed by the public randomness
     bytes commitment = 3;
 }
 
