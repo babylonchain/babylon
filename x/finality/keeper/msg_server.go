@@ -7,7 +7,6 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/finality/types"
@@ -97,20 +96,19 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
-	// ensure the finality provider has committed public randomness
-	pubRand, err := ms.GetPubRand(ctx, fpPK, req.BlockHeight)
-	if err != nil {
-		return nil, types.ErrPubRandNotFound
-	}
-
-	// verify EOTS signature w.r.t. public randomness
-	fpBTCPK, err := fpPK.ToBTCPK()
+	// find the public randomness commitment for this height from this finality provider
+	prCommit, err := ms.GetPubRandCommitForHeight(ctx, req.FpBtcPk, req.BlockHeight)
 	if err != nil {
 		return nil, err
 	}
-	if err := eots.Verify(fpBTCPK, pubRand.ToFieldVal(), req.MsgToSign(), req.FinalitySig.ToModNScalar()); err != nil {
-		return nil, types.ErrInvalidFinalitySig.Wrapf("the EOTS signature is invalid: %v", err)
+
+	// verify the finality signature message w.r.t. the public randomness commitment
+	// including the public randomness inclusion proof and the finality signature
+	if err := types.VerifyFinalitySig(req, prCommit); err != nil {
+		return nil, err
 	}
+	// the public randomness is good, set the public randomness
+	ms.SetPubRand(ctx, req.FpBtcPk, req.BlockHeight, *req.PubRand)
 
 	// verify whether the voted block is a fork or not
 	indexedBlock, err := ms.GetBlock(ctx, req.BlockHeight)
@@ -124,7 +122,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		evidence := &types.Evidence{
 			FpBtcPk:              req.FpBtcPk,
 			BlockHeight:          req.BlockHeight,
-			PubRand:              pubRand,
+			PubRand:              req.PubRand,
 			CanonicalAppHash:     indexedBlock.AppHash,
 			CanonicalFinalitySig: nil,
 			ForkAppHash:          req.BlockAppHash,
@@ -184,10 +182,11 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 
 	// ensure the request contains enough number of public randomness
 	minPubRand := ms.GetParams(ctx).MinPubRand
-	givenPubRand := len(req.PubRandList)
-	if uint64(givenPubRand) < minPubRand {
-		return nil, types.ErrTooFewPubRand.Wrapf("required minimum: %d, actual: %d", minPubRand, givenPubRand)
+	givenNumPubRand := req.NumPubRand
+	if givenNumPubRand < minPubRand {
+		return nil, types.ErrTooFewPubRand.Wrapf("required minimum: %d, actual: %d", minPubRand, givenNumPubRand)
 	}
+	// TODO: ensure log_2(givenNumPubRand) is an integer?
 
 	// ensure the finality provider is registered
 	if req.FpBtcPk == nil {
@@ -198,20 +197,27 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
 	}
 
+	prCommit := &types.PubRandCommit{
+		StartHeight: req.StartHeight,
+		NumPubRand:  req.NumPubRand,
+		Commitment:  req.Commitment,
+	}
+
+	// get last public randomness commitment
+	// TODO: allow committing public randomness earlier than existing ones?
+	lastPrCommit := ms.GetLastPubRandCommit(ctx, req.FpBtcPk)
+
 	// this finality provider has not commit any public randomness,
 	// commit the given public randomness list and return
-	if ms.IsFirstPubRand(ctx, req.FpBtcPk) {
-		ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
+	if lastPrCommit == nil {
+		ms.SetPubRandCommit(ctx, req.FpBtcPk, prCommit)
 		return &types.MsgCommitPubRandListResponse{}, nil
 	}
 
 	// ensure height and req.StartHeight do not overlap, i.e., height < req.StartHeight
-	height, _, err := ms.GetLastPubRand(ctx, req.FpBtcPk)
-	if err != nil {
-		return nil, err
-	}
-	if height >= req.StartHeight {
-		return nil, types.ErrInvalidPubRand.Wrapf("the start height (%d) has overlap with the height of the highest public randomness (%d)", req.StartHeight, height)
+	lastPrHeightCommitted := lastPrCommit.EndHeight()
+	if req.StartHeight <= lastPrCommit.EndHeight() {
+		return nil, types.ErrInvalidPubRand.Wrapf("the start height (%d) has overlap with the height of the highest public randomness committed (%d)", req.StartHeight, lastPrHeightCommitted)
 	}
 
 	// verify signature over the list
@@ -220,7 +226,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	// all good, commit the given public randomness list
-	ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
+	ms.SetPubRandCommit(ctx, req.FpBtcPk, prCommit)
 	return &types.MsgCommitPubRandListResponse{}, nil
 }
 

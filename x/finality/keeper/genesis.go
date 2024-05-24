@@ -25,7 +25,11 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	for _, pubRand := range gs.PublicRandomness {
-		k.SetPubRandList(ctx, pubRand.FpBtcPk, pubRand.BlockHeight, []bbn.SchnorrPubRand{*pubRand.PubRand})
+		k.SetPubRand(ctx, pubRand.FpBtcPk, pubRand.BlockHeight, *pubRand.PubRand)
+	}
+
+	for _, prc := range gs.PubRandCommit {
+		k.SetPubRandCommit(ctx, prc.FpBtcPk, prc.PubRandCommit)
 	}
 
 	return k.SetParams(ctx, gs.Params)
@@ -53,12 +57,18 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	prCommit, err := k.exportPubRandCommit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
 		Params:           k.GetParams(ctx),
 		IndexedBlocks:    blocks,
 		Evidences:        evidences,
 		VoteSigs:         voteSigs,
 		PublicRandomness: pubRandomness,
+		PubRandCommit:    prCommit,
 	}, nil
 }
 
@@ -154,6 +164,34 @@ func (k Keeper) publicRandomness(ctx context.Context) ([]*types.PublicRandomness
 			BlockHeight: blkHeight,
 			FpBtcPk:     fpBTCPK,
 			PubRand:     pubRand,
+		})
+	}
+
+	return commtRandoms, nil
+}
+
+// exportPubRandCommit iterates over all public randomness commitment on the store,
+// parses the finality provider public key and the height from the iterator key
+// and the commitment from the iterator value.
+// This function has high resource consumption and should be only used on export genesis.
+func (k Keeper) exportPubRandCommit(ctx context.Context) ([]*types.PubRandCommitWithPK, error) {
+	store := k.pubRandCommitStore(ctx)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	commtRandoms := make([]*types.PubRandCommitWithPK, 0)
+	for ; iter.Valid(); iter.Next() {
+		// key contains the fp and the block height
+		fpBTCPK, _, err := parsePubKeyAndBlkHeightFromStoreKey(iter.Key())
+		if err != nil {
+			return nil, err
+		}
+		var prc types.PubRandCommit
+		k.cdc.MustUnmarshal(iter.Value(), &prc)
+
+		commtRandoms = append(commtRandoms, &types.PubRandCommitWithPK{
+			FpBtcPk:       fpBTCPK,
+			PubRandCommit: &prc,
 		})
 	}
 

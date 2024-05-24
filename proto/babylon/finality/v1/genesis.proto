@@ -19,6 +19,8 @@ message GenesisState {
   repeated VoteSig vote_sigs = 4;
   // public_randomness contains all the public randomness ever commited from the finality providers.
   repeated PublicRandomness public_randomness = 5;
+  // pub_rand_commit contains all the public randomness commitment ever commited from the finality providers.
+  repeated PubRandCommitWithPK pub_rand_commit = 6;
 }
 
 // VoteSig the vote of an finality provider
@@ -41,4 +43,12 @@ message PublicRandomness {
   bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // pub_rand is the public randomness the finality provider has committed to.
   bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+}
+
+// PubRandCommitWithPK is the public randomness commitment with the finality provider's BTC public key
+message PubRandCommitWithPK {
+  // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
+  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // pub_rand_commit is the public randomness commitment
+  PubRandCommit pub_rand_commit = 2;
 }

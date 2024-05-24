@@ -42,7 +42,7 @@ func benchmarkAddFinalitySig(b *testing.B) {
 
 	// commit enough public randomness
 	// TODO: generalise commit public randomness to allow arbitrary benchtime
-	srList, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, 0, 100000)
+	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, 0, 100000)
 	require.NoError(b, err)
 	_, err = ms.CommitPubRandList(ctx, msg)
 	require.NoError(b, err)
@@ -68,10 +68,9 @@ func benchmarkAddFinalitySig(b *testing.B) {
 		height := uint64(i)
 
 		// generate a vote
-		sr := srList[height]
 		blockHash := datagen.GenRandomByteArray(r, 32)
 		signer := datagen.GenRandomAccount().Address
-		msg, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, height, blockHash)
+		msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, 0, height, randListInfo, blockHash)
 		require.NoError(b, err)
 		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(height), AppHash: blockHash})
 

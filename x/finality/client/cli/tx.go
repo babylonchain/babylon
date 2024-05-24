@@ -8,6 +8,7 @@ import (
 
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -34,8 +35,8 @@ func GetTxCmd() *cobra.Command {
 
 func NewCommitPubRandListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "commit-pubrand-list [fp_btc_pk] [start_height] [pub_rand1]  [pub_rand2] ... [sig]",
-		Args:  cobra.MinimumNArgs(4),
+		Use:   "commit-pubrand-list [fp_btc_pk] [start_height] [num_pub_rand] [commitment] [sig]",
+		Args:  cobra.ExactArgs(5),
 		Short: "Commit a list of public randomness",
 		Long: strings.TrimSpace(
 			`Commit a list of public randomness.`, // TODO: example
@@ -58,28 +59,28 @@ func NewCommitPubRandListCmd() *cobra.Command {
 				return err
 			}
 
-			// get signature
-			sig, err := bbn.NewBIP340SignatureFromHex(args[len(args)-1])
+			numPubRand, err := strconv.ParseUint(args[2], 10, 64)
 			if err != nil {
 				return err
 			}
 
-			// get pub rand list
-			pubRandHexList := args[2 : len(args)-1]
-			pubRandList := []bbn.SchnorrPubRand{}
-			for _, prHex := range pubRandHexList {
-				pr, err := bbn.NewSchnorrPubRandFromHex(prHex)
-				if err != nil {
-					return err
-				}
-				pubRandList = append(pubRandList, *pr)
+			commitment, err := hex.DecodeString(args[3])
+			if err != nil {
+				return err
+			}
+
+			// get signature
+			sig, err := bbn.NewBIP340SignatureFromHex(args[4])
+			if err != nil {
+				return err
 			}
 
 			msg := types.MsgCommitPubRandList{
 				Signer:      clientCtx.FromAddress.String(),
 				FpBtcPk:     fpBTCPK,
 				StartHeight: startHeight,
-				PubRandList: pubRandList,
+				NumPubRand:  numPubRand,
+				Commitment:  commitment,
 				Sig:         sig,
 			}
 
@@ -94,8 +95,8 @@ func NewCommitPubRandListCmd() *cobra.Command {
 
 func NewAddFinalitySigCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-finality-sig [fp_btc_pk] [block_height] [block_app_hash] [finality_sig]",
-		Args:  cobra.ExactArgs(4),
+		Use:   "add-finality-sig [fp_btc_pk] [block_height] [pub_rand] [proof] [block_app_hash] [finality_sig]",
+		Args:  cobra.ExactArgs(6),
 		Short: "Add a finality signature",
 		Long: strings.TrimSpace(
 			`Add a finality signature.`, // TODO: example
@@ -118,14 +119,30 @@ func NewAddFinalitySigCmd() *cobra.Command {
 				return err
 			}
 
-			// get block last commit hash
-			blockLch, err := hex.DecodeString(args[2])
+			// get public randomness
+			pubRand, err := bbn.NewSchnorrPubRandFromHex(args[2])
+			if err != nil {
+				return err
+			}
+
+			// get proof
+			proofBytes, err := hex.DecodeString(args[3])
+			if err != nil {
+				return err
+			}
+			var proof cmtcrypto.Proof
+			if err := clientCtx.Codec.Unmarshal(proofBytes, &proof); err != nil {
+				return err
+			}
+
+			// get block app hash
+			appHash, err := hex.DecodeString(args[4])
 			if err != nil {
 				return err
 			}
 
 			// get finality signature
-			finalitySig, err := bbn.NewSchnorrEOTSSigFromHex(args[3])
+			finalitySig, err := bbn.NewSchnorrEOTSSigFromHex(args[5])
 			if err != nil {
 				return err
 			}
@@ -134,7 +151,9 @@ func NewAddFinalitySigCmd() *cobra.Command {
 				Signer:       clientCtx.FromAddress.String(),
 				FpBtcPk:      fpBTCPK,
 				BlockHeight:  blockHeight,
-				BlockAppHash: blockLch,
+				PubRand:      pubRand,
+				Proof:        &proof,
+				BlockAppHash: appHash,
 				FinalitySig:  finalitySig,
 			}
 

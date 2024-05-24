@@ -94,6 +94,7 @@ func (n *NodeConfig) QueryActivatedHeight() uint64 {
 }
 
 // TODO: pagination support
+// TODO: remove public randomness storage?
 func (n *NodeConfig) QueryListPublicRandomness(fpBTCPK *bbn.BIP340PubKey) map[uint64]*bbn.SchnorrPubRand {
 	path := fmt.Sprintf("/babylon/finality/v1/finality_providers/%s/public_randomness_list", fpBTCPK.MarshalHex())
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
@@ -104,6 +105,19 @@ func (n *NodeConfig) QueryListPublicRandomness(fpBTCPK *bbn.BIP340PubKey) map[ui
 	require.NoError(n.t, err)
 
 	return resp.PubRandMap
+}
+
+// TODO: pagination support
+func (n *NodeConfig) QueryListPubRandCommit(fpBTCPK *bbn.BIP340PubKey) map[uint64]*ftypes.PubRandCommitResponse {
+	path := fmt.Sprintf("/babylon/finality/v1/finality_providers/%s/pub_rand_commit_list", fpBTCPK.MarshalHex())
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp ftypes.QueryListPubRandCommitResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.PubRandCommitMap
 }
 
 func (n *NodeConfig) QueryVotesAtHeight(height uint64) []bbn.BIP340PubKey {
