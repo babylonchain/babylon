@@ -6,6 +6,7 @@ import (
 
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/x/finality/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +19,8 @@ func FuzzMsgAddFinalitySig(f *testing.F) {
 		sk, err := eots.KeyGen(r)
 		require.NoError(t, err)
 
-		randListInfo, err := datagen.GenRandomPubRandList(r, 100)
+		numPubRand := uint64(100)
+		randListInfo, err := datagen.GenRandomPubRandList(r, numPubRand)
 		require.NoError(t, err)
 
 		startHeight := datagen.RandomInt(r, 10)
@@ -29,12 +31,14 @@ func FuzzMsgAddFinalitySig(f *testing.F) {
 		msg, err := datagen.NewMsgAddFinalitySig(signer, sk, startHeight, blockHeight, randListInfo, blockHash)
 		require.NoError(t, err)
 
-		// verify the inclusion proof of the commitment
-		err = msg.VerifyInclusionProof(randListInfo.Commitment)
-		require.NoError(t, err)
+		prCommit := &types.PubRandCommit{
+			StartHeight: startHeight,
+			NumPubRand:  numPubRand,
+			Commitment:  randListInfo.Commitment,
+		}
 
-		// verify msg's EOTS sig against the given public randomness
-		err = msg.VerifyEOTSSig()
+		// verify the finality signature message
+		err = types.VerifyFinalitySig(msg, prCommit)
 		require.NoError(t, err)
 	})
 }

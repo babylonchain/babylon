@@ -102,14 +102,10 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 
-	// verify the proof of inclusion for this public randomness
-	if err := req.VerifyInclusionProof(prCommit.Commitment); err != nil {
+	// verify the finality signature message w.r.t. the public randomness commitment
+	// including the public randomness inclusion proof and the finality signature
+	if err := types.VerifyFinalitySig(req, prCommit); err != nil {
 		return nil, err
-	}
-
-	// verify EOTS signature w.r.t. public randomness
-	if err := req.VerifyEOTSSig(); err != nil {
-		return nil, types.ErrInvalidFinalitySig.Wrapf("the EOTS signature is invalid: %v", err)
 	}
 
 	// verify whether the voted block is a fork or not
@@ -184,11 +180,11 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 
 	// ensure the request contains enough number of public randomness
 	minPubRand := ms.GetParams(ctx).MinPubRand
-	givenPubRand := req.NumPubRand
-	if uint64(givenPubRand) < minPubRand {
-		return nil, types.ErrTooFewPubRand.Wrapf("required minimum: %d, actual: %d", minPubRand, givenPubRand)
+	givenNumPubRand := req.NumPubRand
+	if givenNumPubRand < minPubRand {
+		return nil, types.ErrTooFewPubRand.Wrapf("required minimum: %d, actual: %d", minPubRand, givenNumPubRand)
 	}
-	// TODO: ensure log_2(givenPubRand) is an integer?
+	// TODO: ensure log_2(givenNumPubRand) is an integer?
 
 	// ensure the finality provider is registered
 	if req.FpBtcPk == nil {

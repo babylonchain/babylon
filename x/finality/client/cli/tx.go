@@ -36,7 +36,7 @@ func GetTxCmd() *cobra.Command {
 func NewCommitPubRandListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "commit-pubrand-list [fp_btc_pk] [start_height] [num_pub_rand] [commitment] [sig]",
-		Args:  cobra.MinimumNArgs(5),
+		Args:  cobra.ExactArgs(5),
 		Short: "Commit a list of public randomness",
 		Long: strings.TrimSpace(
 			`Commit a list of public randomness.`, // TODO: example

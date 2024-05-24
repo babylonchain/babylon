@@ -20,25 +20,31 @@ func (m *MsgAddFinalitySig) MsgToSign() []byte {
 	return msgToSignForVote(m.BlockHeight, m.BlockAppHash)
 }
 
-func (m *MsgAddFinalitySig) VerifyInclusionProof(commitment []byte) error {
+// VerifyFinalitySig verifies the finality signature message w.r.t. the
+// public randomness commitment. The verification includes
+// - verifying the proof of inclusion of the given public randomness
+// - verifying the finality signature w.r.t. the given block height/hash
+func VerifyFinalitySig(m *MsgAddFinalitySig, prCommit *PubRandCommit) error {
+	// verify the index of the public randomness
+	heightOfProof := prCommit.StartHeight + uint64(m.Proof.Index)
+	if m.BlockHeight != heightOfProof {
+		return ErrInvalidFinalitySig.Wrapf("the inclusion proof (for height %d) does not correspond to the given height (%d) in the message", heightOfProof, m.BlockHeight)
+	}
 	// verify the proof of inclusion for this public randomness
 	unwrappedProof, err := merkle.ProofFromProto(m.Proof)
 	if err != nil {
 		return ErrInvalidFinalitySig.Wrapf("failed to unwrap proof: %v", err)
 	}
-	if err := unwrappedProof.Verify(commitment, *m.PubRand); err != nil {
+	if err := unwrappedProof.Verify(prCommit.Commitment, *m.PubRand); err != nil {
 		return ErrInvalidFinalitySig.Wrapf("the inclusion proof of the public randomness is invalid: %v", err)
 	}
-	return nil
-}
 
-func (m *MsgAddFinalitySig) VerifyEOTSSig() error {
+	// public randomness is good, verify finality signature
 	msgToSign := m.MsgToSign()
 	pk, err := m.FpBtcPk.ToBTCPK()
 	if err != nil {
 		return err
 	}
-
 	return eots.Verify(pk, m.PubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
 }
 
