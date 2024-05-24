@@ -89,8 +89,8 @@ func (m *IndexedBlock) GetFinalized() bool {
 	return false
 }
 
-// IndexedBlock is a commitment to a series of public randomness
-// currently, the commitment is a root of a Merkle tree tha includes
+// PubRandCommit is a commitment to a series of public randomness
+// currently, the commitment is a root of a Merkle tree that includes
 // a series of public randomness
 type PubRandCommit struct {
 	// start_height is the height of the first commitment
@@ -98,6 +98,7 @@ type PubRandCommit struct {
 	// num_pub_rand is the number of committed public randomness
 	NumPubRand uint64 `protobuf:"varint,2,opt,name=num_pub_rand,json=numPubRand,proto3" json:"num_pub_rand,omitempty"`
 	// commitment is the value of the commitment
+	// currently, it is the root of the merkle tree constructed by the public randomness
 	Commitment []byte `protobuf:"bytes,3,opt,name=commitment,proto3" json:"commitment,omitempty"`
 }
 
