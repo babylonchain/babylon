@@ -30,6 +30,10 @@ func VerifyFinalitySig(m *MsgAddFinalitySig, prCommit *PubRandCommit) error {
 	if m.BlockHeight != heightOfProof {
 		return ErrInvalidFinalitySig.Wrapf("the inclusion proof (for height %d) does not correspond to the given height (%d) in the message", heightOfProof, m.BlockHeight)
 	}
+	// verify the total number of randomness is same as in the commit
+	if uint64(m.Proof.Total) != prCommit.NumPubRand {
+		return ErrInvalidFinalitySig.Wrapf("the total number of public randomnesses in the proof (%d) does not match the number of public randomnesses committed (%d)", m.Proof.Total, prCommit.NumPubRand)
+	}
 	// verify the proof of inclusion for this public randomness
 	unwrappedProof, err := merkle.ProofFromProto(m.Proof)
 	if err != nil {
