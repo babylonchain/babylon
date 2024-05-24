@@ -46,6 +46,20 @@ func (c *QueryClient) VotesAtHeight(height uint64) (*finalitytypes.QueryVotesAtH
 
 	return resp, err
 }
+func (c *QueryClient) ListPubRandCommit(fpBtcPkHex string, pagination *sdkquerytypes.PageRequest) (*finalitytypes.QueryListPubRandCommitResponse, error) {
+	var resp *finalitytypes.QueryListPubRandCommitResponse
+	err := c.QueryFinality(func(ctx context.Context, queryClient finalitytypes.QueryClient) error {
+		var err error
+		req := &finalitytypes.QueryListPubRandCommitRequest{
+			FpBtcPkHex: fpBtcPkHex,
+			Pagination: pagination,
+		}
+		resp, err = queryClient.ListPubRandCommit(ctx, req)
+		return err
+	})
+
+	return resp, err
+}
 
 // ListBlocks queries the Finality module to get blocks with a given status.
 func (c *QueryClient) ListBlocks(status finalitytypes.QueriedBlockStatus, pagination *sdkquerytypes.PageRequest) (*finalitytypes.QueryListBlocksResponse, error) {
