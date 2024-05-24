@@ -16,15 +16,6 @@ import (
 	Public randomness commitment storage
 */
 
-func (k Keeper) IsFirstPubRandCommit(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) bool {
-	store := k.pubRandCommitFpStore(ctx, fpBtcPK)
-	iter := store.ReverseIterator(nil, nil)
-	defer iter.Close()
-
-	// if the iterator is not valid, then this finality provider does not commit any randomness
-	return !iter.Valid()
-}
-
 // GetPubRandCommitForHeight finds the public randomness commitment that includes the given
 // height for the given finality provider
 func (k Keeper) GetPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.PubRandCommit, error) {
