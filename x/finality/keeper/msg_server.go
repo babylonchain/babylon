@@ -107,6 +107,8 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	if err := types.VerifyFinalitySig(req, prCommit); err != nil {
 		return nil, err
 	}
+	// the public randomness is good, set the public randomness
+	ms.SetPubRand(ctx, req.FpBtcPk, req.BlockHeight, *req.PubRand)
 
 	// verify whether the voted block is a fork or not
 	indexedBlock, err := ms.GetBlock(ctx, req.BlockHeight)
