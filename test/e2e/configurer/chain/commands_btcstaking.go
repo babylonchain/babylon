@@ -11,6 +11,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 
 	sdkmath "cosmossdk.io/math"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +21,7 @@ import (
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
-func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, masterPubRand string, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
+func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
 	n.LogActionF("creating finality provider")
 
 	// get babylon PK hex
@@ -34,7 +35,7 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 	require.NoError(n.t, err)
 
 	cmd := []string{
-		"babylond", "tx", "btcstaking", "create-finality-provider", babylonPKHex, btcPKHex, popHex, masterPubRand, "--from=val", "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
+		"babylond", "tx", "btcstaking", "create-finality-provider", babylonPKHex, btcPKHex, popHex, "--from=val", "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
 	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
@@ -133,16 +134,56 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 	n.LogActionF("successfully added covenant signatures")
 }
 
-func (n *NodeConfig) AddFinalitySig(fpBTCPK *bbn.BIP340PubKey, blockHeight uint64, blockLch []byte, finalitySig *bbn.SchnorrEOTSSig) {
+func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
+	n.LogActionF("committing public randomness list")
+
+	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
+
+	// add finality provider BTC PK to cmd
+	fpBTCPKHex := fpBTCPK.MarshalHex()
+	cmd = append(cmd, fpBTCPKHex)
+
+	// add start height to cmd
+	startHeightStr := strconv.FormatUint(startHeight, 10)
+	cmd = append(cmd, startHeightStr)
+
+	// add num_pub_rand to cmd
+	numPubRandStr := strconv.FormatUint(numPubrand, 10)
+	cmd = append(cmd, numPubRandStr)
+
+	// add commitment to cmd
+	commitmentHex := hex.EncodeToString(commitment)
+	cmd = append(cmd, commitmentHex)
+
+	// add sig to cmd
+	sigHex := sig.ToHexStr()
+	cmd = append(cmd, sigHex)
+
+	// specify used key
+	cmd = append(cmd, "--from=val")
+
+	// gas
+	cmd = append(cmd, "--gas=500000")
+
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully committed public randomness list")
+}
+
+func (n *NodeConfig) AddFinalitySig(fpBTCPK *bbn.BIP340PubKey, blockHeight uint64, pubRand *bbn.SchnorrPubRand, proof cmtcrypto.Proof, appHash []byte, finalitySig *bbn.SchnorrEOTSSig) {
 	n.LogActionF("add finality signature")
 
 	fpBTCPKHex := fpBTCPK.MarshalHex()
 	blockHeightStr := strconv.FormatUint(blockHeight, 10)
-	blockLchHex := hex.EncodeToString(blockLch)
+	pubRandHex := pubRand.MarshalHex()
+	proofBytes, err := proof.Marshal()
+	require.NoError(n.t, err)
+	proofHex := hex.EncodeToString(proofBytes)
+	appHashHex := hex.EncodeToString(appHash)
 	finalitySigHex := finalitySig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, blockLchHex, finalitySigHex, "--from=val", "--gas=500000"}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--from=val", "--gas=500000"}
+	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added finality signature")
 }

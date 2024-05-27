@@ -21,7 +21,9 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
-				Params: types.Params{},
+				Params: types.Params{
+					MinPubRand: 200,
+				},
 			},
 			valid: true,
 		},

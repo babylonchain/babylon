@@ -52,8 +52,8 @@ func GetTxCmd() *cobra.Command {
 
 func NewCreateFinalityProviderCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-finality-provider [babylon_pk] [btc_pk] [pop] [master_pub_rand]",
-		Args:  cobra.ExactArgs(4),
+		Use:   "create-finality-provider [babylon_pk] [btc_pk] [pop]",
+		Args:  cobra.ExactArgs(3),
 		Short: "Create a finality provider",
 		Long: strings.TrimSpace(
 			`Create a finality provider.`, // TODO: example
@@ -108,17 +108,13 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 				return err
 			}
 
-			// get master public randomness in base58 string
-			mpr := args[3]
-
 			msg := types.MsgCreateFinalityProvider{
-				Signer:        clientCtx.FromAddress.String(),
-				Description:   &description,
-				Commission:    &rate,
-				BabylonPk:     &babylonPK,
-				BtcPk:         btcPK,
-				Pop:           pop,
-				MasterPubRand: mpr,
+				Signer:      clientCtx.FromAddress.String(),
+				Description: &description,
+				Commission:  &rate,
+				BabylonPk:   &babylonPK,
+				BtcPk:       btcPK,
+				Pop:         pop,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
