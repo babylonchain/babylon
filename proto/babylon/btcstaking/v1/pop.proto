@@ -20,11 +20,9 @@ enum BTCSigType {
 message ProofOfPossession {
     // btc_sig_type indicates the type of btc_sig in the pop
     BTCSigType btc_sig_type = 1;
-    // babylon_sig is the signature generated via sign(sk_babylon, pk_btc)
-    bytes babylon_sig = 2;
-    // btc_sig is the signature generated via sign(sk_btc, babylon_sig)
+    // btc_sig is the signature generated via sign(sk_btc, babylon_address)
     // the signature follows encoding in either BIP-340 spec or BIP-322 spec
-    bytes btc_sig = 3;
+    bytes btc_sig = 2;
 }
 
 // BIP322Sig is a BIP-322 signature together with the address corresponding to

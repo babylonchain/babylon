@@ -80,11 +80,9 @@ message MsgEditFinalityProviderResponse {}
 
 // MsgCreateBTCDelegation is the message for creating a BTC delegation
 message MsgCreateBTCDelegation {
-  option (cosmos.msg.v1.signer) = "signer";
-
-  string signer = 1;
-  // babylon_pk is the Babylon secp256k1 PK of this BTC delegation
-  cosmos.crypto.secp256k1.PubKey babylon_pk = 2;
+  option (cosmos.msg.v1.signer) = "staker_addr";
+  // staker_addr is the address to receive rewards from BTC delegation.
+  string staker_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 3;
   // btc_pk is the Bitcoin secp256k1 PK of the BTC delegator
