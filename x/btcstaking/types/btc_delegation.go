@@ -139,14 +139,8 @@ func (d *BTCDelegation) MustGetStakingTxHash() chainhash.Hash {
 }
 
 func (d *BTCDelegation) ValidateBasic() error {
-	if d.BabylonPk == nil {
-		return fmt.Errorf("empty Babylon public key")
-	}
 	if d.BtcPk == nil {
 		return fmt.Errorf("empty BTC public key")
-	}
-	if d.Pop == nil {
-		return fmt.Errorf("empty proof of possession")
 	}
 	if len(d.FpBtcPkList) == 0 {
 		return fmt.Errorf("empty list of finality provider PKs")
@@ -166,9 +160,6 @@ func (d *BTCDelegation) ValidateBasic() error {
 
 	// ensure staking tx is correctly formatted
 	if _, err := bbn.NewBTCTxFromBytes(d.StakingTx); err != nil {
-		return err
-	}
-	if err := d.Pop.ValidateBasic(); err != nil {
 		return err
 	}
 

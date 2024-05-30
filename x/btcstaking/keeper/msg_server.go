@@ -320,9 +320,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// have voting power only when 1) its corresponding staking tx is k-deep,
 	// and 2) it receives a covenant signature
 	newBTCDel := &types.BTCDelegation{
-		BabylonPk:        nil, // TODO: remove BabylonPk and Pop, add address to stored struct
+		BabylonPk:        nil, // TODO: remove BabylonPk, add address to stored struct
 		BtcPk:            req.BtcPk,
-		Pop:              nil,
 		FpBtcPkList:      req.FpBtcPkList,
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
