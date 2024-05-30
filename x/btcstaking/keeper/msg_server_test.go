@@ -11,7 +11,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -587,8 +586,6 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	stakingMsgTx := testStakingInfo.StakingTx
 	serializedStakingTx, err := bbn.SerializeBTCTx(stakingMsgTx)
 	require.NoError(t, err)
-	// random signer
-	signer := datagen.GenRandomAccount().Address
 	// random Babylon SK
 	delBabylonSK, delBabylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
 	require.NoError(t, err)
@@ -643,8 +640,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	// all good, construct and send MsgCreateBTCDelegation message
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
-		Signer:                        signer,
-		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
+		StakerAddr:                    delBabylonPK.Address().String(),
 		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
 		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
 		Pop:                           pop,
