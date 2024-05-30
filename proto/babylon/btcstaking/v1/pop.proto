@@ -1,6 +1,8 @@
 syntax = "proto3";
 package babylon.btcstaking.v1;
 
+import "cosmos_proto/cosmos.proto";
+
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
 // BTCSigType indicates the type of btc_sig in a pop
@@ -20,7 +22,20 @@ enum BTCSigType {
 message ProofOfPossession {
     // btc_sig_type indicates the type of btc_sig in the pop
     BTCSigType btc_sig_type = 1;
-    // btc_sig is the signature generated via sign(sk_btc, babylon_address)
+    // babylon_sig is the signature generated via sign(sk_babylon, pk_btc)
+    bytes babylon_sig = 2;
+    // btc_sig is the signature generated via sign(sk_btc, babylon_sig)
+    // the signature follows encoding in either BIP-340 spec or BIP-322 spec
+    bytes btc_sig = 3;
+}
+
+// ProofOfPossessionBTC is the proof of possession that a Babylon
+// address and a Bitcoin secp256k1 secret key are held by the same
+// person
+message ProofOfPossessionBTC {
+    // btc_sig_type indicates the type of btc_sig in the pop
+    BTCSigType btc_sig_type = 1;
+    // btc_sig is the signature generated via sign(sk_btc, babylon_staker_address)
     // the signature follows encoding in either BIP-340 spec or BIP-322 spec
     bytes btc_sig = 2;
 }
