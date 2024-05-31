@@ -7,7 +7,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -84,7 +83,7 @@ func GenRandomBTCDelDistInfo(r *rand.Rand) (*bstypes.BTCDelDistInfo, error) {
 	}
 	return &bstypes.BTCDelDistInfo{
 		BtcPk:       btcPK,
-		BabylonPk:   GenRandomAccount().GetPubKey().(*secp256k1.PubKey),
+		StakerAddr:  GenRandomAccount().Address,
 		VotingPower: RandomInt(r, 1000) + 1,
 	}, nil
 }

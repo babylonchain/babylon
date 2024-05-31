@@ -588,9 +588,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	serializedStakingTx, err := bbn.SerializeBTCTx(stakingMsgTx)
 	require.NoError(t, err)
 	// random Babylon SK
-	_, delBabylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-	require.NoError(t, err)
-	stakerAddr := sdk.MustAccAddressFromBech32(delBabylonPK.Address().String())
+	acc := datagen.GenRandomAccount()
+	stakerAddr := sdk.MustAccAddressFromBech32(acc.Address)
 
 	// PoP
 	pop, err := types.NewPoPBTC(stakerAddr, delSK)

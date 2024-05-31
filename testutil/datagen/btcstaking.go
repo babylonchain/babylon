@@ -112,21 +112,8 @@ func GenRandomBTCDelegation(
 	if err != nil {
 		return nil, err
 	}
+	staker := GenRandomAccount()
 
-	// BTC delegation Babylon key pairs
-	bbnSK, bbnPK, err := GenRandomSecp256k1KeyPair(r)
-	if err != nil {
-		return nil, err
-	}
-	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
-	if !ok {
-		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")
-	}
-	// pop
-	pop, err := bstypes.NewPoP(bbnSK, delSK)
-	if err != nil {
-		return nil, err
-	}
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
 		r,
@@ -169,9 +156,8 @@ func GenRandomBTCDelegation(
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
 	del := &bstypes.BTCDelegation{
-		BabylonPk:        secp256k1PK,
+		StakerAddr:       staker.Address,
 		BtcPk:            delBTCPK,
-		Pop:              pop,
 		FpBtcPkList:      fpBTCPKs,
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,

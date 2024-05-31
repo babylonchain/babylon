@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"math"
 	"math/rand"
+	"strings"
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -140,7 +141,7 @@ func TestExportGenesis(t *testing.T) {
 	correctDels := 0
 	for _, del := range btcDelegations {
 		for _, gsdel := range gs.BtcDelegations {
-			if !bytes.Equal(del.BabylonPk.Address(), gsdel.BabylonPk.Address()) {
+			if !strings.EqualFold(del.StakerAddr, gsdel.StakerAddr) {
 				continue
 			}
 			correctDels++
