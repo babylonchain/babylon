@@ -1,18 +1,23 @@
 package types_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/btcsuite/btcd/chaincfg"
+
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -182,4 +187,54 @@ func FuzzPop_ValidBip322SigNotMatchingBip340PubKey(f *testing.F) {
 		err = pop.VerifyBIP322(babylonPK, bip340PK1, net)
 		require.Error(t, err)
 	})
+}
+
+func TestPoPBTCValidateBasic(t *testing.T) {
+	r := rand.New(rand.NewSource(10))
+
+	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+
+	addrToSign := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+	sigHash := tmhash.Sum(addrToSign)
+	btcSig, err := schnorr.Sign(btcSK, sigHash)
+	require.NoError(t, err)
+
+	tcs := []struct {
+		title  string
+		pop    types.ProofOfPossessionBTC
+		expErr error
+	}{
+		{
+			"valid: some sig",
+			types.ProofOfPossessionBTC{
+				BtcSig: []byte("something"),
+			},
+			nil,
+		},
+		{
+			"valid: correct signature",
+			types.ProofOfPossessionBTC{
+				BtcSig: btcSig.Serialize(),
+			},
+			nil,
+		},
+		{
+			"invalid: nil sig",
+			types.ProofOfPossessionBTC{},
+			fmt.Errorf("empty BTC signature"),
+		},
+	}
+
+	for _, tc := range tcs {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			actErr := tc.pop.ValidateBasic()
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.NoError(t, actErr)
+		})
+	}
 }
