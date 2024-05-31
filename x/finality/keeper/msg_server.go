@@ -197,6 +197,11 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
 	}
 
+	// verify signature over the public randomness commitment
+	if err := req.VerifySig(); err != nil {
+		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)
+	}
+
 	prCommit := &types.PubRandCommit{
 		StartHeight: req.StartHeight,
 		NumPubRand:  req.NumPubRand,
@@ -218,11 +223,6 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	lastPrHeightCommitted := lastPrCommit.EndHeight()
 	if req.StartHeight <= lastPrCommit.EndHeight() {
 		return nil, types.ErrInvalidPubRand.Wrapf("the start height (%d) has overlap with the height of the highest public randomness committed (%d)", req.StartHeight, lastPrHeightCommitted)
-	}
-
-	// verify signature over the list
-	if err := req.VerifySig(); err != nil {
-		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)
 	}
 
 	// all good, commit the given public randomness list
