@@ -3,7 +3,6 @@ package babylon.btcstaking.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
-import "babylon/btcstaking/v1/pop.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
@@ -48,15 +47,4 @@ message EventPowerDistUpdate {
     // btc_del_state_update means a BTC delegation's state is updated
     EventBTCDelegationStateUpdate btc_del_state_update = 2;
   }
-}
-
-
-// EventNewBTCDelegation is the event emitted when an new
-// BTC delegation is created.
-message EventNewBTCDelegation {
-  // delegation is the new BTC delegation created.
-  BTCDelegation delegation = 1;
-  // pop identifies the Proof of Possession of the BTC by the
-  // staker address.
-  ProofOfPossessionBTC pop = 2;
 }
