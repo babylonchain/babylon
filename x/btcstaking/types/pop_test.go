@@ -238,3 +238,119 @@ func TestPoPBTCValidateBasic(t *testing.T) {
 		})
 	}
 }
+
+func TestPoPBTCVerify(t *testing.T) {
+	r := rand.New(rand.NewSource(10))
+
+	addrToSign := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+	randomAddr := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+
+	// generate BTC key pair
+	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+
+	netParams := &chaincfg.MainNetParams
+	// btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	// require.NoError(t, err)
+
+	// sigHash := tmhash.Sum(addrToSign)
+	// bip340Sig, err := schnorr.Sign(btcSK, sigHash)
+	// require.NoError(t, err)
+
+	popBip340, err := types.NewPoPBTC(addrToSign, btcSK)
+	require.NoError(t, err)
+
+	popBip322, err := types.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, netParams)
+	require.NoError(t, err)
+
+	tcs := []struct {
+		title  string
+		staker sdk.AccAddress
+		btcPK  *bbn.BIP340PubKey
+		pop    *types.ProofOfPossessionBTC
+		expErr error
+	}{
+		{
+			"valid: BIP340",
+			addrToSign,
+			bip340PK,
+			popBip340,
+			nil,
+		},
+		{
+			"valid: BIP322",
+			addrToSign,
+			bip340PK,
+			popBip322,
+			nil,
+		},
+		// {
+		// 	"valid: ECDSA",
+		// 	nil,
+		// 	nil,
+		// 	&types.ProofOfPossessionBTC{
+		// 		BtcSig: bip340Sig.Serialize(),
+		// 	},
+		// 	nil,
+		// },
+		{
+			"invalid: BIP340 - bad addr",
+			randomAddr,
+			bip340PK,
+			popBip340,
+			fmt.Errorf("failed to verify pop.BtcSig"),
+		},
+		{
+			"invalid: BIP322 - bad addr",
+			randomAddr,
+			bip340PK,
+			popBip322,
+			fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: signature not empty on failed checksig"),
+		},
+		// {
+		// 	"invalid: ECDSA - bad addr",
+		// 	nil,
+		// 	nil,
+		// 	&types.ProofOfPossessionBTC{
+		// 		BtcSig: bip340Sig.Serialize(),
+		// 	},
+		// 	nil,
+		// },
+		// {
+		// 	"invalid: SigType",
+		// 	nil,
+		// 	nil,
+		// 	&types.ProofOfPossessionBTC{
+		// 		BtcSig: bip340Sig.Serialize(),
+		// 	},
+		// 	fmt.Errorf("invalid BTC signature type"),
+		// },
+		// {
+		// 	"invalid: nil sig",
+		// 	nil,
+		// 	nil,
+		// 	&types.ProofOfPossessionBTC{},
+		// 	fmt.Errorf("empty BTC signature"),
+		// },
+		// {
+		// 	"invalid: nil signed msg",
+		// 	nil,
+		// 	nil,
+		// 	&types.ProofOfPossessionBTC{},
+		// 	fmt.Errorf("empty BTC signature"),
+		// },
+	}
+
+	for _, tc := range tcs {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			actErr := tc.pop.Verify(tc.staker, tc.btcPK, netParams)
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.NoError(t, actErr)
+		})
+	}
+}
