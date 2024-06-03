@@ -110,6 +110,27 @@ func NewPoPWithECDSABTCSig(babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKe
 	return &pop, nil
 }
 
+// NewPoPWithECDSABTCSig generates a new proof of possession where Bitcoin signature is in ECDSA format
+// a proof of possession contains two signatures:
+// - pop.BtcSig = ecdsa_sign(sk_BTC, addr)
+func NewPoPBTCWithECDSABTCSig(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*ProofOfPossessionBTC, error) {
+	pop := ProofOfPossessionBTC{
+		BtcSigType: BTCSigType_ECDSA,
+	}
+
+	// generate pop.BtcSig = ecdsa_sign(sk_BTC, pop.BabylonSig)
+	// NOTE: ecdsa.Sign has to take the message as string.
+	// So we have to hex babylonSig before signing
+	babylonSigHex := hex.EncodeToString(addr.Bytes())
+	btcSig, err := ecdsa.Sign(btcSK, babylonSigHex)
+	if err != nil {
+		return nil, err
+	}
+	pop.BtcSig = btcSig
+
+	return &pop, nil
+}
+
 func babylonSigToHexHash(babylonSig []byte) []byte {
 	babylonSigHash := tmhash.Sum(babylonSig)
 	babylonSigHashHex := hex.EncodeToString(babylonSigHash)

@@ -251,17 +251,14 @@ func TestPoPBTCVerify(t *testing.T) {
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 
 	netParams := &chaincfg.MainNetParams
-	// btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	// require.NoError(t, err)
-
-	// sigHash := tmhash.Sum(addrToSign)
-	// bip340Sig, err := schnorr.Sign(btcSK, sigHash)
-	// require.NoError(t, err)
 
 	popBip340, err := types.NewPoPBTC(addrToSign, btcSK)
 	require.NoError(t, err)
 
 	popBip322, err := types.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, netParams)
+	require.NoError(t, err)
+
+	popECDSA, err := types.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
 	require.NoError(t, err)
 
 	tcs := []struct {
@@ -285,15 +282,13 @@ func TestPoPBTCVerify(t *testing.T) {
 			popBip322,
 			nil,
 		},
-		// {
-		// 	"valid: ECDSA",
-		// 	nil,
-		// 	nil,
-		// 	&types.ProofOfPossessionBTC{
-		// 		BtcSig: bip340Sig.Serialize(),
-		// 	},
-		// 	nil,
-		// },
+		{
+			"valid: ECDSA",
+			addrToSign,
+			bip340PK,
+			popECDSA,
+			nil,
+		},
 		{
 			"invalid: BIP340 - bad addr",
 			randomAddr,
@@ -308,38 +303,39 @@ func TestPoPBTCVerify(t *testing.T) {
 			popBip322,
 			fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: signature not empty on failed checksig"),
 		},
-		// {
-		// 	"invalid: ECDSA - bad addr",
-		// 	nil,
-		// 	nil,
-		// 	&types.ProofOfPossessionBTC{
-		// 		BtcSig: bip340Sig.Serialize(),
-		// 	},
-		// 	nil,
-		// },
-		// {
-		// 	"invalid: SigType",
-		// 	nil,
-		// 	nil,
-		// 	&types.ProofOfPossessionBTC{
-		// 		BtcSig: bip340Sig.Serialize(),
-		// 	},
-		// 	fmt.Errorf("invalid BTC signature type"),
-		// },
-		// {
-		// 	"invalid: nil sig",
-		// 	nil,
-		// 	nil,
-		// 	&types.ProofOfPossessionBTC{},
-		// 	fmt.Errorf("empty BTC signature"),
-		// },
-		// {
-		// 	"invalid: nil signed msg",
-		// 	nil,
-		// 	nil,
-		// 	&types.ProofOfPossessionBTC{},
-		// 	fmt.Errorf("empty BTC signature"),
-		// },
+		{
+			"invalid: ECDSA - bad addr",
+			randomAddr,
+			bip340PK,
+			popECDSA,
+			fmt.Errorf("failed to verify btcSigRaw"),
+		},
+		{
+			"invalid: SigType",
+			nil,
+			nil,
+			&types.ProofOfPossessionBTC{
+				BtcSigType: types.BTCSigType(123),
+			},
+			fmt.Errorf("invalid BTC signature type"),
+		},
+		{
+			"invalid: nil sig",
+			randomAddr,
+			bip340PK,
+			&types.ProofOfPossessionBTC{
+				BtcSigType: types.BTCSigType_BIP322,
+				BtcSig:     nil,
+			},
+			fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: cannot verfiy bip322 signature. One of the required parameters is empty"),
+		},
+		{
+			"invalid: nil signed msg",
+			nil,
+			bip340PK,
+			popBip340,
+			fmt.Errorf("failed to verify pop.BtcSig"),
+		},
 	}
 
 	for _, tc := range tcs {
