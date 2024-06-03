@@ -322,6 +322,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	newBTCDel := &types.BTCDelegation{
 		StakerAddr:       stakerAddr.String(),
 		BtcPk:            req.BtcPk,
+		Pop:              req.Pop,
 		FpBtcPkList:      req.FpBtcPkList,
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
