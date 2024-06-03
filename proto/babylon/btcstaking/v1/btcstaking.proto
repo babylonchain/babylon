@@ -61,43 +61,45 @@ message BTCDelegation {
     // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
     // the PK follows encoding in BIP-340 spec
     bytes btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // pop is the proof of possession of babylon_pk and btc_pk
+    ProofOfPossessionBTC pop = 3;
     // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
     // this BTC delegation delegates to
     // If there is more than 1 PKs, then this means the delegation is restaked
     // to multiple finality providers
-    repeated bytes fp_btc_pk_list = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    repeated bytes fp_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // start_height is the start BTC height of the BTC delegation
     // it is the start BTC height of the timelock
-    uint64 start_height = 4;
+    uint64 start_height = 5;
     // end_height is the end height of the BTC delegation
     // it is the end BTC height of the timelock - w
-    uint64 end_height = 5;
+    uint64 end_height = 6;
     // total_sat is the total amount of BTC stakes in this delegation
     // quantified in satoshi
-    uint64 total_sat = 6;
+    uint64 total_sat = 7;
     // staking_tx is the staking tx
-    bytes staking_tx  = 7;
+    bytes staking_tx  = 8;
     // staking_output_idx is the index of the staking output in the staking tx
-    uint32 staking_output_idx = 8;
+    uint32 staking_output_idx = 9;
     // slashing_tx is the slashing tx
     // It is partially signed by SK corresponding to btc_pk, but not signed by
     // finality provider or covenant yet.
-    bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+    bytes slashing_tx = 10 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the staking tx output.
-    bytes delegator_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes delegator_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // covenant_sigs is a list of adaptor signatures on the slashing tx
     // by each covenant member
     // It will be a part of the witness for the staking tx output.
-    repeated CovenantAdaptorSignatures covenant_sigs = 11;
+    repeated CovenantAdaptorSignatures covenant_sigs = 12;
     // unbonding_time describes how long the funds will be locked either in unbonding output
     // or slashing change output
-    uint32 unbonding_time = 12;
+    uint32 unbonding_time = 13;
     // btc_undelegation is the information about the early unbonding path of the BTC delegation
-    BTCUndelegation btc_undelegation = 13;
+    BTCUndelegation btc_undelegation = 14;
     // version of the params used to validate the delegation
-    uint32 params_version = 14;
+    uint32 params_version = 15;
 }
 
 // BTCUndelegation contains the information about the early unbonding path of the BTC delegation
