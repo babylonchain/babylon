@@ -1,18 +1,23 @@
 package types_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/btcsuite/btcd/chaincfg"
+
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -182,4 +187,166 @@ func FuzzPop_ValidBip322SigNotMatchingBip340PubKey(f *testing.F) {
 		err = pop.VerifyBIP322(babylonPK, bip340PK1, net)
 		require.Error(t, err)
 	})
+}
+
+func TestPoPBTCValidateBasic(t *testing.T) {
+	r := rand.New(rand.NewSource(10))
+
+	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+
+	addrToSign := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+	sigHash := tmhash.Sum(addrToSign)
+	btcSig, err := schnorr.Sign(btcSK, sigHash)
+	require.NoError(t, err)
+
+	tcs := []struct {
+		title  string
+		pop    types.ProofOfPossessionBTC
+		expErr error
+	}{
+		{
+			"valid: some sig",
+			types.ProofOfPossessionBTC{
+				BtcSig: []byte("something"),
+			},
+			nil,
+		},
+		{
+			"valid: correct signature",
+			types.ProofOfPossessionBTC{
+				BtcSig: btcSig.Serialize(),
+			},
+			nil,
+		},
+		{
+			"invalid: nil sig",
+			types.ProofOfPossessionBTC{},
+			fmt.Errorf("empty BTC signature"),
+		},
+	}
+
+	for _, tc := range tcs {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			actErr := tc.pop.ValidateBasic()
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.NoError(t, actErr)
+		})
+	}
+}
+
+func TestPoPBTCVerify(t *testing.T) {
+	r := rand.New(rand.NewSource(10))
+
+	addrToSign := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+	randomAddr := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+
+	// generate BTC key pair
+	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+
+	netParams := &chaincfg.MainNetParams
+
+	popBip340, err := types.NewPoPBTC(addrToSign, btcSK)
+	require.NoError(t, err)
+
+	popBip322, err := types.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, netParams)
+	require.NoError(t, err)
+
+	popECDSA, err := types.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
+	require.NoError(t, err)
+
+	tcs := []struct {
+		title  string
+		staker sdk.AccAddress
+		btcPK  *bbn.BIP340PubKey
+		pop    *types.ProofOfPossessionBTC
+		expErr error
+	}{
+		{
+			"valid: BIP340",
+			addrToSign,
+			bip340PK,
+			popBip340,
+			nil,
+		},
+		{
+			"valid: BIP322",
+			addrToSign,
+			bip340PK,
+			popBip322,
+			nil,
+		},
+		{
+			"valid: ECDSA",
+			addrToSign,
+			bip340PK,
+			popECDSA,
+			nil,
+		},
+		{
+			"invalid: BIP340 - bad addr",
+			randomAddr,
+			bip340PK,
+			popBip340,
+			fmt.Errorf("failed to verify pop.BtcSig"),
+		},
+		{
+			"invalid: BIP322 - bad addr",
+			randomAddr,
+			bip340PK,
+			popBip322,
+			fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: signature not empty on failed checksig"),
+		},
+		{
+			"invalid: ECDSA - bad addr",
+			randomAddr,
+			bip340PK,
+			popECDSA,
+			fmt.Errorf("failed to verify btcSigRaw"),
+		},
+		{
+			"invalid: SigType",
+			nil,
+			nil,
+			&types.ProofOfPossessionBTC{
+				BtcSigType: types.BTCSigType(123),
+			},
+			fmt.Errorf("invalid BTC signature type"),
+		},
+		{
+			"invalid: nil sig",
+			randomAddr,
+			bip340PK,
+			&types.ProofOfPossessionBTC{
+				BtcSigType: types.BTCSigType_BIP322,
+				BtcSig:     nil,
+			},
+			fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: cannot verfiy bip322 signature. One of the required parameters is empty"),
+		},
+		{
+			"invalid: nil signed msg",
+			nil,
+			bip340PK,
+			popBip340,
+			fmt.Errorf("failed to verify pop.BtcSig"),
+		},
+	}
+
+	for _, tc := range tcs {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			actErr := tc.pop.Verify(tc.staker, tc.btcPK, netParams)
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.NoError(t, actErr)
+		})
+	}
 }

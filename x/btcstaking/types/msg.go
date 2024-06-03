@@ -79,8 +79,8 @@ func (m *MsgEditFinalityProvider) ValidateBasic() error {
 }
 
 func (m *MsgCreateBTCDelegation) ValidateBasic() error {
-	if m.BabylonPk == nil {
-		return fmt.Errorf("empty Babylon public key")
+	if _, err := sdk.AccAddressFromBech32(m.StakerAddr); err != nil {
+		return fmt.Errorf("invalid staker addr %s: %w", m.StakerAddr, err)
 	}
 	if m.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
@@ -108,10 +108,6 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 
 	if _, err := m.DelegatorSlashingSig.ToBTCSig(); err != nil {
 		return fmt.Errorf("invalid delegator slashing signature: %w", err)
-	}
-
-	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
-		return err
 	}
 
 	// Check staking time is at most uint16
