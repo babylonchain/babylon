@@ -1,8 +1,6 @@
 syntax = "proto3";
 package babylon.btcstaking.v1;
 
-import "cosmos_proto/cosmos.proto";
-
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
 // BTCSigType indicates the type of btc_sig in a pop
