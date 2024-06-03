@@ -272,6 +272,14 @@ func (pop *ProofOfPossession) ToHexStr() (string, error) {
 	return hex.EncodeToString(popBytes), nil
 }
 
+func (pop *ProofOfPossessionBTC) ToHexStr() (string, error) {
+	popBytes, err := pop.Marshal()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(popBytes), nil
+}
+
 func (pop *ProofOfPossession) Verify(babylonPK cryptotypes.PubKey, bip340PK *bbn.BIP340PubKey, net *chaincfg.Params) error {
 	switch pop.BtcSigType {
 	case BTCSigType_BIP340:

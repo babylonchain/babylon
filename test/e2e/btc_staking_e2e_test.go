@@ -104,9 +104,9 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	for _, covenantPK := range params.CovenantPks {
 		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
 	}
-	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
-	delBabylonSK := nonValidatorNode.SecretKey
-	pop, err := bstypes.NewPoP(delBabylonSK, delBTCSK)
+	// NOTE: we use the node's address for the BTC delegation
+	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
+	pop, err := bstypes.NewPoPBTC(stakerAddr, delBTCSK)
 	s.NoError(err)
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)

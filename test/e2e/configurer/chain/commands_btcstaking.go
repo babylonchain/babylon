@@ -45,7 +45,7 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 
 func (n *NodeConfig) CreateBTCDelegation(
 	btcPk *bbn.BIP340PubKey,
-	pop *bstypes.ProofOfPossession,
+	pop *bstypes.ProofOfPossessionBTC,
 	stakingTxInfo *btcctypes.TransactionInfo,
 	fpPK *bbn.BIP340PubKey,
 	stakingTimeBlocks uint16,
@@ -92,7 +92,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 	cmd := []string{
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
 		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
-		fmt.Sprintf("--from=%s", n.Name),
+		fmt.Sprintf("--from=%s", n.WalletName),
 	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
