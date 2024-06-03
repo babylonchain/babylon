@@ -10,7 +10,6 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -177,7 +176,6 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 
 	// submit the message for creating BTC delegation
 	nonValidatorNode.CreateBTCDelegation(
-		delBabylonSK.PubKey().(*secp256k1.PubKey),
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
 		stakingTxInfo,

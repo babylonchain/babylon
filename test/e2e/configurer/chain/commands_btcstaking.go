@@ -2,6 +2,7 @@ package chain
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -43,7 +44,6 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 }
 
 func (n *NodeConfig) CreateBTCDelegation(
-	babylonPK *secp256k1.PubKey,
 	btcPk *bbn.BIP340PubKey,
 	pop *bstypes.ProofOfPossession,
 	stakingTxInfo *btcctypes.TransactionInfo,
@@ -59,11 +59,6 @@ func (n *NodeConfig) CreateBTCDelegation(
 	delUnbondingSlashingSig *bbn.BIP340Signature,
 ) {
 	n.LogActionF("creating BTC delegation")
-
-	// get babylon PK hex
-	babylonPKBytes, err := babylonPK.Marshal()
-	require.NoError(n.t, err)
-	babylonPKHex := hex.EncodeToString(babylonPKBytes)
 
 	btcPkHex := btcPk.MarshalHex()
 
@@ -94,7 +89,11 @@ func (n *NodeConfig) CreateBTCDelegation(
 	unbondingValueStr := sdkmath.NewInt(int64(unbondingValue)).String()
 	delUnbondingSlashingSigHex := delUnbondingSlashingSig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex, "--from=val"}
+	cmd := []string{
+		"babylond", "tx", "btcstaking", "create-btc-delegation",
+		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		fmt.Sprintf("--from=%s", n.Name),
+	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
