@@ -420,7 +420,6 @@ func (h *Helper) GetDelegationAndCheckValues(
 	h.NoError(err)
 	// TODO: update pop in BTC delegation
 	require.Equal(h.t, msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
-	require.Equal(h.t, msgCreateBTCDel.Pop, actualDel.Pop)
 	require.Equal(h.t, msgCreateBTCDel.StakingTx.Transaction, actualDel.StakingTx)
 	require.Equal(h.t, msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
 	// ensure the BTC delegation in DB is correctly formatted

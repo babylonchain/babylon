@@ -445,6 +445,14 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
 
+	evt := &types.EventNewBTCDelegation{
+		Delegation: newBTCDel,
+		Pop:        req.Pop,
+	}
+	if err := ctx.EventManager().EmitTypedEvent(evt); err != nil {
+		panic(fmt.Errorf("failed to emit event of new BTC delegation: %w", err))
+	}
+
 	return &types.MsgCreateBTCDelegationResponse{}, nil
 }
 
