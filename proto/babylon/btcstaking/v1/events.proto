@@ -50,7 +50,6 @@ message EventPowerDistUpdate {
   }
 }
 
-
 // EventNewBTCDelegation is the event emitted when an new
 // BTC delegation is created.
 message EventNewBTCDelegation {

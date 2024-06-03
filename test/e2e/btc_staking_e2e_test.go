@@ -10,7 +10,6 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -105,9 +104,9 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	for _, covenantPK := range params.CovenantPks {
 		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
 	}
-	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
-	delBabylonSK := nonValidatorNode.SecretKey
-	pop, err := bstypes.NewPoP(delBabylonSK, delBTCSK)
+	// NOTE: we use the node's address for the BTC delegation
+	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
+	pop, err := bstypes.NewPoPBTC(stakerAddr, delBTCSK)
 	s.NoError(err)
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
@@ -177,7 +176,6 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 
 	// submit the message for creating BTC delegation
 	nonValidatorNode.CreateBTCDelegation(
-		delBabylonSK.PubKey().(*secp256k1.PubKey),
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
 		stakingTxInfo,

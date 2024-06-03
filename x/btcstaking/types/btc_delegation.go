@@ -5,6 +5,8 @@ import (
 	"fmt"
 	math "math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/babylonchain/babylon/btcstaking"
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
@@ -139,6 +141,9 @@ func (d *BTCDelegation) MustGetStakingTxHash() chainhash.Hash {
 }
 
 func (d *BTCDelegation) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(d.StakerAddr); err != nil {
+		return fmt.Errorf("invalid staker address: %s - %w", d.StakerAddr, err)
+	}
 	if d.BtcPk == nil {
 		return fmt.Errorf("empty BTC public key")
 	}
