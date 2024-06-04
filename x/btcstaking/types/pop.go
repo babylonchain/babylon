@@ -615,5 +615,25 @@ func (pop *ProofOfPossessionBTC) ValidateBasic() error {
 		return fmt.Errorf("empty BTC signature")
 	}
 
-	return nil
+	switch pop.BtcSigType {
+	case BTCSigType_BIP340:
+		_, err := bbn.NewBIP340Signature(pop.BtcSig)
+		if err != nil {
+			return fmt.Errorf("invalid BTC BIP340 signature: %w", err)
+		}
+		return nil
+	case BTCSigType_BIP322:
+		var bip322Sig BIP322Sig
+		if err := bip322Sig.Unmarshal(pop.BtcSig); err != nil {
+			return fmt.Errorf("invalid BTC BIP322 signature: %w", err)
+		}
+		return nil
+	case BTCSigType_ECDSA:
+		if len(pop.BtcSig) != 65 { // size of compact signature
+			return fmt.Errorf("invalid BTC ECDSA signature size")
+		}
+		return nil
+	default:
+		return fmt.Errorf("invalid BTC signature type")
+	}
 }
