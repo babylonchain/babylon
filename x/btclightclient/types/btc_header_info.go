@@ -54,3 +54,12 @@ func (m *BTCHeaderInfo) Validate() error {
 
 	return nil
 }
+
+func NewBTCHeaderInfoResponse(header *bbn.BTCHeaderBytes, headerHash *bbn.BTCHeaderHashBytes, height uint64, work *sdkmath.Uint) *BTCHeaderInfoResponse {
+	return &BTCHeaderInfoResponse{
+		HeaderHex: header.MarshalHex(),
+		HashHex:   headerHash.MarshalHex(),
+		Height:    height,
+		Work:      *work,
+	}
+}

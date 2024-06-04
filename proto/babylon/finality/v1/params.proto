@@ -24,4 +24,7 @@ message Params {
   // jail_duration defines the duration after which the finality provider can unjail
   google.protobuf.Duration jail_duration = 3
   [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+  // min_pub_rand is the minimum number of public randomness each
+  // message should commit
+  uint64 min_pub_rand = 4;
 }

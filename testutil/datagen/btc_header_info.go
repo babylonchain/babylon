@@ -338,6 +338,42 @@ func ChainToInfoChain(
 	return infoChain
 }
 
+func ChainToInfoResponseChain(
+	chain []*wire.BlockHeader,
+	initialHeaderNumber uint64,
+	initialHeaderTotalWork sdkmath.Uint,
+) []*btclightclienttypes.BTCHeaderInfoResponse {
+	if len(chain) == 0 {
+		return []*btclightclienttypes.BTCHeaderInfoResponse{}
+	}
+
+	infoChain := make([]*btclightclienttypes.BTCHeaderInfoResponse, len(chain))
+
+	totalDifficulty := initialHeaderTotalWork
+
+	for i, header := range chain {
+		headerWork := btclightclienttypes.CalcHeaderWork(header)
+		headerTotalDifficulty := btclightclienttypes.CumulativeWork(headerWork, totalDifficulty)
+		hash := header.BlockHash()
+		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(header)
+		headerHash := bbn.NewBTCHeaderHashBytesFromChainhash(&hash)
+		headerNumber := initialHeaderNumber + uint64(i)
+
+		headerInfoResponse := btclightclienttypes.NewBTCHeaderInfoResponse(
+			&headerBytes,
+			&headerHash,
+			headerNumber,
+			&headerTotalDifficulty,
+		)
+
+		infoChain[i] = headerInfoResponse
+
+		totalDifficulty = headerTotalDifficulty
+	}
+
+	return infoChain
+}
+
 func HeaderToHeaderBytes(headers []*wire.BlockHeader) []bbn.BTCHeaderBytes {
 	headerBytes := make([]bbn.BTCHeaderBytes, len(headers))
 	for i, header := range headers {

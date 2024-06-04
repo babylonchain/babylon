@@ -9,16 +9,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/babylon/x/btcstaking/keeper"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
-	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,6 +17,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
+	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/babylonchain/babylon/x/btcstaking/keeper"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 func FuzzMsgCreateFinalityProvider(f *testing.F) {
@@ -50,17 +49,13 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		for i := 0; i < int(datagen.RandomInt(r, 10)); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-
-			h.CheckpointingKeeper.EXPECT().GetEpoch(gomock.Eq(h.Ctx)).Return(&etypes.Epoch{EpochNumber: 10}).Times(1)
-
 			msg := &types.MsgCreateFinalityProvider{
-				Signer:        datagen.GenRandomAccount().Address,
-				Description:   fp.Description,
-				Commission:    fp.Commission,
-				BabylonPk:     fp.BabylonPk,
-				BtcPk:         fp.BtcPk,
-				Pop:           fp.Pop,
-				MasterPubRand: fp.MasterPubRand,
+				Signer:      datagen.GenRandomAccount().Address,
+				Description: fp.Description,
+				Commission:  fp.Commission,
+				BabylonPk:   fp.BabylonPk,
+				BtcPk:       fp.BtcPk,
+				Pop:         fp.Pop,
 			}
 			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.NoError(t, err)
@@ -76,13 +71,12 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		// duplicated finality providers should not pass
 		for _, fp2 := range fps {
 			msg := &types.MsgCreateFinalityProvider{
-				Signer:        datagen.GenRandomAccount().Address,
-				Description:   fp2.Description,
-				Commission:    fp2.Commission,
-				BabylonPk:     fp2.BabylonPk,
-				BtcPk:         fp2.BtcPk,
-				Pop:           fp2.Pop,
-				MasterPubRand: fp2.MasterPubRand,
+				Signer:      datagen.GenRandomAccount().Address,
+				Description: fp2.Description,
+				Commission:  fp2.Commission,
+				BabylonPk:   fp2.BabylonPk,
+				BtcPk:       fp2.BtcPk,
+				Pop:         fp2.Pop,
 			}
 			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)
@@ -163,10 +157,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		_, fpPK, fp := h.CreateFinalityProvider(r)
-
-		// mock that the registered epoch is finalised
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
+		_, fpPK, _ := h.CreateFinalityProvider(r)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -211,10 +202,7 @@ func TestProperVersionInDelegation(t *testing.T) {
 	require.NoError(t, err)
 
 	// generate and insert new finality provider
-	_, fpPK, fp := h.CreateFinalityProvider(r)
-
-	// mock that the registered epoch is finalised
-	h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).AnyTimes()
+	_, fpPK, _ := h.CreateFinalityProvider(r)
 
 	// generate and insert new BTC delegation
 	stakingValue := int64(2 * 10e8)
@@ -282,10 +270,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		_, fpPK, fp := h.CreateFinalityProvider(r)
-
-		// mock that the registered epoch is finalised
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
+		_, fpPK, _ := h.CreateFinalityProvider(r)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -353,10 +338,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		_, fpPK, fp := h.CreateFinalityProvider(r)
-
-		// mock that the registered epoch is finalised
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
+		_, fpPK, _ := h.CreateFinalityProvider(r)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -427,11 +409,8 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
+		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
 		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
-
-		// mock that the registered epoch is finalised
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -497,11 +476,8 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
+		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
 		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
-
-		// mock that the registered epoch is finalised
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).Times(1)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -684,9 +660,6 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		DelegatorUnbondingSlashingSig: delUnbondingSlashingSig,
 	}
 
-	// mock last finalised epoch
-	h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(0))
-
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrFpNotFound))
@@ -749,10 +722,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			require.NoError(t, err)
 
 			// generate and insert new finality provider
-			_, fpPK, fp := h.CreateFinalityProvider(r)
-
-			// mock that the registered epoch is finalised
-			h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).MaxTimes(1)
+			_, fpPK, _ := h.CreateFinalityProvider(r)
 
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
@@ -825,10 +795,7 @@ func TestMinimalUnbondingRate(t *testing.T) {
 			require.NoError(t, err)
 
 			// generate and insert new finality provider
-			_, fpPK, fp := h.CreateFinalityProvider(r)
-
-			// mock that the registered epoch is finalised
-			h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(fp.RegisteredEpoch).MaxTimes(1)
+			_, fpPK, _ := h.CreateFinalityProvider(r)
 
 			// generate and insert new BTC delegation
 			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(
@@ -864,13 +831,12 @@ func createNDelegationsForFinalityProvider(
 ) []*types.BTCDelegation {
 	var delegations []*types.BTCDelegation
 	for i := 0; i < numDelegations; i++ {
-		covenatnSks, _, err := datagen.GenRandomBTCKeyPairs(r, int(quorum))
+		covenatnSks, covenantPks, err := datagen.GenRandomBTCKeyPairs(r, int(quorum))
 		require.NoError(t, err)
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 
-		net := &chaincfg.SimNetParams
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
 
@@ -879,9 +845,11 @@ func createNDelegationsForFinalityProvider(
 		del, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
+			net,
 			[]bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 			delSK,
 			covenatnSks,
+			covenantPks,
 			quorum,
 			slashingAddress.EncodeAddress(),
 			0,
@@ -908,14 +876,29 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(1)
+		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(2)
 		require.NoError(t, err)
 
-		var expectedProviderData map[string]*ExpectedProviderData = make(map[string]*ExpectedProviderData)
+		var expectedProviderData = make(map[string]*ExpectedProviderData)
 
 		// Create two test apps from the same set of validators
 		h := testhelper.NewHelperWithValSet(t, valSet, privSigner)
 		h1 := testhelper.NewHelperWithValSet(t, valSet, privSigner)
+		// app hash should be same at the beginning
+		appHash1 := hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 := hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
+
+		// Execute block for both apps
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+		// Given that there is no transactions and the data in db is the same
+		// app hash produced by both apps should be the same
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
 
 		// Default params are the same in both apps
 		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
@@ -960,16 +943,14 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		}
 
 		// Execute block for both apps
-		ctx, err := h.ApplyEmptyBlockWithVoteExtension(r)
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-
-		ctx1, err := h1.ApplyEmptyBlockWithVoteExtension(r)
+		h1.Ctx, err = h1.ApplyEmptyBlockWithVoteExtension(r)
 		require.NoError(t, err)
-
 		// Given that there is no transactions and the data in db is the same
 		// app hash produced by both apps should be the same
-		appHash1 := hex.EncodeToString(ctx.BlockHeader().AppHash)
-		appHash2 := hex.EncodeToString(ctx1.BlockHeader().AppHash)
+		appHash1 = hex.EncodeToString(h.Ctx.BlockHeader().AppHash)
+		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
 	})
 }

@@ -9,6 +9,36 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (c *PubRandCommit) IsInRange(height uint64) bool {
+	start, end := c.Range()
+	return start <= height && height <= end
+}
+
+func (c *PubRandCommit) GetIndex(height uint64) (uint64, error) {
+	start, end := c.Range()
+	if start <= height && height <= end {
+		return height - start, nil
+	}
+	return 0, ErrPubRandNotFound.Wrapf("the given height (%d) is not in range [%d, %d]", height, start, end)
+}
+
+func (c *PubRandCommit) EndHeight() uint64 {
+	return c.StartHeight + c.NumPubRand - 1
+}
+
+// Range() returns the range of the heights that a public randomness is committed
+// both values are inclusive
+func (c *PubRandCommit) Range() (uint64, uint64) {
+	return c.StartHeight, c.EndHeight()
+}
+
+func (c *PubRandCommit) ToResponse() *PubRandCommitResponse {
+	return &PubRandCommitResponse{
+		NumPubRand: c.NumPubRand,
+		Commitment: c.Commitment,
+	}
+}
+
 // msgToSignForVote returns the message for an EOTS signature
 // The EOTS signature on a block will be (blockHeight || blockHash)
 func msgToSignForVote(blockHeight uint64, blockHash []byte) []byte {
@@ -42,8 +72,8 @@ func (e *Evidence) ValidateBasic() error {
 	if e.FpBtcPk == nil {
 		return fmt.Errorf("empty FpBtcPk")
 	}
-	if len(e.MasterPubRand) == 0 {
-		return fmt.Errorf("empty MasterPubRand")
+	if e.PubRand == nil {
+		return fmt.Errorf("empty PubRand")
 	}
 	if len(e.CanonicalAppHash) != 32 {
 		return fmt.Errorf("malformed CanonicalAppHash")
@@ -76,16 +106,8 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	mpr, err := eots.NewMasterPublicRandFromBase58(e.MasterPubRand)
-	if err != nil {
-		return nil, err
-	}
-	pubRand, err := mpr.DerivePubRand(uint32(e.BlockHeight))
-	if err != nil {
-		return nil, err
-	}
 	return eots.Extract(
-		btcPK, pubRand,
+		btcPK, e.PubRand.ToFieldVal(),
 		e.canonicalMsgToSign(), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
 		e.forkMsgToSign(), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
 	)

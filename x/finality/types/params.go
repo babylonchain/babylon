@@ -13,6 +13,7 @@ import (
 const (
 	DefaultSignedBlocksWindow = int64(100)
 	DefaultJailDuration       = 60 * 10 * time.Second
+	DefaultMinPubRand         = 100
 )
 
 var (
@@ -27,12 +28,20 @@ func DefaultParams() Params {
 		SignedBlocksWindow: DefaultSignedBlocksWindow,
 		MinSignedPerWindow: DefaultMinSignedPerWindow,
 		JailDuration:       DefaultJailDuration,
+		MinPubRand:         DefaultMinPubRand,
 	}
 }
 
 // ParamSetPairs get the params.ParamSet
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{}
+}
+
+func validateMinPubRand(minPubRand uint64) error {
+	if minPubRand == 0 {
+		return fmt.Errorf("min Pub Rand cannot be 0")
+	}
+	return nil
 }
 
 // String implements the Stringer interface.
@@ -50,6 +59,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateJailDuration(p.JailDuration); err != nil {
+		return err
+	}
+	if err := validateMinPubRand(p.MinPubRand); err != nil {
 		return err
 	}
 

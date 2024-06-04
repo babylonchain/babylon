@@ -40,9 +40,6 @@ func FuzzVotingPowerTable(f *testing.F) {
 			fps = append(fps, fp)
 		}
 
-		// mock that the registered epoch is finalised
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
-
 		// for the first numFpsWithVotingPower finality providers, generate a random number of BTC delegations
 		numBTCDels := datagen.RandomInt(r, 10) + 1
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
@@ -173,9 +170,6 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		h.NoError(err)
 
-		// mock that the registered epoch is finalised
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
-
 		// generate a random batch of finality providers, each with a BTC delegation with random power
 		fpsWithMeta := []*types.FinalityProviderDistInfo{}
 		numFps := datagen.RandomInt(r, 300) + 1
@@ -268,9 +262,6 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// change address
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		h.NoError(err)
-
-		// mock that the registered epoch is finalised
-		h.CheckpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(10)).AnyTimes()
 
 		numFps := datagen.RandomInt(r, 20) + 10
 		numActiveFPs := int(min(numFps, uint64(bsParams.MaxActiveFinalityProviders)))

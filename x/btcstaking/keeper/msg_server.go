@@ -8,7 +8,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
-	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -81,20 +80,13 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, types.ErrFpRegistered
 	}
 
-	// ensure the master public randomness is valid
-	if _, err := eots.NewMasterPublicRandFromBase58(req.MasterPubRand); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
-		Description:     req.Description,
-		Commission:      req.Commission,
-		BabylonPk:       req.BabylonPk,
-		BtcPk:           req.BtcPk,
-		Pop:             req.Pop,
-		MasterPubRand:   req.MasterPubRand,
-		RegisteredEpoch: ms.ckptKeeper.GetEpoch(ctx).EpochNumber,
+		Description: req.Description,
+		Commission:  req.Commission,
+		BabylonPk:   req.BabylonPk,
+		BtcPk:       req.BtcPk,
+		Pop:         req.Pop,
 	}
 	ms.SetFinalityProvider(ctx, &fp)
 
@@ -194,7 +186,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// Ensure all finality providers are known to Babylon, are not slashed,
 	// and their registered epochs are finalised
-	lastFinalizedEpoch := ms.GetLastFinalizedEpoch(ctx)
 	for _, fpBTCPK := range req.FpBtcPkList {
 		// get this finality provider
 		fp, err := ms.GetFinalityProvider(ctx, fpBTCPK)
@@ -204,10 +195,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		// ensure the finality provider is not slashed
 		if fp.IsSlashed() {
 			return nil, types.ErrFpAlreadySlashed
-		}
-		// ensure the finality provider's registered epoch is finalised
-		if lastFinalizedEpoch < fp.RegisteredEpoch {
-			return nil, types.ErrFpNotBTCTimestamped
 		}
 	}
 
@@ -314,8 +301,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	err = req.SlashingTx.VerifySignature(
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		slashingSpendInfo.GetPkScriptPath(),
 		stakerPk,
 		req.DelegatorSlashingSig,
@@ -414,8 +400,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	err = req.UnbondingSlashingTx.VerifySignature(
-		unbondingInfo.UnbondingOutput.PkScript,
-		unbondingInfo.UnbondingOutput.Value,
+		unbondingInfo.UnbondingOutput,
 		unbondingSlashingSpendInfo.GetPkScriptPath(),
 		newBTCDel.BtcPk.MustToBTCPK(),
 		req.DelegatorUnbondingSlashingSig,
@@ -569,10 +554,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		// this fails, it is a programming error
 		panic(err)
 	}
-	if err := btcstaking.VerifyTransactionSigWithOutputData(
+	if err := btcstaking.VerifyTransactionSigWithOutput(
 		unbondingMsgTx,
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		unbondingSpendInfo.GetPkScriptPath(),
 		req.Pk.MustToBTCPK(),
 		*req.UnbondingTxSig,
@@ -660,10 +644,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		// this fails, it is a programming error
 		panic(err)
 	}
-	if err := btcstaking.VerifyTransactionSigWithOutputData(
+	if err := btcstaking.VerifyTransactionSigWithOutput(
 		unbondingMsgTx,
-		stakingInfo.StakingOutput.PkScript,
-		stakingInfo.StakingOutput.Value,
+		stakingInfo.StakingOutput,
 		unbondingSpendInfo.GetPkScriptPath(),
 		btcDel.BtcPk.MustToBTCPK(),
 		*req.UnbondingTxSig,

@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/btcstaking"
-	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
@@ -29,22 +28,12 @@ const (
 )
 
 func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) {
-	// BTC key pairs
+	// key pairs
 	btcSK, _, err := GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, err
 	}
-	// Babylon key pairs
-	bbnSK, _, err := GenRandomSecp256k1KeyPair(r)
-	if err != nil {
-		return nil, err
-	}
-	// master secret randomness
-	msr, _, err := eots.NewMasterRandPair(r)
-	if err != nil {
-		return nil, err
-	}
-	return GenRandomCustomFinalityProvider(r, btcSK, bbnSK, msr)
+	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
 }
 
 func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.FinalityProvider {
@@ -57,6 +46,14 @@ func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.Fina
 	return fps
 }
 
+func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.FinalityProvider, error) {
+	bbnSK, _, err := GenRandomSecp256k1KeyPair(r)
+	if err != nil {
+		return nil, err
+	}
+	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, bbnSK)
+}
+
 func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {
 	return sdkmath.LegacyNewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
 }
@@ -65,7 +62,7 @@ func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
 	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 }
 
-func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey, msr *eots.MasterSecretRand) (*bstypes.FinalityProvider, error) {
+func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
 	// description
@@ -83,19 +80,12 @@ func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnS
 	if err != nil {
 		return nil, err
 	}
-	// master pub rand
-	mpr, err := msr.MasterPubicRand()
-	if err != nil {
-		return nil, err
-	}
-
 	return &bstypes.FinalityProvider{
-		Description:   description,
-		Commission:    &commission,
-		BabylonPk:     secp256k1PK,
-		BtcPk:         bip340PK,
-		Pop:           pop,
-		MasterPubRand: mpr.MarshalBase58(),
+		Description: description,
+		Commission:  &commission,
+		BabylonPk:   secp256k1PK,
+		BtcPk:       bip340PK,
+		Pop:         pop,
 	}, nil
 }
 
@@ -103,23 +93,20 @@ func GenRandomCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, bbnS
 func GenRandomBTCDelegation(
 	r *rand.Rand,
 	t *testing.T,
+	btcNet *chaincfg.Params,
 	fpBTCPKs []bbn.BIP340PubKey,
 	delSK *btcec.PrivateKey,
 	covenantSKs []*btcec.PrivateKey,
+	covenantPks []*btcec.PublicKey,
 	covenantQuorum uint32,
 	slashingAddress string,
 	startHeight, endHeight, totalSat uint64,
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) (*bstypes.BTCDelegation, error) {
-	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
-	// list of covenant PKs
-	covenantBTCPKs := []*btcec.PublicKey{}
-	for _, covenantSK := range covenantSKs {
-		covenantBTCPKs = append(covenantBTCPKs, covenantSK.PubKey())
-	}
+
 	// list of finality provider PKs
 	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(fpBTCPKs)
 	if err != nil {
@@ -144,10 +131,10 @@ func GenRandomBTCDelegation(
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
 		r,
 		t,
-		net,
+		btcNet,
 		delSK,
 		fpPKs,
-		covenantBTCPKs,
+		covenantPks,
 		covenantQuorum,
 		uint16(endHeight-startHeight),
 		int64(totalSat),
@@ -208,10 +195,10 @@ func GenRandomBTCDelegation(
 	unbondingSlashingInfo := GenBTCUnbondingSlashingInfo(
 		r,
 		t,
-		net,
+		btcNet,
 		delSK,
 		fpPKs,
-		covenantBTCPKs,
+		covenantPks,
 		covenantQuorum,
 		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
 		w+1,
