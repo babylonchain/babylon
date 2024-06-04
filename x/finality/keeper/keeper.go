@@ -34,7 +34,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
-	btctakingKeeper types.BTCStakingKeeper,
+	btcstakingKeeper types.BTCStakingKeeper,
 	incentiveKeeper types.IncentiveKeeper,
 	authority string,
 ) Keeper {
@@ -43,7 +43,7 @@ func NewKeeper(
 		cdc:          cdc,
 		storeService: storeService,
 
-		BTCStakingKeeper: btctakingKeeper,
+		BTCStakingKeeper: btcstakingKeeper,
 		IncentiveKeeper:  incentiveKeeper,
 		authority:        authority,
 		FinalityProviderSigningTracker: collections.NewMap(
