@@ -30,13 +30,28 @@ The protocol has the following important properties:
 7. (WIP) restakable, meaning that the same bitcoin can be staked to secure
    multiple PoS chains and earn multiple PoS yields
 
+
+In the entire Bitcoin staking process, two parties are involved: one is called
+the Bitcoin Staker, and the other is called the Finality Provider.
+
+- **Bitcoin Staker**: A Bitcoin Staker is an entity identified by `<StakerPk>`
+in staking scripts. Note that a staking transaction can be funded from
+arbitrary UTXO, including those owned by multsig/MPC/threshold accounts.
+Thus, `<StakerPk>` is not necessarily the address of the source of the fund.
+Rather, it is the controller and beneficiary of the stake after its creation.
+- **Finality Provider**: A Finality Provider is the an entity that votes
+in the finality round to provide security assurance to the PoS chain.
+
+The Bitcoin staker can choose a specific Finality Provider to delegate
+their voting power derived from their locked Bitcoin.
+
 The key to making all these possible is special constructions of BTC
 transactions using BTC scripts.
 
 ## Preliminary
 
 Babylon interaction with Bitcoin is heavily based on Bitcoin's
-[Taproot upgrade](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawik).
+[Taproot upgrade](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki).
 This design choice was made due to the heavy usage of
 [Schnorr signatures](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki)
 that were introduced through the Taproot upgrade.
@@ -90,7 +105,7 @@ There are three special transaction types recognized by the Babylon chain:
 
 ### Staking Transaction
 
-A BTC holder gains voting power by creating a staking transaction. This is a
+A BTC Staker gains voting power by creating a staking transaction. This is a
 Bitcoin transaction that commits a certain amount of to-be-staked bitcoin to
 Babylon recognized BTC staking scripts. These scripts lock the stake for a
 chosen amount of BTC blocks and enable other features such as unbonding and
@@ -176,7 +191,7 @@ before the timelock expires. It commits to a script of the form:
 ```
 <StakerPk> OP_CHECKSIGVERIFY
 <CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
-<CovenantThreshold> OP_GREATERTHANOREQUAL
+<CovenantThreshold> OP_NUMEQUAL
 ```
 
 where:
@@ -200,7 +215,7 @@ delegators in the case of double signing. It commits to a script:
 <StakerPk> OP_CHECKSIGVERIFY
 <FinalityProviderPk> OP_CHECKSIGVERIFY
 <CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
-<CovenantThreshold> OP_GREATERTHANOREQUAL
+<CovenantThreshold> OP_NUMEQUAL
 ```
 
 where:
@@ -230,14 +245,14 @@ The main difference between the unbonding and slashing paths is the existence of
 
 This leads to following system wide repercussions:
 
-- for staking request to become active, btc holder needs to provide valid
+- for staking request to become active, btc staker needs to provide valid
   unbonding transaction in this staking request. This staking request will become
   active only when `CovenantThreshold` signatures will be received by Babylon
   chain. Lack of `FinalityProviderPk` in unbonding path, means that after
   delegation becomes active, staker can send unbodning transaction any time
   without asking finality provider for permission.
 - existence of `FinalityProviderPk` in slashing path, coupled with the fact that
-  btc holder needs to provide pre-signed slashing transaction which needs to be
+  btc staker needs to provide pre-signed slashing transaction which needs to be
   signed by covenant committee for delegation request to become active, leads to
   situation in which the only signature missing to send slashing transaction to
   btc is signature of finality provider.
@@ -264,7 +279,7 @@ Bitcoin blocks. It commits to a script of the form:
 
 where:
 
-- Staker_PK is btc holder public key
+- Staker_PK is btc staker public key
 - Timelock_Blocks is unbonding time. It must be lower or equal 65535, but larger
   than `max(MinUnbondingTime, CheckpointFinalizationTimeout)`. `MinUnbondingTime`
   and `CheckpointFinalizationTimeout` are Babylon parameters.
@@ -278,7 +293,7 @@ delegators in the case of double signing. It commits to a script:
 <StakerPk> OP_CHECKSIGVERIFY
 <FinalityProviderPk> OP_CHECKSIGVERIFY
 <CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
-<CovenantThreshold> OP_GREATERTHANOREQUAL
+<CovenantThreshold> OP_NUMEQUAL
 ```
 
 where:

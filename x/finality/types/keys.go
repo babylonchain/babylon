@@ -38,9 +38,11 @@ const (
 var (
 	BlockKey                                   = []byte{0x01}             // key prefix for blocks
 	VoteKey                                    = []byte{0x02}             // key prefix for votes
-	ParamsKey                                  = []byte{0x03}             // key prefix for the parameters
-	EvidenceKey                                = []byte{0x04}             // key prefix for evidences
-	NextHeightToFinalizeKey                    = []byte{0x05}             // key prefix for next height to finalise
-	FinalityProviderSigningInfoKeyPrefix       = collections.NewPrefix(6) // Prefix for signing info
-	FinalityProviderMissedBlockBitmapKeyPrefix = collections.NewPrefix(7) // Prefix for missed block bitmap
+	PubRandKey                                 = []byte{0x03}             // key prefix for public randomness
+	PubRandCommitKey                           = []byte{0x04}             // key prefix for commitment of public randomness
+	ParamsKey                                  = []byte{0x05}             // key prefix for the parameters
+	EvidenceKey                                = []byte{0x06}             // key prefix for evidences
+	NextHeightToFinalizeKey                    = []byte{0x07}             // key prefix for next height to finalise
+	FinalityProviderSigningInfoKeyPrefix       = collections.NewPrefix(8) // key prefix for signing info
+	FinalityProviderMissedBlockBitmapKeyPrefix = collections.NewPrefix(9) // key prefix for missed block bitmap
 )

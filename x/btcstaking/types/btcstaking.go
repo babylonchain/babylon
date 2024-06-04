@@ -6,7 +6,6 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/babylonchain/babylon/crypto/eots"
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -39,23 +38,6 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-// MustGetPubRand gets the public randomness at the given height for the
-// finality provider. It is derived from its master public randomness.
-func (fp *FinalityProvider) MustGetPubRand(height uint64) *eots.PublicRand {
-	mpr, err := eots.NewMasterPublicRandFromBase58(fp.MasterPubRand)
-	if err != nil {
-		// fp is a DB object and mpr has been verified. This
-		// must be a programming error
-		panic(err)
-	}
-	pr, err := mpr.DerivePubRand(uint32(height))
-	if err != nil {
-		// must be a programming error
-		panic(err)
-	}
-	return pr
 }
 
 // SortFinalityProviders sorts the finality providers slice,

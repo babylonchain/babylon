@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	"cosmossdk.io/log"
+	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -23,7 +22,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            EmptyAppOptions{},
+		AppOpts:            TmpAppOptions(),
 	})
 
 	for acc := range BlockedAddresses() {
@@ -58,7 +57,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		map[int64]bool{},
 		0,
 		signer,
-		EmptyAppOptions{},
+		TmpAppOptions(),
 		EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})
@@ -81,7 +80,7 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 		DB:                 db,
 		InvCheckPeriod:     0,
 		SkipUpgradeHeights: map[int64]bool{},
-		AppOpts:            EmptyAppOptions{},
+		AppOpts:            TmpAppOptions(),
 	})
 
 	// make sure the upgrade keeper has version map in state

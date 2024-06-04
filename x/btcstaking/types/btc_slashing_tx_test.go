@@ -91,8 +91,7 @@ func FuzzSlashingTx_VerifySigAndASig(f *testing.F) {
 		covASig, err := slashingTx.EncSign(stakingTx, 0, slashingPkScriptPath, covSK, encKey)
 		require.NoError(t, err)
 		err = slashingTx.EncVerifyAdaptorSignature(
-			testStakingInfo.StakingInfo.GetPkScript(),
-			testStakingInfo.StakingInfo.StakingOutput.Value,
+			testStakingInfo.StakingInfo.StakingOutput,
 			slashingPkScriptPath,
 			covPK,
 			encKey,
@@ -104,8 +103,7 @@ func FuzzSlashingTx_VerifySigAndASig(f *testing.F) {
 		// can be verified
 		covSig := covASig.Decrypt(decKey)
 		err = slashingTx.VerifySignature(
-			testStakingInfo.StakingInfo.GetPkScript(),
-			testStakingInfo.StakingInfo.StakingOutput.Value,
+			testStakingInfo.StakingInfo.StakingOutput,
 			slashingPkScriptPath,
 			covPK,
 			bbn.NewBIP340SignatureFromBTCSig(covSig),
@@ -189,9 +187,10 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingPkScriptPath, delSK)
 		require.NoError(t, err)
 
+		covenantSigners := covenantSKs[:covenantQuorum]
 		// get covenant Schnorr signatures
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
-			covenantSKs,
+			covenantSigners,
 			fpPKs,
 			stakingMsgTx,
 			slashingPkScriptPath,
@@ -205,9 +204,12 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// finality provider's PK are verified
 		orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
 		for i := range covSigsForFP {
+			if covSigsForFP[i] == nil {
+				continue
+			}
+
 			err := slashingTx.EncVerifyAdaptorSignature(
-				testStakingInfo.StakingInfo.StakingOutput.PkScript,
-				testStakingInfo.StakingInfo.StakingOutput.Value,
+				testStakingInfo.StakingInfo.StakingOutput,
 				slashingPkScriptPath,
 				orderedCovenantPKs[i].MustToBTCPK(),
 				encKey,
@@ -217,8 +219,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 
 			covSchnorrSig := covSigsForFP[i].Decrypt(decKey)
 			err = slashingTx.VerifySignature(
-				testStakingInfo.StakingInfo.StakingOutput.PkScript,
-				testStakingInfo.StakingInfo.StakingOutput.Value,
+				testStakingInfo.StakingInfo.StakingOutput,
 				slashingPkScriptPath,
 				orderedCovenantPKs[i].MustToBTCPK(),
 				bbn.NewBIP340SignatureFromBTCSig(covSchnorrSig),

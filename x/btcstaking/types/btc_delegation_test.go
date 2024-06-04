@@ -105,13 +105,18 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		unbondingTime := uint16(100) + 1
 		slashingChangeLockTime := unbondingTime
 
+		// only the quorum of signers provided the signatures
+		covenantSigners := covenantSKs[:covenantQuorum]
+
 		// construct the BTC delegation with everything
 		btcDel, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
+			&chaincfg.SimNetParams,
 			fpBTCPKs,
 			delSK,
-			covenantSKs,
+			covenantSigners,
+			covenantPKs,
 			covenantQuorum,
 			slashingAddress.EncodeAddress(),
 			1000,
@@ -139,8 +144,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 				continue
 			}
 			err := btcDel.SlashingTx.EncVerifyAdaptorSignature(
-				stakingInfo.StakingOutput.PkScript,
-				stakingInfo.StakingOutput.Value,
+				stakingInfo.StakingOutput,
 				slashingSpendInfo.GetPkScriptPath(),
 				orderedCovenantPKs[i].MustToBTCPK(),
 				encKey,

@@ -1,6 +1,7 @@
 package checkpointing
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"slices"
@@ -113,7 +114,7 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epo
 		return nil, err
 	}
 	ckpt := ckpttypes.NewCheckpointWithMeta(ckpttypes.NewCheckpoint(epoch, prevBlockID), ckpttypes.Accumulating)
-	validBLSSigs := h.getValidBlsSigs(ctx, extendedVotes)
+	validBLSSigs := h.getValidBlsSigs(ctx, extendedVotes, prevBlockID)
 	vals := h.ckptKeeper.GetValidatorSet(ctx, epoch)
 	totalPower := h.ckptKeeper.GetTotalVotingPower(ctx, epoch)
 	// TODO: maybe we don't need to verify BLS sigs anymore as they are already
@@ -156,7 +157,7 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epo
 	return ckpt, nil
 }
 
-func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.ExtendedVoteInfo) []ckpttypes.BlsSig {
+func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.ExtendedVoteInfo, blockHash []byte) []ckpttypes.BlsSig {
 	k := h.ckptKeeper
 	validBLSSigs := make([]ckpttypes.BlsSig, 0, len(extendedVotes))
 	for _, voteInfo := range extendedVotes {
@@ -170,6 +171,14 @@ func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.
 			h.logger.Error("failed to unmarshal vote extension", "err", err)
 			continue
 		}
+
+		if !bytes.Equal(*ve.BlockHash, blockHash) {
+			h.logger.Error("the BLS sig is signed over unexpected block hash",
+				"expected", hex.EncodeToString(blockHash),
+				"got", ve.BlockHash.String())
+			continue
+		}
+
 		sig := ve.ToBLSSig()
 
 		if err := k.VerifyBLSSig(ctx, sig); err != nil {
@@ -281,7 +290,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			err = baseapp.ValidateVoteExtensions(ctx, h.ckptKeeper, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
 			if err != nil {
 				// the returned err will lead to panic as something very wrong happened during consensus
-				return resReject, err
+				return resReject, nil
 			}
 
 			// 4. rebuild the checkpoint from vote extensions and compare it with

@@ -5,19 +5,11 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
-
-	"time"
-
 	"testing"
+	"time"
 
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/testutil/mocks"
-	"github.com/babylonchain/babylon/x/checkpointing"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	et "github.com/babylonchain/babylon/x/epoching/types"
 	cbftt "github.com/cometbft/cometbft/abci/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tendermintTypes "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -27,6 +19,14 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/testutil/helper"
+	"github.com/babylonchain/babylon/testutil/mocks"
+	"github.com/babylonchain/babylon/x/checkpointing"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	et "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 type TestValidator struct {
@@ -122,13 +122,27 @@ func genNTestValidators(t *testing.T, n int) []TestValidator {
 		})
 	}
 
+	// below are copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.6/baseapp/abci_utils_test.go
+	// Since v0.50.5 Cosmos SDK enforces certain order for vote extensions
+	sort.SliceStable(vals, func(i, j int) bool {
+		if vals[i].Power == vals[j].Power {
+			valAddress1, err := sdk.ValAddressFromBech32(vals[i].Keys.ValidatorAddress)
+			require.NoError(t, err)
+			valAddress2, err := sdk.ValAddressFromBech32(vals[j].Keys.ValidatorAddress)
+			require.NoError(t, err)
+			return bytes.Compare(valAddress1, valAddress2) == -1
+		}
+		return vals[i].Power > vals[j].Power
+	})
+
 	return vals
 }
 
 func setupSdkCtx(height int64) sdk.Context {
 	return sdk.Context{}.WithHeaderInfo(header.Info{
-		Height: height,
-		Time:   time.Now(),
+		Height:  height,
+		Time:    time.Now(),
+		ChainID: "test",
 	}).WithConsensusParams(tendermintTypes.ConsensusParams{
 		Abci: &tendermintTypes.ABCIParams{
 			VoteExtensionsEnableHeight: 1,
@@ -186,15 +200,12 @@ func genVoteExt(
 	return extSignBytes
 }
 
-func requestPrepareProposal(height int64, votes []cbftt.ExtendedVoteInfo) *cbftt.RequestPrepareProposal {
+func requestPrepareProposal(height int64, commitInfo cbftt.ExtendedCommitInfo) *cbftt.RequestPrepareProposal {
 	return &cbftt.RequestPrepareProposal{
-		MaxTxBytes: 10000,
-		Txs:        [][]byte{},
-		LocalLastCommit: cbftt.ExtendedCommitInfo{
-			Round: 0,
-			Votes: votes,
-		},
-		Height: height,
+		MaxTxBytes:      10000,
+		Txs:             [][]byte{},
+		LocalLastCommit: commitInfo,
+		Height:          height,
 	}
 }
 
@@ -266,6 +277,7 @@ func generateNValidatorAndVoteExtensions(t *testing.T, n int, bh *checkpointingt
 		extensions = append(extensions, ve)
 		power += validator.Power
 	}
+
 	return &ValidatorsAndExtensions{
 		Vals:       validators,
 		Extensions: extensions,
@@ -364,7 +376,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				bh := randomBlockHash()
 				// each validator has the same voting power
 				numValidators := 9
-				invalidValidBlsSig := numValidators/3 - 1
+				invalidBlsSig := numValidators/3 - 1
 
 				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, numValidators, &bh, ec.Epoch.EpochNumber)
 
@@ -373,7 +385,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 					validator := val
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
 
-					if i < invalidValidBlsSig {
+					if i < invalidBlsSig {
 						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(checkpointingtypes.ErrInvalidBlsSignature).AnyTimes()
 					} else {
 						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
@@ -478,9 +490,13 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				mem,
 				nil,
 			)
-			prepareProposalFn := h.PrepareProposal()
 
-			prop, err := prepareProposalFn(ec.Ctx, requestPrepareProposal(ec.Ctx.HeaderInfo().Height, scenario.Extensions))
+			commitInfo, _, cometInfo := helper.ExtendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: scenario.Extensions})
+			scenario.Extensions = commitInfo.Votes
+			ec.Ctx = ec.Ctx.WithCometInfo(cometInfo)
+
+			req := requestPrepareProposal(ec.Ctx.HeaderInfo().Height, commitInfo)
+			prop, err := h.PrepareProposal()(ec.Ctx, req)
 			if tt.expectError {
 				require.Error(t, err)
 			} else {

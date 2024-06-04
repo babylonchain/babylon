@@ -18,6 +18,19 @@ message IndexedBlock {
     bool finalized = 3;
 }
 
+// PubRandCommit is a commitment to a series of public randomness
+// currently, the commitment is a root of a Merkle tree that includes
+// a series of public randomness
+message PubRandCommit {
+    // start_height is the height of the first commitment
+    uint64 start_height = 1;
+    // num_pub_rand is the number of committed public randomness
+    uint64 num_pub_rand = 2;
+    // commitment is the value of the commitment
+    // currently, it is the root of the merkle tree constructed by the public randomness
+    bytes commitment = 3;
+}
+
 // Evidence is the evidence that a finality provider has signed finality
 // signatures with correct public randomness on two conflicting Babylon headers
 message Evidence {
@@ -25,9 +38,8 @@ message Evidence {
     bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // block_height is the height of the conflicting blocks
     uint64 block_height = 2;
-    // master_pub_rand is the master public randomness the finality provider has committed to
-    // encoded as a base58 string
-    string master_pub_rand = 3;
+    // pub_rand is the public randomness the finality provider has committed to
+    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
     // canonical_app_hash is the AppHash of the canonical block
     bytes canonical_app_hash = 4;
     // fork_app_hash is the AppHash of the fork block

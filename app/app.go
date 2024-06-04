@@ -156,12 +156,6 @@ const (
 	// environmental variables - https://github.com/cosmos/cosmos-sdk/pull/10950
 	BabylonAppEnvPrefix = ""
 
-	// TODO review possible capabilities
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	wasmCapabilities = "iterator,stargate,cosmwasm_1_1,cosmwasm_1_2,babylon"
-
 	// According to https://github.com/CosmWasm/wasmd#genesis-configuration chains
 	// using smart contracts should configure proper gas limits per block.
 	// https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc
@@ -172,6 +166,12 @@ const (
 )
 
 var (
+	// TODO review possible capabilities
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
+	wasmCapabilities = []string{"iterator", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "babylon"}
+
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
@@ -293,7 +293,7 @@ func NewBabylonApp(
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
-	// we could also take it from global object which should be initilised in rootCmd
+	// we could also take it from global object which should be initialised in rootCmd
 	// but this way it makes babylon app more testable
 	btcConfig := bbn.ParseBtcOptionsFromConfig(appOpts)
 	powLimit := btcConfig.PowLimit()
@@ -381,18 +381,26 @@ func NewBabylonApp(
 		epochingKeeper,
 	)
 
+	// set proposal extension
+	prepareOpt := func(bApp *baseapp.BaseApp) {
+		proposalHandler := checkpointing.NewProposalHandler(
+			logger, &checkpointingKeeper, bApp.Mempool(), bApp)
+		proposalHandler.SetHandlers(bApp)
+	}
+	baseAppOptions = append(baseAppOptions, prepareOpt)
+
+	// set vote extension
+	voteExtOp := func(bApp *baseapp.BaseApp) {
+		voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &checkpointingKeeper)
+		voteExtHandler.SetHandlers(bApp)
+	}
+	baseAppOptions = append(baseAppOptions, voteExtOp)
+
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
-
-	// set handlers of vote extension
-	voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &checkpointingKeeper)
-	voteExtHandler.SetHandlers(bApp)
-	proposalHandler := checkpointing.NewProposalHandler(
-		logger, &checkpointingKeeper, bApp.Mempool(), bApp)
-	proposalHandler.SetHandlers(bApp)
 
 	tkeys := storetypes.NewTransientStoreKeys(
 		paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
@@ -747,7 +755,7 @@ func NewBabylonApp(
 	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
 
-	// Create static IBC router, add ibc-tranfer module route, then set and seal it
+	// Create static IBC router, add ibc-transfer module route, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(zctypes.ModuleName, zoneConciergeStack).

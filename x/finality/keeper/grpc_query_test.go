@@ -4,13 +4,16 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/finality/keeper"
 	"github.com/babylonchain/babylon/x/finality/types"
 )
 
@@ -174,6 +177,78 @@ func FuzzVotesAtHeight(f *testing.F) {
 		}
 		if len(fpsFoundMap) != len(votedFpsMap) {
 			t.Errorf("Some finality providers were missed. Got %d while %d were expected", len(fpsFoundMap), len(votedFpsMap))
+		}
+	})
+}
+
+func FuzzListPubRandCommit(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// Setup keeper and context
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		fKeeper, ctx := testkeeper.FinalityKeeper(t, bsKeeper, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+		ms := keeper.NewMsgServerImpl(*fKeeper)
+
+		// set random BTC SK PK
+		sk, _, err := datagen.GenRandomBTCKeyPair(r)
+		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey())
+		require.NoError(t, err)
+
+		// register finality provider
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, sk)
+		require.NoError(t, err)
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(fp, nil).AnyTimes()
+		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(true).AnyTimes()
+
+		numPrCommitList := datagen.RandomInt(r, 10) + 1
+		prCommitList := []*types.PubRandCommit{}
+
+		// set a list of random public randomness commitment
+		startHeight := datagen.RandomInt(r, 10) + 1
+		for i := uint64(0); i < numPrCommitList; i++ {
+			numPubRand := datagen.RandomInt(r, 10) + 100
+			randListInfo, err := datagen.GenRandomPubRandList(r, numPubRand)
+			require.NoError(t, err)
+			prCommit := &types.PubRandCommit{
+				StartHeight: startHeight,
+				NumPubRand:  numPubRand,
+				Commitment:  randListInfo.Commitment,
+			}
+			msg := &types.MsgCommitPubRandList{
+				Signer:      datagen.GenRandomAccount().Address,
+				FpBtcPk:     bip340PK,
+				StartHeight: startHeight,
+				NumPubRand:  numPubRand,
+				Commitment:  prCommit.Commitment,
+			}
+			hash, err := msg.HashToSign()
+			require.NoError(t, err)
+			schnorrSig, err := schnorr.Sign(sk, hash)
+			require.NoError(t, err)
+			msg.Sig = bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
+			_, err = ms.CommitPubRandList(ctx, msg)
+			require.NoError(t, err)
+
+			prCommitList = append(prCommitList, prCommit)
+
+			startHeight += numPubRand
+		}
+
+		resp, err := fKeeper.ListPubRandCommit(ctx, &types.QueryListPubRandCommitRequest{
+			FpBtcPkHex: bip340PK.MarshalHex(),
+		})
+		require.NoError(t, err)
+
+		for _, prCommit := range prCommitList {
+			prCommitResp, ok := resp.PubRandCommitMap[prCommit.StartHeight]
+			require.True(t, ok)
+			require.Equal(t, prCommitResp.NumPubRand, prCommit.NumPubRand)
+			require.Equal(t, prCommitResp.Commitment, prCommit.Commitment)
 		}
 	})
 }

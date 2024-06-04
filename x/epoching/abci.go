@@ -29,8 +29,6 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// record the current AppHash
-	k.RecordAppHash(ctx)
 
 	// if this block is the first block of the next epoch
 	// note that we haven't incremented the epoch number yet
@@ -84,7 +82,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsLastBlock(ctx) {
 		// finalise this epoch, i.e., record the current header and the Merkle root of all AppHashs in this epoch
-		if err := k.RecordLastHeaderAndAppHashRoot(ctx); err != nil {
+		if err := k.RecordLastHeaderTime(ctx); err != nil {
 			return nil, err
 		}
 		// get all msgs in the msg queue
