@@ -491,7 +491,7 @@ func VerifyBIP322SigPop(
 
 // VerifyBIP322 verifies the validity of PoP where Bitcoin signature is in BIP-322
 // after decoding pop.BtcSig to bip322Sig which contains sig and address,
-// 1. verify whether bip322 pop signature where msg=signedMsg
+// verify whether bip322 pop signature where msg=signedMsg
 func VerifyBIP322(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKey, signedMsg []byte, net *chaincfg.Params) error {
 	if sigType != BTCSigType_BIP322 {
 		return fmt.Errorf("the Bitcoin signature in this proof of possession is not using BIP-322 encoding")
@@ -507,7 +507,7 @@ func VerifyBIP322(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubK
 		return err
 	}
 
-	// 1. Verify Bip322 proof of possession signature
+	// Verify Bip322 proof of possession signature
 	if err := VerifyBIP322SigPop(
 		signedMsg,
 		bip322Sig.Address,
