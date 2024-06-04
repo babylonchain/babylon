@@ -120,9 +120,9 @@ func NewPoPBTCWithECDSABTCSig(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*Pr
 
 	// generate pop.BtcSig = ecdsa_sign(sk_BTC, pop.BabylonSig)
 	// NOTE: ecdsa.Sign has to take the message as string.
-	// So we have to hex babylonSig before signing
-	babylonSigHex := hex.EncodeToString(addr.Bytes())
-	btcSig, err := ecdsa.Sign(btcSK, babylonSigHex)
+	// So we have to hex addr before signing
+	addrHex := hex.EncodeToString(addr.Bytes())
+	btcSig, err := ecdsa.Sign(btcSK, addrHex)
 	if err != nil {
 		return nil, err
 	}
