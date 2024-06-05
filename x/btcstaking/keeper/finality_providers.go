@@ -67,6 +67,29 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	return nil
 }
 
+// JailFinalityProvider jails a finality provider with the given PK
+// A jailed finality provider will temporarily lose voting power
+func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	// ensure finality provider exists
+	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+	if err != nil {
+		return err
+	}
+
+	// ensure finality provider is not slashed yet
+	if fp.IsJailed() {
+		return fmt.Errorf("the finality provider is already jailed")
+	}
+
+	// set finality provider to be slashed
+	fp.Jailed = true
+	k.SetFinalityProvider(ctx, fp)
+
+	// TODO record jailed event
+
+	return nil
+}
+
 // finalityProviderStore returns the KVStore of the finality provider set
 // prefix: FinalityProviderKey
 // key: Bitcoin secp256k1 PK

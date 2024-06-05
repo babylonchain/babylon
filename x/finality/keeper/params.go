@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/babylonchain/babylon/x/finality/types"
 )
 
