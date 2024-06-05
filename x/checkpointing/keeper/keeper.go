@@ -66,20 +66,30 @@ func (k Keeper) SealCheckpoint(ctx context.Context, ckptWithMeta *types.RawCheck
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	// if reaching this line, it means ckptWithMeta is updated,
+	// and we need to write the updated ckptWithMeta back to KVStore
+	if err := k.AddRawCheckpoint(ctx, ckptWithMeta); err != nil {
+		return err
+	}
+
 	// record state update of Sealed
 	ckptWithMeta.RecordStateUpdate(ctx, types.Sealed)
-	// log in console
-	k.Logger(sdkCtx).Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
 	// emit event
 	if err := sdkCtx.EventManager().EmitTypedEvent(
 		&types.EventCheckpointSealed{Checkpoint: ckptWithMeta},
 	); err != nil {
 		panic(fmt.Errorf("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum))
 	}
+	// invoke hook
+	if err := k.AfterRawCheckpointSealed(ctx, ckptWithMeta.Ckpt.EpochNum); err != nil {
+		k.Logger(sdkCtx).Error("failed to trigger checkpoint sealed hook for epoch %v: %v", ckptWithMeta.Ckpt.EpochNum, err)
+	}
 
-	// if reaching this line, it means ckptWithMeta is updated,
-	// and we need to write the updated ckptWithMeta back to KVStore
-	return k.AddRawCheckpoint(ctx, ckptWithMeta)
+	// log in console
+	k.Logger(sdkCtx).Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
+
+	return nil
 }
 
 func (k Keeper) VerifyBLSSig(ctx context.Context, sig *types.BlsSig) error {

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,6 +30,9 @@ func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 func (h Hooks) BeforeSlashThreshold(ctx context.Context, valSet etypes.ValidatorSet) {}
 
 func (h Hooks) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error {
+	return nil
+}
+func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
 	return nil
 }
 func (h Hooks) AfterRawCheckpointConfirmed(ctx context.Context, epoch uint64) error {

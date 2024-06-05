@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -17,6 +18,15 @@ func NewMultiCheckpointingHooks(hooks ...CheckpointingHooks) MultiCheckpointingH
 func (h MultiCheckpointingHooks) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error {
 	for i := range h {
 		if err := h[i].AfterBlsKeyRegistered(ctx, valAddr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h MultiCheckpointingHooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
+	for i := range h {
+		if err := h[i].AfterRawCheckpointSealed(ctx, epoch); err != nil {
 			return err
 		}
 	}

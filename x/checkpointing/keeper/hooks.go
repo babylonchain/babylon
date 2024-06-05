@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -13,6 +14,14 @@ var _ types.CheckpointingHooks = Keeper{}
 func (k Keeper) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error {
 	if k.hooks != nil {
 		return k.hooks.AfterBlsKeyRegistered(ctx, valAddr)
+	}
+	return nil
+}
+
+// AfterRawCheckpointSealed - call hook if the checkpoint is sealed
+func (k Keeper) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
+	if k.hooks != nil {
+		return k.hooks.AfterRawCheckpointSealed(ctx, epoch)
 	}
 	return nil
 }
