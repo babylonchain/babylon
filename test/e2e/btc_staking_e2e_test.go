@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -189,6 +190,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		uint16(unbondingTime),
 		btcutil.Amount(unbondingValue),
 		delUnbondingSlashingSig,
+		nonValidatorNode.WalletName,
 	)
 
 	// wait for a block so that above txs take effect
@@ -525,6 +527,165 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	unbondDel, err := ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
 	s.NoError(err)
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
+}
+
+// Test6 is an end-to-end test for user unbonding
+func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	w1, w2, wMultisig := "multisig-holder-1", "multisig-holder-2", "multisig-2of2"
+
+	addr1 := nonValidatorNode.KeysAdd(w1)
+	addr2 := nonValidatorNode.KeysAdd(w2)
+	multisigAddr := nonValidatorNode.KeysAdd(wMultisig, []string{fmt.Sprintf("--multisig=%s,%s", w1, w2), "--multisig-threshold=2"}...)
+
+	fmt.Printf("addr1: %s", addr1)
+	fmt.Printf("addr2: %s", addr2)
+	fmt.Printf("multisigAddr: %s", multisigAddr)
+	/*
+		create a random finality provider on Babylon
+	*/
+	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
+	fp, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nonValidatorNode.SecretKey)
+	s.NoError(err)
+	nonValidatorNode.CreateFinalityProvider(fp.BabylonPk, fp.BtcPk, fp.Pop, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
+
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+
+	// query the existence of finality provider and assert equivalence
+	actualFps := nonValidatorNode.QueryFinalityProviders()
+	s.Len(actualFps, 1)
+	s.equalFinalityProviderResp(fp, actualFps[0])
+
+	// creates multisig
+	// babylond keys add muti2-2 --home ~/.babylond/local-testnet/node0/babylond/ --keyring-backend test --multisig node0,tests --multisig-threshold 2
+	nonValidatorNode.BankSend(multisigAddr, "100000ubbn")
+
+	/*
+		create a random BTC delegation under this finality provider
+	*/
+	// BTC staking params, BTC delegation key pairs and PoP
+	params := nonValidatorNode.QueryBTCStakingParams()
+
+	// minimal required unbonding time
+	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+
+	// get covenant BTC PKs
+	covenantBTCPKs := []*btcec.PublicKey{}
+	for _, covenantPK := range params.CovenantPks {
+		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
+	}
+	// NOTE: we use the multisig address for the BTC delegation
+	stakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
+	pop, err := bstypes.NewPoPBTC(stakerAddr, delBTCSK)
+	s.NoError(err)
+	// generate staking tx and slashing tx
+	stakingTimeBlocks := uint16(math.MaxUint16)
+	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
+		r,
+		s.T(),
+		net,
+		delBTCSK,
+		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
+		covenantBTCPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		params.SlashingAddress,
+		params.SlashingRate,
+		unbondingTime,
+	)
+
+	stakingMsgTx := testStakingInfo.StakingTx
+	stakingTxHash := stakingMsgTx.TxHash().String()
+	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+
+	// generate proper delegator sig
+	delegatorSig, err := testStakingInfo.SlashingTx.Sign(
+		stakingMsgTx,
+		datagen.StakingOutIdx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		delBTCSK,
+	)
+	s.NoError(err)
+
+	// submit staking tx to Bitcoin and get inclusion proof
+	currentBtcTipResp, err := nonValidatorNode.QueryTip()
+	s.NoError(err)
+	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	s.NoError(err)
+
+	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
+	nonValidatorNode.InsertHeader(&blockWithStakingTx.HeaderBytes)
+	// make block k-deep
+	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
+		nonValidatorNode.InsertNewEmptyBtcHeader(r)
+	}
+	stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
+
+	// generate BTC undelegation stuff
+	stkTxHash := testStakingInfo.StakingTx.TxHash()
+	unbondingValue := stakingValue - datagen.UnbondingTxFee // TODO: parameterise fee
+	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		s.T(),
+		net,
+		delBTCSK,
+		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
+		covenantBTCPKs,
+		covenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		stakingTimeBlocks,
+		unbondingValue,
+		params.SlashingAddress,
+		params.SlashingRate,
+		unbondingTime,
+	)
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
+	s.NoError(err)
+
+	fileNameTxBTCDelegation := "/home/babylon/babylondata/tx.json"
+	// submit the message for creating BTC delegation
+	jsonTx := nonValidatorNode.CreateBTCDelegationGenerateOnly(
+		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		pop,
+		stakingTxInfo,
+		fp.BtcPk,
+		stakingTimeBlocks,
+		btcutil.Amount(stakingValue),
+		testStakingInfo.SlashingTx,
+		delegatorSig,
+		testUnbondingInfo.UnbondingTx,
+		testUnbondingInfo.SlashingTx,
+		uint16(unbondingTime),
+		btcutil.Amount(unbondingValue),
+		delUnbondingSlashingSig,
+		wMultisig,
+	)
+
+	nonValidatorNode.WriteFile(fileNameTxBTCDelegation, jsonTx)
+
+	nonValidatorNode.TxMultisignBroadcast(wMultisig, fileNameTxBTCDelegation, []string{w1, w2})
+
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.WaitForNextBlock()
+
+	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	s.Len(pendingDelSet, 1)
+	pendingDels := pendingDelSet[0]
+	s.Len(pendingDels.Dels, 1)
+	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
+
+	// check delegation
+	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
+	s.NotNil(delegation)
 }
 
 // ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
