@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"path/filepath"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -529,7 +530,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
 }
 
-// Test6 is an end-to-end test for user unbonding
+// Test6MultisigBTCDelegation is an end-to-end test for multisig debug
 func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
@@ -649,7 +650,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
 
-	fileNameTxBTCDelegation := "/home/babylon/babylondata/tx.json"
+	fullPathTxBTCDelegation := "/home/babylon/babylondata/tx.json"
 	// submit the message for creating BTC delegation
 	jsonTx := nonValidatorNode.CreateBTCDelegationGenerateOnly(
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
@@ -665,12 +666,12 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 		uint16(unbondingTime),
 		btcutil.Amount(unbondingValue),
 		delUnbondingSlashingSig,
-		wMultisig,
+		multisigAddr,
 	)
 
-	nonValidatorNode.WriteFile(fileNameTxBTCDelegation, jsonTx)
+	nonValidatorNode.WriteFile(filepath.Base(fullPathTxBTCDelegation), jsonTx)
 
-	nonValidatorNode.TxMultisignBroadcast(wMultisig, fileNameTxBTCDelegation, []string{w1, w2})
+	nonValidatorNode.TxMultisignBroadcast(wMultisig, fullPathTxBTCDelegation, []string{w1, w2})
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()

@@ -1,10 +1,13 @@
 package chain
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -25,7 +28,7 @@ import (
 
 func (n *NodeConfig) GetWallet(walletName string) string {
 	n.LogActionF("retrieving wallet %s", walletName)
-	cmd := []string{"babylond", "keys", "show", walletName, "--keyring-backend=test"}
+	cmd := []string{"babylond", "keys", "show", walletName, "--keyring-backend=test", "--home=/home/babylon/babylondata"}
 	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
 	require.NoError(n.t, err)
 	re := regexp.MustCompile("bbn(.{39})")
@@ -249,7 +252,7 @@ func (n *NodeConfig) WithdrawReward(sType, from string) {
 }
 
 // TxSign sign a tx in a file.
-func (n *NodeConfig) TxSign(walletName, multisigAddr, txFileFullPath, outputFileFullPath string, overallFlags ...string) {
+func (n *NodeConfig) TxSign(walletName, multisigAddr, txFileFullPath, fileName string, overallFlags ...string) {
 	n.LogActionF("%s sign tx file %s", walletName, txFileFullPath)
 	cmd := []string{
 		"babylond", "tx", "sign", txFileFullPath,
@@ -258,13 +261,14 @@ func (n *NodeConfig) TxSign(walletName, multisigAddr, txFileFullPath, outputFile
 		fmt.Sprintf("--chain-id=%s", n.chainId),
 		"--keyring-backend=test", "--home=/home/babylon/babylondata",
 	}
-	cmd = append(cmd, overallFlags...)
-	_, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, ">", outputFileFullPath), "")
+	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
+
+	n.WriteFile(fileName, outBuf.String())
 }
 
 // TxMultisign sign a tx in a file.
-func (n *NodeConfig) TxMultisign(walletNameMultisig, txFileFullPath, outputFileFullPath string, signedFiles []string, overallFlags ...string) {
+func (n *NodeConfig) TxMultisign(walletNameMultisig, txFileFullPath, outputFileName string, signedFiles []string, overallFlags ...string) {
 	n.LogActionF("%s multisig tx file %s", walletNameMultisig, txFileFullPath)
 	cmd := []string{
 		"babylond", "tx", "multisign", txFileFullPath, walletNameMultisig,
@@ -272,9 +276,10 @@ func (n *NodeConfig) TxMultisign(walletNameMultisig, txFileFullPath, outputFileF
 		"--keyring-backend=test", "--home=/home/babylon/babylondata",
 	}
 	cmd = append(cmd, signedFiles...)
-	cmd = append(cmd, overallFlags...)
-	_, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, ">", outputFileFullPath), "")
+	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
+
+	n.WriteFile(outputFileName, outBuf.String())
 }
 
 // TxBroadcast broadcast a signed transaction to the chain.
@@ -294,19 +299,24 @@ func (n *NodeConfig) TxMultisignBroadcast(walletNameMultisig, txFileFullPath str
 
 	signedFiles := make([]string, len(walleNameSigners))
 	for i, wName := range walleNameSigners {
-		outputFilePath := fmt.Sprintf("/home/babylon/babylondata/tx-signed-%s.json", wName)
-		n.TxSign(wName, multisigAddr, txFileFullPath, outputFilePath)
+		fileName := fmt.Sprintf("tx-signed-%s.json", wName)
+		outputFilePath := fmt.Sprintf("/home/babylon/babylondata/%s", fileName)
+		n.TxSign(wName, multisigAddr, txFileFullPath, fileName)
 		signedFiles[i] = outputFilePath
 	}
 
 	signedTxToBroadcast := "/home/babylon/babylondata/tx-multisigned.json"
-	n.TxMultisign(walletNameMultisig, txFileFullPath, signedTxToBroadcast, signedFiles)
+	n.TxMultisign(walletNameMultisig, txFileFullPath, filepath.Base(signedTxToBroadcast), signedFiles)
 	n.TxBroadcast(signedTxToBroadcast)
 }
 
-// WriteFile writes a new file inside the container
-func (n *NodeConfig) WriteFile(fileFullPath, content string) {
-	n.containerManager.ExecCmd(n.t, n.Name, []string{"echo", content, ">", fileFullPath}, "")
+// WriteFile writes a new file
+func (n *NodeConfig) WriteFile(fileName, content string) {
+	b := bytes.NewBufferString(content)
+	fileFullPath := filepath.Join(n.ConfigDir, fileName)
+
+	err := os.WriteFile(fileFullPath, b.Bytes(), 0644)
+	require.NoError(n.t, err)
 }
 
 // ParseBTCHeaderInfoResponseToInfo turns an BTCHeaderInfoResponse back to BTCHeaderInfo.
