@@ -240,12 +240,12 @@ func TestPoPBTCValidateBasic(t *testing.T) {
 			fmt.Errorf("invalid BTC BIP340 signature: bytes cannot be converted to a *schnorr.Signature object"),
 		},
 		{
-			"invalid: BIP 322 - bad sig with ECDSA",
+			"invalid: BIP 322 - bad sig",
 			&types.ProofOfPossessionBTC{
 				BtcSigType: types.BTCSigType_BIP322,
-				BtcSig:     popECDSA.BtcSig,
+				BtcSig:     []byte("ss"),
 			},
-			fmt.Errorf("invalid BTC BIP322 signature: proto: illegal wireType 7"),
+			fmt.Errorf("invalid BTC BIP322 signature: unexpected EOF"),
 		},
 		{
 			"invalid: ECDSA - bad sig",
