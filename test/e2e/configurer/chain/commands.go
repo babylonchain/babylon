@@ -272,7 +272,7 @@ func (n *NodeConfig) TxMultisigSign(walletName, multisigAddr, txFileFullPath, fi
 }
 
 // TxMultisign sign a tx in a file.
-func (n *NodeConfig) TxMultisign(walletNameMultisig, txFileFullPath, outputFileName string, signedFiles []string, overallFlags ...string) {
+func (n *NodeConfig) TxMultisign(walletNameMultisig, txFileFullPath, outputFileName string, signedFiles []string, overallFlags ...string) (signedTxFilePath string) {
 	n.LogActionF("%s multisig tx file %s", walletNameMultisig, txFileFullPath)
 	cmd := []string{
 		"babylond", "tx", "multisign", txFileFullPath, walletNameMultisig,
@@ -283,7 +283,7 @@ func (n *NodeConfig) TxMultisign(walletNameMultisig, txFileFullPath, outputFileN
 	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
 
-	n.WriteFile(outputFileName, outBuf.String())
+	return n.WriteFile(outputFileName, outBuf.String())
 }
 
 // TxBroadcast broadcast a signed transaction to the chain.
@@ -304,13 +304,10 @@ func (n *NodeConfig) TxMultisignBroadcast(walletNameMultisig, txFileFullPath str
 	signedFiles := make([]string, len(walleNameSigners))
 	for i, wName := range walleNameSigners {
 		fileName := fmt.Sprintf("tx-signed-%s.json", wName)
-		outputFilePath := filepath.Join(containers.BabylonHomePath, fileName)
-		n.TxMultisigSign(wName, multisigAddr, txFileFullPath, fileName)
-		signedFiles[i] = outputFilePath
+		signedFiles[i] = n.TxMultisigSign(wName, multisigAddr, txFileFullPath, fileName)
 	}
 
-	signedTxToBroadcast := filepath.Join(containers.BabylonHomePath, "tx-multisigned.json")
-	n.TxMultisign(walletNameMultisig, txFileFullPath, filepath.Base(signedTxToBroadcast), signedFiles)
+	signedTxToBroadcast := n.TxMultisign(walletNameMultisig, txFileFullPath, "tx-multisigned.json", signedFiles)
 	n.TxBroadcast(signedTxToBroadcast)
 }
 
