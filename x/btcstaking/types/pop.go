@@ -120,9 +120,9 @@ func NewPoPBTCWithECDSABTCSig(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*Pr
 
 	// generate pop.BtcSig = ecdsa_sign(sk_BTC, pop.BabylonSig)
 	// NOTE: ecdsa.Sign has to take the message as string.
-	// So we have to hex babylonSig before signing
-	babylonSigHex := hex.EncodeToString(addr.Bytes())
-	btcSig, err := ecdsa.Sign(btcSK, babylonSigHex)
+	// So we have to hex addr before signing
+	addrHex := hex.EncodeToString(addr.Bytes())
+	btcSig, err := ecdsa.Sign(btcSK, addrHex)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +491,7 @@ func VerifyBIP322SigPop(
 
 // VerifyBIP322 verifies the validity of PoP where Bitcoin signature is in BIP-322
 // after decoding pop.BtcSig to bip322Sig which contains sig and address,
-// 1. verify whether bip322 pop signature where msg=signedMsg
+// verify whether bip322 pop signature where msg=signedMsg
 func VerifyBIP322(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKey, signedMsg []byte, net *chaincfg.Params) error {
 	if sigType != BTCSigType_BIP322 {
 		return fmt.Errorf("the Bitcoin signature in this proof of possession is not using BIP-322 encoding")
@@ -507,7 +507,7 @@ func VerifyBIP322(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubK
 		return err
 	}
 
-	// 1. Verify Bip322 proof of possession signature
+	// Verify Bip322 proof of possession signature
 	if err := VerifyBIP322SigPop(
 		signedMsg,
 		bip322Sig.Address,
@@ -615,5 +615,25 @@ func (pop *ProofOfPossessionBTC) ValidateBasic() error {
 		return fmt.Errorf("empty BTC signature")
 	}
 
-	return nil
+	switch pop.BtcSigType {
+	case BTCSigType_BIP340:
+		_, err := bbn.NewBIP340Signature(pop.BtcSig)
+		if err != nil {
+			return fmt.Errorf("invalid BTC BIP340 signature: %w", err)
+		}
+		return nil
+	case BTCSigType_BIP322:
+		var bip322Sig BIP322Sig
+		if err := bip322Sig.Unmarshal(pop.BtcSig); err != nil {
+			return fmt.Errorf("invalid BTC BIP322 signature: %w", err)
+		}
+		return nil
+	case BTCSigType_ECDSA:
+		if len(pop.BtcSig) != 65 { // size of compact signature
+			return fmt.Errorf("invalid BTC ECDSA signature size")
+		}
+		return nil
+	default:
+		return fmt.Errorf("invalid BTC signature type")
+	}
 }

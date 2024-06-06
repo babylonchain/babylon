@@ -196,33 +196,64 @@ func TestPoPBTCValidateBasic(t *testing.T) {
 	require.NoError(t, err)
 
 	addrToSign := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
-	sigHash := tmhash.Sum(addrToSign)
-	btcSig, err := schnorr.Sign(btcSK, sigHash)
+
+	popBip340, err := types.NewPoPBTC(addrToSign, btcSK)
+	require.NoError(t, err)
+
+	popBip322, err := types.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, &chaincfg.MainNetParams)
+	require.NoError(t, err)
+
+	popECDSA, err := types.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
 	require.NoError(t, err)
 
 	tcs := []struct {
 		title  string
-		pop    types.ProofOfPossessionBTC
+		pop    *types.ProofOfPossessionBTC
 		expErr error
 	}{
 		{
-			"valid: some sig",
-			types.ProofOfPossessionBTC{
-				BtcSig: []byte("something"),
-			},
+			"valid: BIP 340",
+			popBip340,
 			nil,
 		},
 		{
-			"valid: correct signature",
-			types.ProofOfPossessionBTC{
-				BtcSig: btcSig.Serialize(),
-			},
+			"valid: BIP 322",
+			popBip322,
+			nil,
+		},
+		{
+			"valid: ECDSA",
+			popECDSA,
 			nil,
 		},
 		{
 			"invalid: nil sig",
-			types.ProofOfPossessionBTC{},
+			&types.ProofOfPossessionBTC{},
 			fmt.Errorf("empty BTC signature"),
+		},
+		{
+			"invalid: BIP 340 - bad sig",
+			&types.ProofOfPossessionBTC{
+				BtcSigType: types.BTCSigType_BIP340,
+				BtcSig:     popBip322.BtcSig,
+			},
+			fmt.Errorf("invalid BTC BIP340 signature: bytes cannot be converted to a *schnorr.Signature object"),
+		},
+		{
+			"invalid: BIP 322 - bad sig",
+			&types.ProofOfPossessionBTC{
+				BtcSigType: types.BTCSigType_BIP322,
+				BtcSig:     []byte("ss"),
+			},
+			fmt.Errorf("invalid BTC BIP322 signature: unexpected EOF"),
+		},
+		{
+			"invalid: ECDSA - bad sig",
+			&types.ProofOfPossessionBTC{
+				BtcSigType: types.BTCSigType_ECDSA,
+				BtcSig:     popBip340.BtcSig,
+			},
+			fmt.Errorf("invalid BTC ECDSA signature size"),
 		},
 	}
 
