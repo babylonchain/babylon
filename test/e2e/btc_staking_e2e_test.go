@@ -205,6 +205,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	// check delegation
 	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
 	s.NotNil(delegation)
+	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
 }
 
 // Test2SubmitCovenantSignature is an end-to-end test for user
