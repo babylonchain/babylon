@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"path/filepath"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -537,30 +536,12 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
+	randomFP := s.CreateRandomFP(nonValidatorNode)
 	w1, w2, wMultisig := "multisig-holder-1", "multisig-holder-2", "multisig-2of2"
 
-	addr1 := nonValidatorNode.KeysAdd(w1)
-	addr2 := nonValidatorNode.KeysAdd(w2)
+	nonValidatorNode.KeysAdd(w1)
+	nonValidatorNode.KeysAdd(w2)
 	multisigAddr := nonValidatorNode.KeysAdd(wMultisig, []string{fmt.Sprintf("--multisig=%s,%s", w1, w2), "--multisig-threshold=2"}...)
-
-	fmt.Printf("addr1: %s", addr1)
-	fmt.Printf("addr2: %s", addr2)
-	fmt.Printf("multisigAddr: %s", multisigAddr)
-	/*
-		create a random finality provider on Babylon
-	*/
-	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	fp, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nonValidatorNode.SecretKey)
-	s.NoError(err)
-	nonValidatorNode.CreateFinalityProvider(fp.BabylonPk, fp.BtcPk, fp.Pop, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
-
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
-
-	// query the existence of finality provider and assert equivalence
-	actualFps := nonValidatorNode.QueryFinalityProviders()
-	s.Len(actualFps, 1)
-	s.equalFinalityProviderResp(fp, actualFps[0])
 
 	// creates multisig
 	// babylond keys add muti2-2 --home ~/.babylond/local-testnet/node0/babylond/ --keyring-backend test --multisig node0,tests --multisig-threshold 2
@@ -591,7 +572,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 		s.T(),
 		net,
 		delBTCSK,
-		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
+		[]*btcec.PublicKey{randomFP.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
 		covenantQuorum,
 		stakingTimeBlocks,
@@ -637,7 +618,7 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 		s.T(),
 		net,
 		delBTCSK,
-		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
+		[]*btcec.PublicKey{randomFP.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
 		covenantQuorum,
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
@@ -650,13 +631,12 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
 
-	fullPathTxBTCDelegation := "/home/babylon/babylondata/tx.json"
 	// submit the message for creating BTC delegation
 	jsonTx := nonValidatorNode.CreateBTCDelegationGenerateOnly(
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
 		stakingTxInfo,
-		fp.BtcPk,
+		randomFP.BtcPk,
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
@@ -669,15 +649,14 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 		multisigAddr,
 	)
 
-	nonValidatorNode.WriteFile(filepath.Base(fullPathTxBTCDelegation), jsonTx)
-
+	fullPathTxBTCDelegation := nonValidatorNode.WriteFile("tx.json", jsonTx)
 	nonValidatorNode.TxMultisignBroadcast(wMultisig, fullPathTxBTCDelegation, []string{w1, w2})
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 	nonValidatorNode.WaitForNextBlock()
 
-	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(randomFP.BtcPk.MarshalHex())
 	s.Len(pendingDelSet, 1)
 	pendingDels := pendingDelSet[0]
 	s.Len(pendingDels.Dels, 1)
@@ -786,4 +765,21 @@ func (s *BTCStakingTestSuite) equalFinalityProviderResp(fp *bstypes.FinalityProv
 	s.Equal(fp.Pop, fpResp.Pop)
 	s.Equal(fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	s.Equal(fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
+}
+
+// CreateRandomFP creates a random finality provider.
+func (s *BTCStakingTestSuite) CreateRandomFP(node *chain.NodeConfig) (fp *bstypes.FinalityProvider) {
+	fp, err := datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, node.SecretKey)
+	s.NoError(err)
+	node.CreateFinalityProvider(fp.BabylonPk, fp.BtcPk, fp.Pop, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
+
+	// wait for a block so that above txs take effect
+	node.WaitForNextBlock()
+
+	// query the existence of finality provider and assert equivalence
+	actualFps := node.QueryFinalityProviders()
+	s.Len(actualFps, 1)
+	s.equalFinalityProviderResp(fp, actualFps[0])
+
+	return fp
 }

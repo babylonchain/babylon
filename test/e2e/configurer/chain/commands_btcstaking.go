@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonchain/babylon/test/e2e/containers"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
@@ -95,7 +96,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
 		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
 		fmt.Sprintf("--from=%s", fromWalletName),
-		fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata",
+		n.FlagChainID(), "-b=sync", "--yes", flagKeyringTest, "--log_format=json", containers.FlagHome,
 	}
 	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
@@ -154,8 +155,8 @@ func (n *NodeConfig) CreateBTCDelegationGenerateOnly(
 	cmd := []string{
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
 		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
-		fmt.Sprintf("--from=%s", fromWalletName), "--home=/home/babylon/babylondata", "--keyring-backend=test",
-		fmt.Sprintf("--chain-id=%s", n.chainId), "--log_format=json", "--generate-only",
+		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
+		n.FlagChainID(), "--log_format=json", "--generate-only",
 	}
 	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
