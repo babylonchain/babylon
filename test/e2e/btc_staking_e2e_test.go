@@ -177,6 +177,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		btcutil.Amount(unbondingValue),
 		delUnbondingSlashingSig,
 		nonValidatorNode.WalletName,
+		false,
 	)
 
 	// wait for a block so that above txs take effect
@@ -517,7 +518,9 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
 }
 
-// Test6MultisigBTCDelegation is an end-to-end test for multisig debug
+// Test6MultisigBTCDelegation is an end-to-end test to create a BTC delegation
+// with multisignature. It also utilizes the cacheFP populated at
+// Test1CreateFinalityProviderAndDelegation.
 func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
@@ -528,13 +531,11 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 
 	nonValidatorNode.KeysAdd(w1)
 	nonValidatorNode.KeysAdd(w2)
+	// creates and fund multisig
 	multisigAddr := nonValidatorNode.KeysAdd(wMultisig, []string{fmt.Sprintf("--multisig=%s,%s", w1, w2), "--multisig-threshold=2"}...)
-
-	// creates multisig
-	// babylond keys add muti2-2 --home ~/.babylond/local-testnet/node0/babylond/ --keyring-backend test --multisig node0,tests --multisig-threshold 2
 	nonValidatorNode.BankSend(multisigAddr, "100000ubbn")
 
-	// create a random BTC delegation under this finality provider
+	// create a random BTC delegation under the cached finality provider
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
 
@@ -542,22 +543,19 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
 
 	// NOTE: we use the multisig address for the BTC delegation
-	stakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
-	pop, err := bstypes.NewPoPBTC(stakerAddr, delBTCSK)
+	multisigStakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
+	pop, err := bstypes.NewPoPBTC(multisigStakerAddr, delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
 	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks)
 
-	stakingMsgTx := testStakingInfo.StakingTx
-	stakingTxHash := stakingMsgTx.TxHash().String()
-
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
 
-	// submit the message for creating BTC delegation
-	jsonTx := nonValidatorNode.CreateBTCDelegationGenerateOnly(
+	// submit the message for only generate the Tx to create BTC delegation
+	jsonTx := nonValidatorNode.CreateBTCDelegation(
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
 		stakingTxInfo,
@@ -572,16 +570,19 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
 		delUnbondingSlashingSig,
 		multisigAddr,
+		true,
 	)
 
+	// write the tx to a file
 	fullPathTxBTCDelegation := nonValidatorNode.WriteFile("tx.json", jsonTx)
+	// signs the tx with the 2 wallets and the multisig and broadcast the tx
 	nonValidatorNode.TxMultisignBroadcast(wMultisig, fullPathTxBTCDelegation, []string{w1, w2})
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlocks(2)
 
-	// check delegation
-	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
+	// check delegation with the multisig staker address exists.
+	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(delegation)
 	s.Equal(multisigAddr, delegation.BtcDelegation.StakerAddr)
 }
