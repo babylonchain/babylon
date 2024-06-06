@@ -31,7 +31,7 @@ var (
 	net = &chaincfg.SimNetParams
 	// finality provider
 	fpBTCSK, _, _ = datagen.GenRandomBTCKeyPair(r)
-	fp            *bstypes.FinalityProvider
+	cacheFP       *bstypes.FinalityProvider
 	// BTC delegation
 	delBTCSK, delBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
 	// covenant
@@ -194,6 +194,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
 	s.NotNil(delegation)
 	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
+	cacheFP = randomFP
 }
 
 // Test2SubmitCovenantSignature is an end-to-end test for user
@@ -205,7 +206,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.NoError(err)
 
 	// get last BTC delegation
-	pendingDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	pendingDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
 	s.Len(pendingDelsSet, 1)
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
@@ -290,7 +291,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	nonValidatorNode.WaitForNextBlock()
 
 	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 1)
 
 	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
@@ -349,7 +350,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	nonValidatorNode.WaitForNextBlock()
 	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
 	s.Eventually(func() bool {
-		prCommitMap = nonValidatorNode.QueryListPubRandCommit(fp.BtcPk)
+		prCommitMap = nonValidatorNode.QueryListPubRandCommit(cacheFP.BtcPk)
 		return len(prCommitMap) > 0
 	}, time.Minute, time.Second*5)
 	s.Equal(prCommitMap[activatedHeight].NumPubRand, msgCommitPubRandList.NumPubRand)
@@ -378,7 +379,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature
-	nonValidatorNode.AddFinalitySig(fp.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+	nonValidatorNode.AddFinalitySig(cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 	// ensure vote is eventually cast
 	nonValidatorNode.WaitForNextBlock()
@@ -388,7 +389,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		return len(votes) > 0
 	}, time.Minute, time.Second*5)
 	s.Equal(1, len(votes))
-	s.Equal(votes[0].MarshalHex(), fp.BtcPk.MarshalHex())
+	s.Equal(votes[0].MarshalHex(), cacheFP.BtcPk.MarshalHex())
 	// once the vote is cast, ensure block is finalised
 	finalizedBlock := nonValidatorNode.QueryIndexedBlock(activatedHeight)
 	s.NotEmpty(finalizedBlock)
@@ -480,7 +481,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 
-	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 1)
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
@@ -692,8 +693,7 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 	}
 
 	btcDel = &bstypes.BTCDelegation{
-		// missing BabylonPk, Pop
-		// these fields are not sent out to the client on BTCDelegationResponse
+		StakerAddr:       resp.StakerAddr,
 		BtcPk:            resp.BtcPk,
 		FpBtcPkList:      resp.FpBtcPkList,
 		StartHeight:      resp.StartHeight,
