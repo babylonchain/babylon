@@ -86,78 +86,15 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	// minimal required unbonding time
 	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
 
-	// get covenant BTC PKs
-	covenantBTCPKs := []*btcec.PublicKey{}
-	for _, covenantPK := range params.CovenantPks {
-		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
-	}
 	// NOTE: we use the node's address for the BTC delegation
 	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
 	pop, err := bstypes.NewPoPBTC(stakerAddr, delBTCSK)
 	s.NoError(err)
+
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
-	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
-		r,
-		s.T(),
-		net,
-		delBTCSK,
-		[]*btcec.PublicKey{randomFP.BtcPk.MustToBTCPK()},
-		covenantBTCPKs,
-		covenantQuorum,
-		stakingTimeBlocks,
-		stakingValue,
-		params.SlashingAddress,
-		params.SlashingRate,
-		unbondingTime,
-	)
+	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks)
 
-	stakingMsgTx := testStakingInfo.StakingTx
-	stakingTxHash := stakingMsgTx.TxHash().String()
-	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
-	s.NoError(err)
-
-	// generate proper delegator sig
-	delegatorSig, err := testStakingInfo.SlashingTx.Sign(
-		stakingMsgTx,
-		datagen.StakingOutIdx,
-		stakingSlashingPathInfo.GetPkScriptPath(),
-		delBTCSK,
-	)
-	s.NoError(err)
-
-	// submit staking tx to Bitcoin and get inclusion proof
-	currentBtcTipResp, err := nonValidatorNode.QueryTip()
-	s.NoError(err)
-	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
-	s.NoError(err)
-
-	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
-	nonValidatorNode.InsertHeader(&blockWithStakingTx.HeaderBytes)
-	// make block k-deep
-	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
-		nonValidatorNode.InsertNewEmptyBtcHeader(r)
-	}
-	stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
-
-	// generate BTC undelegation stuff
-	stkTxHash := testStakingInfo.StakingTx.TxHash()
-	unbondingValue := stakingValue - datagen.UnbondingTxFee // TODO: parameterise fee
-	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
-		r,
-		s.T(),
-		net,
-		delBTCSK,
-		[]*btcec.PublicKey{randomFP.BtcPk.MustToBTCPK()},
-		covenantBTCPKs,
-		covenantQuorum,
-		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
-		stakingTimeBlocks,
-		unbondingValue,
-		params.SlashingAddress,
-		params.SlashingRate,
-		unbondingTime,
-	)
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
 
@@ -174,7 +111,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		testUnbondingInfo.UnbondingTx,
 		testUnbondingInfo.SlashingTx,
 		uint16(unbondingTime),
-		btcutil.Amount(unbondingValue),
+		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
 		delUnbondingSlashingSig,
 		nonValidatorNode.WalletName,
 		false,
@@ -192,7 +129,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 
 	// check delegation
-	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
+	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(delegation)
 	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
 	cacheFP = randomFP
