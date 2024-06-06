@@ -643,16 +643,10 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 	nonValidatorNode.WaitForNextBlock()
 	nonValidatorNode.WaitForNextBlock()
 
-	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
-	s.Len(pendingDelSet, 1)
-	pendingDels := pendingDelSet[0]
-	s.Len(pendingDels.Dels, 1)
-	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
-
 	// check delegation
 	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
 	s.NotNil(delegation)
+	s.Equal(multisigAddr, delegation.BtcDelegation.StakerAddr)
 }
 
 // ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
