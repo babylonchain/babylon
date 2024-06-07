@@ -361,7 +361,7 @@ func initAccountWithCoins(app *BabylonApp, ctx sdk.Context, addr sdk.AccAddress,
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
 func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.ResponseFinalizeBlock, error) {
 	tx, err := simsutils.GenSignedMockTx(
-		rand.New(rand.NewSource(time.Now().UnixNano())),
+		rand.New(rand.NewSource(time.Now().UnixNano())), // #nosec: G404
 		txCfg,
 		msgs,
 		fees,
