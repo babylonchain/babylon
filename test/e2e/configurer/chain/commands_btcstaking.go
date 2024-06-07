@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonchain/babylon/test/e2e/containers"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
@@ -57,7 +58,10 @@ func (n *NodeConfig) CreateBTCDelegation(
 	unbondingTime uint16,
 	unbondingValue btcutil.Amount,
 	delUnbondingSlashingSig *bbn.BIP340Signature,
-) {
+	fromWalletName string,
+	generateOnly bool,
+	overallFlags ...string,
+) string {
 	n.LogActionF("creating BTC delegation")
 
 	btcPkHex := btcPk.MarshalHex()
@@ -92,11 +96,20 @@ func (n *NodeConfig) CreateBTCDelegation(
 	cmd := []string{
 		"babylond", "tx", "btcstaking", "create-btc-delegation",
 		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
-		fmt.Sprintf("--from=%s", n.WalletName),
+		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
+		n.FlagChainID(), "--log_format=json",
 	}
-	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+
+	if generateOnly {
+		cmd = append(cmd, "--generate-only")
+	} else {
+		cmd = append(cmd, "-b=sync", "--yes")
+	}
+
+	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
+	return outBuff.String()
 }
 
 func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte) {
