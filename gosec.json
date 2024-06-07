@@ -5,6 +5,7 @@
   },
   "G104": {
     "wire": ["WriteVarString"],
-    "io": ["WriteString"]
+    "io": ["WriteString"],
+    "types": ["RegisterQueryHandlerClient"]
   }
 }
