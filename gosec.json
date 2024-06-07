@@ -1,0 +1,10 @@
+{
+  "global": {
+    "nosec": "enabled",
+    "audit": "disabled"
+  },
+  "G104": {
+    "wire": ["WriteVarString"],
+    "io": ["WriteString"]
+  }
+}
