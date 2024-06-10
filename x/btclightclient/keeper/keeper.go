@@ -2,19 +2,15 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	corestoretypes "cosmossdk.io/core/store"
-	proto "github.com/cosmos/gogoproto/proto"
 
-	"cosmossdk.io/log"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type (
@@ -45,21 +41,6 @@ func NewKeeper(
 		btcConfig:    btcConfig,
 		bl:           bl,
 		authority:    authority,
-	}
-}
-
-func Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// EmitTypedEventWithLog emits an event and logs if it errors.
-func EmitTypedEventWithLog(ctx context.Context, evt proto.Message) {
-	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(evt); err != nil {
-		Logger(sdk.UnwrapSDKContext(ctx)).Error(
-			"faied to emit event",
-			"type", evt.String(),
-			"reason", err.Error(),
-		)
 	}
 }
 

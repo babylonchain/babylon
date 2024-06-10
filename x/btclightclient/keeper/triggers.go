@@ -10,19 +10,19 @@ func (k Keeper) triggerHeaderInserted(ctx context.Context, headerInfo *types.BTC
 	// Trigger AfterBTCHeaderInserted hook
 	k.AfterBTCHeaderInserted(ctx, headerInfo)
 	// Emit HeaderInserted event
-	EmitTypedEventWithLog(ctx, &types.EventBTCHeaderInserted{Header: headerInfo})
+	emitTypedEventWithLog(ctx, &types.EventBTCHeaderInserted{Header: headerInfo})
 }
 
 func (k Keeper) triggerRollBack(ctx context.Context, headerInfo *types.BTCHeaderInfo) {
 	// Trigger AfterBTCRollBack hook
 	k.AfterBTCRollBack(ctx, headerInfo)
 	// Emit BTCRollBack event
-	EmitTypedEventWithLog(ctx, &types.EventBTCRollBack{Header: headerInfo})
+	emitTypedEventWithLog(ctx, &types.EventBTCRollBack{Header: headerInfo})
 }
 
 func (k Keeper) triggerRollForward(ctx context.Context, headerInfo *types.BTCHeaderInfo) {
 	// Trigger AfterBTCRollForward hook
 	k.AfterBTCRollForward(ctx, headerInfo)
 	// Emit BTCRollForward event
-	EmitTypedEventWithLog(ctx, &types.EventBTCRollForward{Header: headerInfo})
+	emitTypedEventWithLog(ctx, &types.EventBTCRollForward{Header: headerInfo})
 }
