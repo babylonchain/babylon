@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -15,13 +14,10 @@ import (
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
-	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/types"
 	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -356,31 +352,4 @@ func initAccountWithCoins(app *BabylonApp, ctx sdk.Context, addr sdk.AccAddress,
 	if err != nil {
 		panic(err)
 	}
-}
-
-// SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
-func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.ResponseFinalizeBlock, error) {
-	source := rand.NewSource(time.Now().UnixNano())
-	tx, err := simsutils.GenSignedMockTx(
-		rand.New(source),
-		txCfg,
-		msgs,
-		fees,
-		simsutils.DefaultGenTxGas,
-		chainID,
-		accNums,
-		accSeqs,
-		priv...,
-	)
-	require.NoError(t, err)
-
-	bz, err := txCfg.TxEncoder()(tx)
-	require.NoError(t, err)
-
-	return app.FinalizeBlock(&abci.RequestFinalizeBlock{
-		Height: app.LastBlockHeight() + 1,
-		Hash:   app.LastCommitID().Hash,
-		Time:   blockTime,
-		Txs:    [][]byte{bz},
-	})
 }
