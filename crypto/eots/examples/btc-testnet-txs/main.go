@@ -130,7 +130,10 @@ func generateTx(senderPk *eots.PrivateKey, amount int64, fees int64, rcvAddress 
 	recTx.TxIn[0].SignatureScript = scriptSig
 
 	buf := bytes.NewBuffer(make([]byte, 0, recTx.SerializeSize()))
-	recTx.Serialize(buf)
+	err = recTx.Serialize(buf)
+	if err != nil {
+		return nil, "", err
+	}
 
 	// verify transaction
 	vm, err := txscript.NewEngine(rcvScript, recTx, 0, txscript.StandardVerifyFlags, nil, nil, amount, nil)
