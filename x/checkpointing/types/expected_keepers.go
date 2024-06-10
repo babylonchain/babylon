@@ -29,6 +29,7 @@ type EpochingKeeper interface {
 // CheckpointingHooks event hooks for raw checkpoint object (noalias)
 type CheckpointingHooks interface {
 	AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error         // Must be called when a BLS key is registered
+	AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error                // Must be called when a raw checkpoint is SEALED
 	AfterRawCheckpointConfirmed(ctx context.Context, epoch uint64) error             // Must be called when a raw checkpoint is CONFIRMED
 	AfterRawCheckpointForgotten(ctx context.Context, ckpt *RawCheckpoint) error      // Must be called when a raw checkpoint is FORGOTTEN
 	AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error             // Must be called when a raw checkpoint is FINALIZED

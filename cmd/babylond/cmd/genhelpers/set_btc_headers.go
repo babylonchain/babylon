@@ -3,6 +3,7 @@ package genhelpers
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -103,11 +104,12 @@ Possible content of 'btc_headers.json' is
 }
 
 func getBtcLightGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btclighttypes.GenesisState, error) {
-	if !cmtos.FileExists(inputFilePath) {
-		return nil, fmt.Errorf("input file %s does not exists", inputFilePath)
+	filePath := filepath.Clean(inputFilePath)
+	if !cmtos.FileExists(filePath) {
+		return nil, fmt.Errorf("input file %s does not exists", filePath)
 	}
 
-	bz, err := os.ReadFile(inputFilePath)
+	bz, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

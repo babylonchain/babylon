@@ -119,6 +119,7 @@ func LoadWrappedFilePVEmptyState(keyFilePath, stateFilePath string) *WrappedFile
 
 // If loadState is true, we load from the stateFilePath. Otherwise, we use an empty LastSignState.
 func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *WrappedFilePV {
+	keyFilePath = filepath.Clean(keyFilePath)
 	keyJSONBytes, err := os.ReadFile(keyFilePath)
 	if err != nil {
 		cmtos.Exit(err.Error())
@@ -138,6 +139,7 @@ func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *Wrapp
 	pvState := privval.FilePVLastSignState{}
 
 	if loadState {
+		stateFilePath := filepath.Clean(stateFilePath)
 		stateJSONBytes, err := os.ReadFile(stateFilePath)
 		if err != nil {
 			cmtos.Exit(err.Error())
