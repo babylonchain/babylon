@@ -301,7 +301,8 @@ func (n *NodeConfig) TxBroadcast(txSignedFileFullPath string, overallFlags ...st
 	require.NoError(n.t, err)
 }
 
-// TxFBroadcast broadcast a signed transaction to the chain.
+// TxFeeGrant creates a fee grant tx. Which the granter is the one that will
+// pay the fees for the grantee to submit txs for free.
 func (n *NodeConfig) TxFeeGrant(granter, grantee string, overallFlags ...string) {
 	n.LogActionF("tx fee grant, granter: %s - grantee: %s", granter, grantee)
 	cmd := []string{
