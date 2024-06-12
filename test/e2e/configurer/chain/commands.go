@@ -258,11 +258,15 @@ func (n *NodeConfig) WithdrawReward(sType, from string) {
 
 // TxMultisigSign sign a tx in a file with one wallet for a multisig address.
 func (n *NodeConfig) TxMultisigSign(walletName, multisigAddr, txFileFullPath, fileName string, overallFlags ...string) (fullFilePathInContainer string) {
+	return n.TxSign(walletName, txFileFullPath, fileName, fmt.Sprintf("--multisig=%s", multisigAddr))
+}
+
+// TxSign sign a tx in a file with one wallet.
+func (n *NodeConfig) TxSign(walletName, txFileFullPath, fileName string, overallFlags ...string) (fullFilePathInContainer string) {
 	n.LogActionF("wallet %s sign tx file %s", walletName, txFileFullPath)
 	cmd := []string{
 		"babylond", "tx", "sign", txFileFullPath,
 		fmt.Sprintf("--from=%s", walletName),
-		fmt.Sprintf("--multisig=%s", multisigAddr),
 		n.FlagChainID(), flagKeyringTest, containers.FlagHome,
 	}
 	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
@@ -295,6 +299,25 @@ func (n *NodeConfig) TxBroadcast(txSignedFileFullPath string, overallFlags ...st
 	}
 	_, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
+}
+
+// TxFeeGrant creates a fee grant tx. Which the granter is the one that will
+// pay the fees for the grantee to submit txs for free.
+func (n *NodeConfig) TxFeeGrant(granter, grantee string, overallFlags ...string) {
+	n.LogActionF("tx fee grant, granter: %s - grantee: %s", granter, grantee)
+	cmd := []string{
+		"babylond", "tx", "feegrant", "grant", granter, grantee,
+		n.FlagChainID(),
+	}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+	require.NoError(n.t, err)
+}
+
+// TxSignBroadcast signs the tx from the wallet and broadcast to chain.
+func (n *NodeConfig) TxSignBroadcast(walletName, txFileFullPath string) {
+	fileName := fmt.Sprintf("tx-signed-%s.json", walletName)
+	signedTxToBroadcast := n.TxSign(walletName, txFileFullPath, fileName)
+	n.TxBroadcast(signedTxToBroadcast)
 }
 
 // TxMultisignBroadcast signs the tx from each wallet and the multisig and broadcast to chain.

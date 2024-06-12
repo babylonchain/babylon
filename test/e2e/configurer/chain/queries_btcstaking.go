@@ -69,6 +69,17 @@ func (n *NodeConfig) QueryBtcDelegation(stakingTxHash string) *bstypes.QueryBTCD
 	return &resp
 }
 
+func (n *NodeConfig) QueryBtcDelegations() *bstypes.QueryBTCDelegationsResponse {
+	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_delegations", url.Values{})
+	require.NoError(n.t, err)
+
+	var resp bstypes.QueryBTCDelegationsResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return &resp
+}
+
 func (n *NodeConfig) QueryUnbondedDelegations() []*bstypes.BTCDelegationResponse {
 	queryParams := url.Values{}
 	queryParams.Add("status", fmt.Sprintf("%d", bstypes.BTCDelegationStatus_UNBONDED))
