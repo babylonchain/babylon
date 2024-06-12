@@ -142,7 +142,8 @@ The requirements for a valid slashing transaction are:
   unbonding output
 - it must have exactly two outputs, the first sending the slashed fraction of
   the funds to a burn address specified in the Babylon chain's parameters and the
-  second sending the remaining funds back to the BTC staker's address.
+  second sending the remaining funds to output which can be unlocked by staker
+  after the timelock
 - the fee for the slashing transactions must be larger than or equal to the
   minimal fee specified in Babylon's parameters
 
@@ -190,7 +191,7 @@ before the timelock expires. It commits to a script of the form:
 
 ```
 <StakerPk> OP_CHECKSIGVERIFY
-<CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
+<CovenantPk1> OP_CHECKSIG <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
 <CovenantThreshold> OP_NUMEQUAL
 ```
 
@@ -214,7 +215,7 @@ delegators in the case of double signing. It commits to a script:
 ```
 <StakerPk> OP_CHECKSIGVERIFY
 <FinalityProviderPk> OP_CHECKSIGVERIFY
-<CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
+<CovenantPk1> OP_CHECKSIG <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
 <CovenantThreshold> OP_NUMEQUAL
 ```
 
@@ -292,7 +293,7 @@ delegators in the case of double signing. It commits to a script:
 ```
 <StakerPk> OP_CHECKSIGVERIFY
 <FinalityProviderPk> OP_CHECKSIGVERIFY
-<CovenantPk1> OP_CHECKSIGADD <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
+<CovenantPk1> OP_CHECKSIG <CovenantPk1> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
 <CovenantThreshold> OP_NUMEQUAL
 ```
 
