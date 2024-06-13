@@ -439,8 +439,9 @@ localnet-start-nodes: init-testnet-dirs
 # localnet-start will run a with 4 nodes with 4 nodes, a bitcoin instance, and a vigilante instance
 localnet-start: localnet-stop build-docker localnet-start-nodes
 
-# localnet-stop will stop all localnets running
+# localnet-stop will clean up and stop all localnets running
 localnet-stop:
+	rm -rf $(CURDIR)/.testnets
 	docker-compose down
 
 build-test-wasm:
