@@ -85,8 +85,12 @@ func (pk BIP340PubKey) MarshalTo(data []byte) (int, error) {
 }
 
 func (pk *BIP340PubKey) Unmarshal(data []byte) error {
-	if len(data) != BIP340PubKeyLen {
-		return fmt.Errorf("malformed data for BIP340 public key")
+	newPK := BIP340PubKey(data)
+
+	// ensure that the bytes can be transformed to a *btcec.PublicKey object
+	// this includes all format checks
+	if _, err := newPK.ToBTCPK(); err != nil {
+		return fmt.Errorf("bytes cannot be converted to a *btcec.PublicKey object: %w", err)
 	}
 
 	*pk = data
