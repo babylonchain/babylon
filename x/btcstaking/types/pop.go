@@ -222,7 +222,7 @@ func NewPoPWithBIP322P2WPKHSig(
 	return newPoPWithBIP322Sig(babylonSK, btcSK, net, bip322.SignWithP2WPKHAddress)
 }
 
-// NewPoPBTCWithBIP322P2WPKHSig creates a proof of possesion of type BIP322
+// NewPoPBTCWithBIP322P2WPKHSig creates a proof of possession of type BIP322
 // that signs the address with the BTC secret key.
 func NewPoPBTCWithBIP322P2WPKHSig(
 	addr sdk.AccAddress,
@@ -347,7 +347,7 @@ func (pop *ProofOfPossessionBTC) VerifyBIP340(stakerAddr sdk.AccAddress, bip340P
 // 2. verify(sig=pop.BabylonSig, pubkey=pk_babylon, msg=pk_btc)?
 func (pop *ProofOfPossession) VerifyBIP340(babylonPK cryptotypes.PubKey, bip340PK *bbn.BIP340PubKey) error {
 	if err := VerifyBIP340(pop.BtcSigType, pop.BtcSig, bip340PK, pop.BabylonSig); err != nil {
-		return fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: %w", err)
+		return fmt.Errorf("failed to verify possession of babylon sig by the BTC key: %w", err)
 	}
 
 	// rule 2: verify(sig=pop.BabylonSig, pubkey=pk_babylon, msg=pk_btc)?
@@ -531,7 +531,7 @@ func (pop *ProofOfPossession) VerifyBIP322(babylonPK cryptotypes.PubKey, bip340P
 	// ref: https://github.com/babylonchain/babylon/issues/433
 	bbnSigHashHexBytes := babylonSigToHexHash(pop.BabylonSig)
 	if err := VerifyBIP322(pop.BtcSigType, pop.BtcSig, bip340PK, bbnSigHashHexBytes, net); err != nil {
-		return fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: %w", err)
+		return fmt.Errorf("failed to verify possession of babylon sig by the BTC key: %w", err)
 	}
 
 	// rule 2: verify(sig=pop.BabylonSig, pubkey=pk_babylon, msg=pk_btc)?
@@ -549,7 +549,7 @@ func (pop *ProofOfPossession) VerifyBIP322(babylonPK cryptotypes.PubKey, bip340P
 func (pop *ProofOfPossessionBTC) VerifyBIP322(addr sdk.AccAddress, bip340PK *bbn.BIP340PubKey, net *chaincfg.Params) error {
 	msg := tmhash.Sum(addr.Bytes())
 	if err := VerifyBIP322(pop.BtcSigType, pop.BtcSig, bip340PK, msg, net); err != nil {
-		return fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: %w", err)
+		return fmt.Errorf("failed to verify possession of babylon sig by the BTC key: %w", err)
 	}
 	return nil
 }
@@ -581,7 +581,7 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 // 2. verify(sig=pop.BabylonSig, pubkey=pk_babylon, msg=pk_btc)?
 func (pop *ProofOfPossession) VerifyECDSA(babylonPK cryptotypes.PubKey, bip340PK *bbn.BIP340PubKey) error {
 	if err := VerifyECDSA(pop.BtcSigType, pop.BtcSig, bip340PK, pop.BabylonSig); err != nil {
-		return fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: %w", err)
+		return fmt.Errorf("failed to verify possession of babylon sig by the BTC key: %w", err)
 	}
 
 	// rule 2: verify(sig=pop.BabylonSig, pubkey=pk_babylon, msg=pk_btc)?

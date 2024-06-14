@@ -332,7 +332,7 @@ func TestPoPBTCVerify(t *testing.T) {
 			randomAddr,
 			bip340PK,
 			popBip322,
-			fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: signature not empty on failed checksig"),
+			fmt.Errorf("failed to verify possession of babylon sig by the BTC key: signature not empty on failed checksig"),
 		},
 		{
 			"invalid: ECDSA - bad addr",
@@ -358,7 +358,7 @@ func TestPoPBTCVerify(t *testing.T) {
 				BtcSigType: types.BTCSigType_BIP322,
 				BtcSig:     nil,
 			},
-			fmt.Errorf("failed to verify possesion of babylon sig by the BTC key: cannot verfiy bip322 signature. One of the required parameters is empty"),
+			fmt.Errorf("failed to verify possession of babylon sig by the BTC key: cannot verfiy bip322 signature. One of the required parameters is empty"),
 		},
 		{
 			"invalid: nil signed msg",
