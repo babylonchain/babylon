@@ -61,7 +61,7 @@ func (n *NodeConfig) CreateBTCDelegation(
 	fromWalletName string,
 	generateOnly bool,
 	overallFlags ...string,
-) string {
+) (outStr string) {
 	n.LogActionF("creating BTC delegation")
 
 	btcPkHex := btcPk.MarshalHex()
