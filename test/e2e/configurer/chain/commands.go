@@ -90,12 +90,24 @@ func (n *NodeConfig) FailIBCTransfer(from, recipient, amount string) {
 	n.LogActionF("Failed to send IBC transfer (as expected)")
 }
 
-func (n *NodeConfig) BankSend(receiveAddress, amount string) {
-	n.LogActionF("bank sending %s from wallet %s to %s", amount, n.WalletName, receiveAddress)
-	cmd := []string{"babylond", "tx", "bank", "send", n.PublicAddress, receiveAddress, amount, fmt.Sprintf("--from=%s", n.WalletName)}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+func (n *NodeConfig) BankSendFromNode(receiveAddress, amount string) {
+	n.BankSend(n.WalletName, receiveAddress, amount)
+}
+
+func (n *NodeConfig) BankSend(fromWallet, to, amount string, overallFlags ...string) {
+	fromAddr := n.GetWallet(fromWallet)
+	n.LogActionF("bank sending %s from wallet %s to %s", amount, fromWallet, to)
+	cmd := []string{"babylond", "tx", "bank", "send", fromAddr, to, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
 	require.NoError(n.t, err)
-	n.LogActionF("successfully sent bank sent %s from address %s to %s", amount, n.PublicAddress, receiveAddress)
+	n.LogActionF("successfully sent bank sent %s from address %s to %s", amount, fromWallet, to)
+}
+
+func (n *NodeConfig) BankSendOutput(fromWallet, to, amount string, overallFlags ...string) (out bytes.Buffer, errBuff bytes.Buffer, err error) {
+	fromAddr := n.GetWallet(fromWallet)
+	n.LogActionF("bank sending %s from wallet %s to %s", amount, fromWallet, to)
+	cmd := []string{"babylond", "tx", "bank", "send", fromAddr, to, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	return n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 }
 
 func (n *NodeConfig) SendHeaderHex(headerHex string) {
