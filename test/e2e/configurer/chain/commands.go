@@ -106,7 +106,10 @@ func (n *NodeConfig) BankSend(fromWallet, to, amount string, overallFlags ...str
 func (n *NodeConfig) BankSendOutput(fromWallet, to, amount string, overallFlags ...string) (out bytes.Buffer, errBuff bytes.Buffer, err error) {
 	fromAddr := n.GetWallet(fromWallet)
 	n.LogActionF("bank sending %s from wallet %s to %s", amount, fromWallet, to)
-	cmd := []string{"babylond", "tx", "bank", "send", fromAddr, to, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	cmd := []string{
+		"babylond", "tx", "bank", "send", fromAddr, to, amount, fmt.Sprintf("--from=%s", fromWallet),
+		n.FlagChainID(), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata",
+	}
 	return n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 }
 
