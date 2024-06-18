@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
+	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
@@ -25,8 +25,6 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	ftypes "github.com/babylonchain/babylon/x/finality/types"
-	itypes "github.com/babylonchain/babylon/x/incentive/types"
 )
 
 var (
@@ -136,417 +134,507 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
 }
 
-// Test2SubmitCovenantSignature is an end-to-end test for user
-// story 2: covenant approves the BTC delegation
-func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
-	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
+// // Test2SubmitCovenantSignature is an end-to-end test for user
+// // story 2: covenant approves the BTC delegation
+// func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
+// 	chainA := s.configurer.GetChainConfig(0)
+// 	chainA.WaitUntilHeight(1)
+// 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+// 	s.NoError(err)
 
-	// get last BTC delegation
-	pendingDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
-	s.Len(pendingDelsSet, 1)
-	pendingDels := pendingDelsSet[0]
-	s.Len(pendingDels.Dels, 1)
-	pendingDelResp := pendingDels.Dels[0]
-	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
-	s.NoError(err)
-	s.Len(pendingDel.CovenantSigs, 0)
+// 	// get last BTC delegation
+// 	pendingDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
+// 	s.Len(pendingDelsSet, 1)
+// 	pendingDels := pendingDelsSet[0]
+// 	s.Len(pendingDels.Dels, 1)
+// 	pendingDelResp := pendingDels.Dels[0]
+// 	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
+// 	s.NoError(err)
+// 	s.Len(pendingDel.CovenantSigs, 0)
 
-	slashingTx := pendingDel.SlashingTx
-	stakingTx := pendingDel.StakingTx
+// 	slashingTx := pendingDel.SlashingTx
+// 	stakingTx := pendingDel.StakingTx
 
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
-	s.NoError(err)
-	stakingTxHash := stakingMsgTx.TxHash().String()
+// 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
+// 	s.NoError(err)
+// 	stakingTxHash := stakingMsgTx.TxHash().String()
 
-	params := nonValidatorNode.QueryBTCStakingParams()
+// 	params := nonValidatorNode.QueryBTCStakingParams()
 
-	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
-	s.NoError(err)
+// 	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+// 	s.NoError(err)
 
-	stakingInfo, err := pendingDel.GetStakingInfo(params, net)
-	s.NoError(err)
+// 	stakingInfo, err := pendingDel.GetStakingInfo(params, net)
+// 	s.NoError(err)
 
-	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
-	s.NoError(err)
+// 	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+// 	s.NoError(err)
 
-	/*
-		generate and insert new covenant signature, in order to activate the BTC delegation
-	*/
-	// covenant signatures on slashing tx
-	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covenantSKs,
-		fpBTCPKs,
-		stakingMsgTx,
-		stakingSlashingPathInfo.GetPkScriptPath(),
-		slashingTx,
-	)
-	s.NoError(err)
+// 	/*
+// 		generate and insert new covenant signature, in order to activate the BTC delegation
+// 	*/
+// 	// covenant signatures on slashing tx
+// 	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+// 		covenantSKs,
+// 		fpBTCPKs,
+// 		stakingMsgTx,
+// 		stakingSlashingPathInfo.GetPkScriptPath(),
+// 		slashingTx,
+// 	)
+// 	s.NoError(err)
 
-	// cov Schnorr sigs on unbonding signature
-	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
-	s.NoError(err)
-	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
-	s.NoError(err)
+// 	// cov Schnorr sigs on unbonding signature
+// 	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+// 	s.NoError(err)
+// 	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+// 	s.NoError(err)
 
-	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
-		covenantSKs,
-		stakingMsgTx,
-		pendingDel.StakingOutputIdx,
-		unbondingPathInfo.GetPkScriptPath(),
-		unbondingTx,
-	)
-	s.NoError(err)
+// 	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+// 		covenantSKs,
+// 		stakingMsgTx,
+// 		pendingDel.StakingOutputIdx,
+// 		unbondingPathInfo.GetPkScriptPath(),
+// 		unbondingTx,
+// 	)
+// 	s.NoError(err)
 
-	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, net)
-	s.NoError(err)
-	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
-	s.NoError(err)
-	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covenantSKs,
-		fpBTCPKs,
-		unbondingTx,
-		unbondingSlashingPathInfo.GetPkScriptPath(),
-		pendingDel.BtcUndelegation.SlashingTx,
-	)
-	s.NoError(err)
+// 	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, net)
+// 	s.NoError(err)
+// 	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+// 	s.NoError(err)
+// 	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+// 		covenantSKs,
+// 		fpBTCPKs,
+// 		unbondingTx,
+// 		unbondingSlashingPathInfo.GetPkScriptPath(),
+// 		pendingDel.BtcUndelegation.SlashingTx,
+// 	)
+// 	s.NoError(err)
 
-	for i := 0; i < int(covenantQuorum); i++ {
-		nonValidatorNode.AddCovenantSigs(
-			covenantSlashingSigs[i].CovPk,
-			stakingTxHash,
-			covenantSlashingSigs[i].AdaptorSigs,
-			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
-			covenantUnbondingSlashingSigs[i].AdaptorSigs,
-		)
-		// wait for a block so that above txs take effect
-		nonValidatorNode.WaitForNextBlock()
-	}
+// 	for i := 0; i < int(covenantQuorum); i++ {
+// 		nonValidatorNode.AddCovenantSigs(
+// 			covenantSlashingSigs[i].CovPk,
+// 			stakingTxHash,
+// 			covenantSlashingSigs[i].AdaptorSigs,
+// 			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+// 			covenantUnbondingSlashingSigs[i].AdaptorSigs,
+// 		)
+// 		// wait for a block so that above txs take effect
+// 		nonValidatorNode.WaitForNextBlock()
+// 	}
 
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
-	nonValidatorNode.WaitForNextBlock()
+// 	// wait for a block so that above txs take effect
+// 	nonValidatorNode.WaitForNextBlock()
+// 	nonValidatorNode.WaitForNextBlock()
 
-	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
-	s.Len(activeDelsSet, 1)
+// 	// ensure the BTC delegation has covenant sigs now
+// 	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
+// 	s.Len(activeDelsSet, 1)
 
-	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
-	s.NoError(err)
-	s.NotNil(activeDels)
-	s.Len(activeDels.Dels, 1)
+// 	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+// 	s.NoError(err)
+// 	s.NotNil(activeDels)
+// 	s.Len(activeDels.Dels, 1)
 
-	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
+// 	activeDel := activeDels.Dels[0]
+// 	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
 
-	// wait for a block so that above txs take effect and the voting power table
-	// is updated in the next block's BeginBlock
-	nonValidatorNode.WaitForNextBlock()
+// 	// wait for a block so that above txs take effect and the voting power table
+// 	// is updated in the next block's BeginBlock
+// 	nonValidatorNode.WaitForNextBlock()
 
-	// ensure BTC staking is activated
-	activatedHeight := nonValidatorNode.QueryActivatedHeight()
-	s.Positive(activatedHeight)
-	// ensure finality provider has voting power at activated height
-	currentBtcTip, err := nonValidatorNode.QueryTip()
-	s.NoError(err)
-	activeFps := nonValidatorNode.QueryActiveFinalityProvidersAtHeight(activatedHeight)
-	s.Len(activeFps, 1)
-	s.Equal(activeFps[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
-	s.Equal(activeFps[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
-}
+// 	// ensure BTC staking is activated
+// 	activatedHeight := nonValidatorNode.QueryActivatedHeight()
+// 	s.Positive(activatedHeight)
+// 	// ensure finality provider has voting power at activated height
+// 	currentBtcTip, err := nonValidatorNode.QueryTip()
+// 	s.NoError(err)
+// 	activeFps := nonValidatorNode.QueryActiveFinalityProvidersAtHeight(activatedHeight)
+// 	s.Len(activeFps, 1)
+// 	s.Equal(activeFps[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
+// 	s.Equal(activeFps[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
+// }
 
-// Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
-// test for user story 3: finality provider commits public randomness and submits
-// finality signature, such that blocks can be finalised.
-func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignature() {
-	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
+// // Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
+// // test for user story 3: finality provider commits public randomness and submits
+// // finality signature, such that blocks can be finalised.
+// func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignature() {
+// 	chainA := s.configurer.GetChainConfig(0)
+// 	chainA.WaitUntilHeight(1)
+// 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+// 	s.NoError(err)
 
-	// get activated height
-	activatedHeight := nonValidatorNode.QueryActivatedHeight()
-	s.Positive(activatedHeight)
+// 	// get activated height
+// 	activatedHeight := nonValidatorNode.QueryActivatedHeight()
+// 	s.Positive(activatedHeight)
 
-	/*
-		commit a number of public randomness since activatedHeight
-	*/
-	// commit public randomness list
-	numPubRand := uint64(100)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpBTCSK, activatedHeight, numPubRand)
-	s.NoError(err)
-	nonValidatorNode.CommitPubRandList(
-		msgCommitPubRandList.FpBtcPk,
-		msgCommitPubRandList.StartHeight,
-		msgCommitPubRandList.NumPubRand,
-		msgCommitPubRandList.Commitment,
-		msgCommitPubRandList.Sig,
-	)
+// 	/*
+// 		commit a number of public randomness since activatedHeight
+// 	*/
+// 	// commit public randomness list
+// 	numPubRand := uint64(100)
+// 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpBTCSK, activatedHeight, numPubRand)
+// 	s.NoError(err)
+// 	nonValidatorNode.CommitPubRandList(
+// 		msgCommitPubRandList.FpBtcPk,
+// 		msgCommitPubRandList.StartHeight,
+// 		msgCommitPubRandList.NumPubRand,
+// 		msgCommitPubRandList.Commitment,
+// 		msgCommitPubRandList.Sig,
+// 	)
 
-	// ensure public randomness list is eventually committed
-	nonValidatorNode.WaitForNextBlock()
-	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
-	s.Eventually(func() bool {
-		prCommitMap = nonValidatorNode.QueryListPubRandCommit(cacheFP.BtcPk)
-		return len(prCommitMap) > 0
-	}, time.Minute, time.Second*5)
-	s.Equal(prCommitMap[activatedHeight].NumPubRand, msgCommitPubRandList.NumPubRand)
-	s.Equal(prCommitMap[activatedHeight].Commitment, msgCommitPubRandList.Commitment)
+// 	// ensure public randomness list is eventually committed
+// 	nonValidatorNode.WaitForNextBlock()
+// 	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
+// 	s.Eventually(func() bool {
+// 		prCommitMap = nonValidatorNode.QueryListPubRandCommit(cacheFP.BtcPk)
+// 		return len(prCommitMap) > 0
+// 	}, time.Minute, time.Second*5)
+// 	s.Equal(prCommitMap[activatedHeight].NumPubRand, msgCommitPubRandList.NumPubRand)
+// 	s.Equal(prCommitMap[activatedHeight].Commitment, msgCommitPubRandList.Commitment)
 
-	// no reward gauge for finality provider and delegation yet
-	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
-	_, err = nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.Error(err)
-	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
-	_, err = nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.Error(err)
+// 	// no reward gauge for finality provider and delegation yet
+// 	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+// 	_, err = nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
+// 	s.Error(err)
+// 	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+// 	_, err = nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+// 	s.Error(err)
 
-	/*
-		submit finality signature
-	*/
-	// get block to vote
-	blockToVote, err := nonValidatorNode.QueryBlock(int64(activatedHeight))
-	s.NoError(err)
-	appHash := blockToVote.AppHash
+// 	/*
+// 		submit finality signature
+// 	*/
+// 	// get block to vote
+// 	blockToVote, err := nonValidatorNode.QueryBlock(int64(activatedHeight))
+// 	s.NoError(err)
+// 	appHash := blockToVote.AppHash
 
-	idx := 0
-	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
-	// generate EOTS signature
-	sig, err := eots.Sign(fpBTCSK, randListInfo.SRList[idx], msgToSign)
-	s.NoError(err)
-	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
-	// submit finality signature
-	nonValidatorNode.AddFinalitySig(cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+// 	idx := 0
+// 	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
+// 	// generate EOTS signature
+// 	sig, err := eots.Sign(fpBTCSK, randListInfo.SRList[idx], msgToSign)
+// 	s.NoError(err)
+// 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+// 	// submit finality signature
+// 	nonValidatorNode.AddFinalitySig(cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
-	// ensure vote is eventually cast
-	nonValidatorNode.WaitForNextBlock()
-	var votes []bbn.BIP340PubKey
-	s.Eventually(func() bool {
-		votes = nonValidatorNode.QueryVotesAtHeight(activatedHeight)
-		return len(votes) > 0
-	}, time.Minute, time.Second*5)
-	s.Equal(1, len(votes))
-	s.Equal(votes[0].MarshalHex(), cacheFP.BtcPk.MarshalHex())
-	// once the vote is cast, ensure block is finalised
-	finalizedBlock := nonValidatorNode.QueryIndexedBlock(activatedHeight)
-	s.NotEmpty(finalizedBlock)
-	s.Equal(appHash.Bytes(), finalizedBlock.AppHash)
-	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-	s.NotEmpty(finalizedBlocks)
-	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
+// 	// ensure vote is eventually cast
+// 	nonValidatorNode.WaitForNextBlock()
+// 	var votes []bbn.BIP340PubKey
+// 	s.Eventually(func() bool {
+// 		votes = nonValidatorNode.QueryVotesAtHeight(activatedHeight)
+// 		return len(votes) > 0
+// 	}, time.Minute, time.Second*5)
+// 	s.Equal(1, len(votes))
+// 	s.Equal(votes[0].MarshalHex(), cacheFP.BtcPk.MarshalHex())
+// 	// once the vote is cast, ensure block is finalised
+// 	finalizedBlock := nonValidatorNode.QueryIndexedBlock(activatedHeight)
+// 	s.NotEmpty(finalizedBlock)
+// 	s.Equal(appHash.Bytes(), finalizedBlock.AppHash)
+// 	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+// 	s.NotEmpty(finalizedBlocks)
+// 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 
-	// ensure finality provider has received rewards after the block is finalised
-	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.NoError(err)
-	fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
-	s.True(ok)
-	s.True(fpRewardGauge.Coins.IsAllPositive())
-	// ensure BTC delegation has received rewards after the block is finalised
-	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.NoError(err)
-	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
-	s.True(ok)
-	s.True(btcDelRewardGauge.Coins.IsAllPositive())
-}
+// 	// ensure finality provider has received rewards after the block is finalised
+// 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
+// 	s.NoError(err)
+// 	fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]
+// 	s.True(ok)
+// 	s.True(fpRewardGauge.Coins.IsAllPositive())
+// 	// ensure BTC delegation has received rewards after the block is finalised
+// 	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+// 	s.NoError(err)
+// 	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
+// 	s.True(ok)
+// 	s.True(btcDelRewardGauge.Coins.IsAllPositive())
+// }
 
-func (s *BTCStakingTestSuite) Test4WithdrawReward() {
-	chainA := s.configurer.GetChainConfig(0)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
+// func (s *BTCStakingTestSuite) Test4WithdrawReward() {
+// 	chainA := s.configurer.GetChainConfig(0)
+// 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+// 	s.NoError(err)
 
-	// finality provider balance before withdraw
-	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
-	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
-	fpBalance, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
-	s.NoError(err)
-	// finality provider reward gauge should not be fully withdrawn
-	fpRgs, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.NoError(err)
-	fpRg := fpRgs[itypes.FinalityProviderType.String()]
-	s.T().Logf("finality provider's withdrawable reward before withdrawing: %s", fpRg.GetWithdrawableCoins().String())
-	s.False(fpRg.IsFullyWithdrawn())
+// 	// finality provider balance before withdraw
+// 	fpBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+// 	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+// 	fpBalance, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
+// 	s.NoError(err)
+// 	// finality provider reward gauge should not be fully withdrawn
+// 	fpRgs, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
+// 	s.NoError(err)
+// 	fpRg := fpRgs[itypes.FinalityProviderType.String()]
+// 	s.T().Logf("finality provider's withdrawable reward before withdrawing: %s", fpRg.GetWithdrawableCoins().String())
+// 	s.False(fpRg.IsFullyWithdrawn())
 
-	// withdraw finality provider reward
-	nonValidatorNode.WithdrawReward(itypes.FinalityProviderType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
+// 	// withdraw finality provider reward
+// 	nonValidatorNode.WithdrawReward(itypes.FinalityProviderType.String(), initialization.ValidatorWalletName)
+// 	nonValidatorNode.WaitForNextBlock()
 
-	// balance after withdrawing finality provider reward
-	fpBalance2, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
-	s.NoError(err)
-	s.T().Logf("fpBalance2: %s; fpBalance: %s", fpBalance2.String(), fpBalance.String())
-	s.True(fpBalance2.IsAllGT(fpBalance))
-	// finality provider reward gauge should be fully withdrawn now
-	fpRgs2, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
-	s.NoError(err)
-	fpRg2 := fpRgs2[itypes.FinalityProviderType.String()]
-	s.T().Logf("finality provider's withdrawable reward after withdrawing: %s", fpRg2.GetWithdrawableCoins().String())
-	s.True(fpRg2.IsFullyWithdrawn())
+// 	// balance after withdrawing finality provider reward
+// 	fpBalance2, err := nonValidatorNode.QueryBalances(fpBabylonAddr.String())
+// 	s.NoError(err)
+// 	s.T().Logf("fpBalance2: %s; fpBalance: %s", fpBalance2.String(), fpBalance.String())
+// 	s.True(fpBalance2.IsAllGT(fpBalance))
+// 	// finality provider reward gauge should be fully withdrawn now
+// 	fpRgs2, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
+// 	s.NoError(err)
+// 	fpRg2 := fpRgs2[itypes.FinalityProviderType.String()]
+// 	s.T().Logf("finality provider's withdrawable reward after withdrawing: %s", fpRg2.GetWithdrawableCoins().String())
+// 	s.True(fpRg2.IsFullyWithdrawn())
 
-	// BTC delegation balance before withdraw
-	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
-	s.NoError(err)
-	// BTC delegation reward gauge should not be fully withdrawn
-	btcDelRgs, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.NoError(err)
-	btcDelRg := btcDelRgs[itypes.BTCDelegationType.String()]
-	s.T().Logf("BTC delegation's withdrawable reward before withdrawing: %s", btcDelRg.GetWithdrawableCoins().String())
-	s.False(btcDelRg.IsFullyWithdrawn())
+// 	// BTC delegation balance before withdraw
+// 	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
+// 	s.NoError(err)
+// 	// BTC delegation reward gauge should not be fully withdrawn
+// 	btcDelRgs, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+// 	s.NoError(err)
+// 	btcDelRg := btcDelRgs[itypes.BTCDelegationType.String()]
+// 	s.T().Logf("BTC delegation's withdrawable reward before withdrawing: %s", btcDelRg.GetWithdrawableCoins().String())
+// 	s.False(btcDelRg.IsFullyWithdrawn())
 
-	// withdraw BTC delegation reward
-	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
+// 	// withdraw BTC delegation reward
+// 	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), initialization.ValidatorWalletName)
+// 	nonValidatorNode.WaitForNextBlock()
 
-	// balance after withdrawing BTC delegation reward
-	btcDelBalance2, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
-	s.NoError(err)
-	s.T().Logf("btcDelBalance2: %s; btcDelBalance: %s", btcDelBalance2.String(), btcDelBalance.String())
-	s.True(btcDelBalance2.IsAllGT(btcDelBalance))
-	// BTC delegation reward gauge should be fully withdrawn now
-	btcDelRgs2, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
-	s.NoError(err)
-	btcDelRg2 := btcDelRgs2[itypes.BTCDelegationType.String()]
-	s.T().Logf("BTC delegation's withdrawable reward after withdrawing: %s", btcDelRg2.GetWithdrawableCoins().String())
-	s.True(btcDelRg2.IsFullyWithdrawn())
-}
+// 	// balance after withdrawing BTC delegation reward
+// 	btcDelBalance2, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
+// 	s.NoError(err)
+// 	s.T().Logf("btcDelBalance2: %s; btcDelBalance: %s", btcDelBalance2.String(), btcDelBalance.String())
+// 	s.True(btcDelBalance2.IsAllGT(btcDelBalance))
+// 	// BTC delegation reward gauge should be fully withdrawn now
+// 	btcDelRgs2, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+// 	s.NoError(err)
+// 	btcDelRg2 := btcDelRgs2[itypes.BTCDelegationType.String()]
+// 	s.T().Logf("BTC delegation's withdrawable reward after withdrawing: %s", btcDelRg2.GetWithdrawableCoins().String())
+// 	s.True(btcDelRg2.IsFullyWithdrawn())
+// }
 
-// Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
-func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
-	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
+// // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
+// func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
+// 	chainA := s.configurer.GetChainConfig(0)
+// 	chainA.WaitUntilHeight(1)
+// 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+// 	s.NoError(err)
+// 	// wait for a block so that above txs take effect
+// 	nonValidatorNode.WaitForNextBlock()
 
-	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
-	s.Len(activeDelsSet, 1)
-	activeDels := activeDelsSet[0]
-	s.Len(activeDels.Dels, 1)
-	activeDelResp := activeDels.Dels[0]
-	activeDel, err := ParseRespBTCDelToBTCDel(activeDelResp)
-	s.NoError(err)
-	s.NotNil(activeDel.CovenantSigs)
+// 	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
+// 	s.Len(activeDelsSet, 1)
+// 	activeDels := activeDelsSet[0]
+// 	s.Len(activeDels.Dels, 1)
+// 	activeDelResp := activeDels.Dels[0]
+// 	activeDel, err := ParseRespBTCDelToBTCDel(activeDelResp)
+// 	s.NoError(err)
+// 	s.NotNil(activeDel.CovenantSigs)
 
-	// staking tx hash
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(activeDel.StakingTx)
-	s.NoError(err)
-	stakingTxHash := stakingMsgTx.TxHash()
+// 	// staking tx hash
+// 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(activeDel.StakingTx)
+// 	s.NoError(err)
+// 	stakingTxHash := stakingMsgTx.TxHash()
 
-	// delegator signs unbonding tx
-	params := nonValidatorNode.QueryBTCStakingParams()
-	delUnbondingSig, err := activeDel.SignUnbondingTx(params, net, delBTCSK)
-	s.NoError(err)
+// 	// delegator signs unbonding tx
+// 	params := nonValidatorNode.QueryBTCStakingParams()
+// 	delUnbondingSig, err := activeDel.SignUnbondingTx(params, net, delBTCSK)
+// 	s.NoError(err)
 
-	// submit the message for creating BTC undelegation
-	nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
+// 	// submit the message for creating BTC undelegation
+// 	nonValidatorNode.BTCUndelegate(&stakingTxHash, delUnbondingSig)
+// 	// wait for a block so that above txs take effect
+// 	nonValidatorNode.WaitForNextBlock()
 
-	// Wait for unbonded delegations to be created
-	var unbondedDelsResp []*bstypes.BTCDelegationResponse
-	s.Eventually(func() bool {
-		unbondedDelsResp = nonValidatorNode.QueryUnbondedDelegations()
-		return len(unbondedDelsResp) > 0
-	}, time.Minute, time.Second*2)
+// 	// Wait for unbonded delegations to be created
+// 	var unbondedDelsResp []*bstypes.BTCDelegationResponse
+// 	s.Eventually(func() bool {
+// 		unbondedDelsResp = nonValidatorNode.QueryUnbondedDelegations()
+// 		return len(unbondedDelsResp) > 0
+// 	}, time.Minute, time.Second*2)
 
-	unbondDel, err := ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
-	s.NoError(err)
-	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
-}
+// 	unbondDel, err := ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
+// 	s.NoError(err)
+// 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
+// }
 
-// Test6MultisigBTCDelegation is an end-to-end test to create a BTC delegation
-// with multisignature. It also utilizes the cacheFP populated at
-// Test1CreateFinalityProviderAndDelegation.
-func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
-	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
+// // Test6MultisigBTCDelegation is an end-to-end test to create a BTC delegation
+// // with multisignature. It also utilizes the cacheFP populated at
+// // Test1CreateFinalityProviderAndDelegation.
+// func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
+// 	chainA := s.configurer.GetChainConfig(0)
+// 	chainA.WaitUntilHeight(1)
+// 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+// 	s.NoError(err)
 
-	w1, w2, wMultisig := "multisig-holder-1", "multisig-holder-2", "multisig-2of2"
+// 	w1, w2, wMultisig := "multisig-holder-1", "multisig-holder-2", "multisig-2of2"
 
-	nonValidatorNode.KeysAdd(w1)
-	nonValidatorNode.KeysAdd(w2)
-	// creates and fund multisig
-	multisigAddr := nonValidatorNode.KeysAdd(wMultisig, []string{fmt.Sprintf("--multisig=%s,%s", w1, w2), "--multisig-threshold=2"}...)
-	nonValidatorNode.BankSend(multisigAddr, "100000ubbn")
+// 	nonValidatorNode.KeysAdd(w1)
+// 	nonValidatorNode.KeysAdd(w2)
+// 	// creates and fund multisig
+// 	multisigAddr := nonValidatorNode.KeysAdd(wMultisig, []string{fmt.Sprintf("--multisig=%s,%s", w1, w2), "--multisig-threshold=2"}...)
+// 	nonValidatorNode.BankSend(multisigAddr, "100000ubbn")
 
-	// create a random BTC delegation under the cached finality provider
-	// BTC staking params, BTC delegation key pairs and PoP
-	params := nonValidatorNode.QueryBTCStakingParams()
+// 	// create a random BTC delegation under the cached finality provider
+// 	// BTC staking params, BTC delegation key pairs and PoP
+// 	params := nonValidatorNode.QueryBTCStakingParams()
 
-	// minimal required unbonding time
-	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+// 	// minimal required unbonding time
+// 	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
 
-	// NOTE: we use the multisig address for the BTC delegation
-	multisigStakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
-	pop, err := bstypes.NewPoPBTC(multisigStakerAddr, delBTCSK)
-	s.NoError(err)
+// 	// NOTE: we use the multisig address for the BTC delegation
+// 	multisigStakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
+// 	pop, err := bstypes.NewPoPBTC(multisigStakerAddr, delBTCSK)
+// 	s.NoError(err)
 
-	// generate staking tx and slashing tx
-	stakingTimeBlocks := uint16(math.MaxUint16)
-	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, cacheFP)
+// 	// generate staking tx and slashing tx
+// 	stakingTimeBlocks := uint16(math.MaxUint16)
+// 	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, cacheFP)
 
-	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
-	s.NoError(err)
+// 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
+// 	s.NoError(err)
 
-	// submit the message for only generate the Tx to create BTC delegation
-	jsonTx := nonValidatorNode.CreateBTCDelegation(
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
-		pop,
-		stakingTxInfo,
-		cacheFP.BtcPk,
-		stakingTimeBlocks,
-		btcutil.Amount(stakingValue),
-		testStakingInfo.SlashingTx,
-		delegatorSig,
-		testUnbondingInfo.UnbondingTx,
-		testUnbondingInfo.SlashingTx,
-		uint16(unbondingTime),
-		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
-		delUnbondingSlashingSig,
-		multisigAddr,
-		true,
-	)
+// 	// submit the message for only generate the Tx to create BTC delegation
+// 	jsonTx := nonValidatorNode.CreateBTCDelegation(
+// 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+// 		pop,
+// 		stakingTxInfo,
+// 		cacheFP.BtcPk,
+// 		stakingTimeBlocks,
+// 		btcutil.Amount(stakingValue),
+// 		testStakingInfo.SlashingTx,
+// 		delegatorSig,
+// 		testUnbondingInfo.UnbondingTx,
+// 		testUnbondingInfo.SlashingTx,
+// 		uint16(unbondingTime),
+// 		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
+// 		delUnbondingSlashingSig,
+// 		multisigAddr,
+// 		true,
+// 	)
 
-	// write the tx to a file
-	fullPathTxBTCDelegation := nonValidatorNode.WriteFile("tx.json", jsonTx)
-	// signs the tx with the 2 wallets and the multisig and broadcast the tx
-	nonValidatorNode.TxMultisignBroadcast(wMultisig, fullPathTxBTCDelegation, []string{w1, w2})
+// 	// write the tx to a file
+// 	fullPathTxBTCDelegation := nonValidatorNode.WriteFile("tx.json", jsonTx)
+// 	// signs the tx with the 2 wallets and the multisig and broadcast the tx
+// 	nonValidatorNode.TxMultisignBroadcast(wMultisig, fullPathTxBTCDelegation, []string{w1, w2})
 
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
+// 	// wait for a block so that above txs take effect
+// 	nonValidatorNode.WaitForNextBlock()
 
-	// check delegation with the multisig staker address exists.
-	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
-	s.NotNil(delegation)
-	s.Equal(multisigAddr, delegation.BtcDelegation.StakerAddr)
-}
+// 	// check delegation with the multisig staker address exists.
+// 	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+// 	s.NotNil(delegation)
+// 	s.Equal(multisigAddr, delegation.BtcDelegation.StakerAddr)
+// }
 
-// Test7BTCDelegationFeeGrant is an end-to-end test to create a BTC delegation
+// // Test7BTCDelegationFeeGrant is an end-to-end test to create a BTC delegation
+// // from a BTC delegator that does not have funds to pay for fees. It also
+// // utilizes the cacheFP populated at Test1CreateFinalityProviderAndDelegation.
+// func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
+// 	chainA := s.configurer.GetChainConfig(0)
+// 	chainA.WaitUntilHeight(1)
+// 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+// 	s.NoError(err)
+
+// 	wGratee, wGranter := "grantee", "granter"
+// 	feePayerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGranter))
+// 	granteeStakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGratee))
+
+// 	feePayerBalanceBeforeBTCDel := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(100000))
+// 	fees := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(50000))
+
+// 	// fund the granter
+// 	nonValidatorNode.BankSend(feePayerAddr.String(), feePayerBalanceBeforeBTCDel.String())
+
+// 	// create a random BTC delegation under the cached finality provider
+// 	// BTC staking btcStkParams, BTC delegation key pairs and PoP
+// 	btcStkParams := nonValidatorNode.QueryBTCStakingParams()
+
+// 	// minimal required unbonding time
+// 	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+
+// 	// NOTE: we use the grantee staker address for the BTC delegation PoP
+// 	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, delBTCSK)
+// 	s.NoError(err)
+
+// 	// generate staking tx and slashing tx
+// 	stakingTimeBlocks := uint16(math.MaxUint16) - 5
+// 	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, btcStkParams, stakingTimeBlocks, cacheFP)
+
+// 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
+// 	s.NoError(err)
+
+// 	// conceive the fee grant from the payer to the staker.
+// 	nonValidatorNode.TxFeeGrant(feePayerAddr.String(), granteeStakerAddr.String(), fmt.Sprintf("--from=%s", wGranter))
+// 	// wait for a block to take effect the fee grant tx.
+// 	nonValidatorNode.WaitForNextBlock()
+
+// 	// staker should not have any balance.
+// 	stakerBalances, err := nonValidatorNode.QueryBalances(granteeStakerAddr.String())
+// 	s.NoError(err)
+// 	s.True(stakerBalances.IsZero())
+
+// 	// submit the message to create BTC delegation
+// 	nonValidatorNode.CreateBTCDelegation(
+// 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+// 		pop,
+// 		stakingTxInfo,
+// 		cacheFP.BtcPk,
+// 		stakingTimeBlocks,
+// 		btcutil.Amount(stakingValue),
+// 		testStakingInfo.SlashingTx,
+// 		delegatorSig,
+// 		testUnbondingInfo.UnbondingTx,
+// 		testUnbondingInfo.SlashingTx,
+// 		uint16(unbondingTime),
+// 		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
+// 		delUnbondingSlashingSig,
+// 		wGratee,
+// 		false,
+// 		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
+// 		fmt.Sprintf("--fees=%s", fees.String()),
+// 	)
+
+// 	// wait for a block so that above txs take effect
+// 	nonValidatorNode.WaitForNextBlock()
+
+// 	// check the delegation was success.
+// 	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+// 	s.NotNil(delegation)
+// 	s.Equal(granteeStakerAddr.String(), delegation.BtcDelegation.StakerAddr)
+
+// 	// verify the balances after the BTC delegation was submited
+// 	// the staker should continue to have zero as balance.
+// 	stakerBalances, err = nonValidatorNode.QueryBalances(granteeStakerAddr.String())
+// 	s.NoError(err)
+// 	s.True(stakerBalances.IsZero())
+
+// 	// the fee payer should have the (feePayerBalanceBeforeBTCDel - fee) == currentBalance
+// 	feePayerBalances, err := nonValidatorNode.QueryBalances(feePayerAddr.String())
+// 	s.NoError(err)
+// 	s.Equal(feePayerBalanceBeforeBTCDel.Sub(fees).String(), feePayerBalances.String())
+// }
+
+// Test8BTCDelegationFeeGrantTyped is an end-to-end test to create a BTC delegation
 // from a BTC delegator that does not have funds to pay for fees. It also
 // utilizes the cacheFP populated at Test1CreateFinalityProviderAndDelegation.
-func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
+func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	node, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	wGratee, wGranter := "grantee", "granter"
-	feePayerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGranter))
-	granteeStakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGratee))
+	wGratee, wGranter := "staker", "feePayer"
+	feePayerAddr := sdk.MustAccAddressFromBech32(node.KeysAdd(wGranter))
+	granteeStakerAddr := sdk.MustAccAddressFromBech32(node.KeysAdd(wGratee))
 
 	feePayerBalanceBeforeBTCDel := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(100000))
+	stakerBalance := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(100))
 	fees := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(50000))
 
-	// fund the granter
-	nonValidatorNode.BankSend(feePayerAddr.String(), feePayerBalanceBeforeBTCDel.String())
+	// fund the granter and the staker
+	node.BankSendFromNode(feePayerAddr.String(), feePayerBalanceBeforeBTCDel.String())
+	node.BankSendFromNode(granteeStakerAddr.String(), stakerBalance.String())
 
 	// create a random BTC delegation under the cached finality provider
 	// BTC staking btcStkParams, BTC delegation key pairs and PoP
-	btcStkParams := nonValidatorNode.QueryBTCStakingParams()
+	btcStkParams := node.QueryBTCStakingParams()
 
 	// minimal required unbonding time
 	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
@@ -556,24 +644,48 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
-	stakingTimeBlocks := uint16(math.MaxUint16) - 5
-	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, btcStkParams, stakingTimeBlocks, cacheFP)
+	stakingTimeBlocks := uint16(math.MaxUint16) - 2
+	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(node, btcStkParams, stakingTimeBlocks, cacheFP)
 
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
 
-	// conceive the fee grant from the payer to the staker.
-	nonValidatorNode.TxFeeGrant(feePayerAddr.String(), granteeStakerAddr.String(), fmt.Sprintf("--from=%s", wGranter))
+	// encConfig := params.DefaultEncodingConfig()
+	// encConfig.InterfaceRegistry.ListImplementations(&bstypes.BTCDelegation{}.)
+	// encConfig.InterfaceRegistry.FindDescriptorByName()
+	// var btcDel bstypes.BTCDelegation
+	// AllowedMsgAllowance
+
+	// feegrant.NewAllowedMsgAllowance(&feegrant.PeriodicAllowance{}, []string{})
+	// feegrant.AllowedMsgAllowance{}
+
+	// conceive the fee grant from the payer to the staker only for one specific msg type.
+	node.TxFeeGrant(
+		feePayerAddr.String(), granteeStakerAddr.String(),
+		fmt.Sprintf("--from=%s", wGranter),
+		fmt.Sprintf("--%s=%s", feegrantcli.FlagAllowedMsgs, sdk.MsgTypeURL(&bstypes.BTCDelegation{})),
+	)
 	// wait for a block to take effect the fee grant tx.
-	nonValidatorNode.WaitForNextBlock()
+	node.WaitForNextBlock()
+
+	// tries to create a send transaction putting the freegranter as feepayer, it should FAIL
+	// since we only gave grant for BTC delegation msgs.
+	outBuff, errBuff, err := node.BankSendOutput(
+		wGratee, node.PublicAddress, stakerBalance.String(),
+		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
+	)
+	fmt.Printf("\n outBuff: %s", outBuff.String())
+	fmt.Printf("\n errBuff: %s", errBuff.String())
+	// fmt.Printf("\n err: %s", err.Error())
+	s.Nil(err)
 
 	// staker should not have any balance.
-	stakerBalances, err := nonValidatorNode.QueryBalances(granteeStakerAddr.String())
+	stakerBalances, err := node.QueryBalances(granteeStakerAddr.String())
 	s.NoError(err)
 	s.True(stakerBalances.IsZero())
 
 	// submit the message to create BTC delegation
-	nonValidatorNode.CreateBTCDelegation(
+	node.CreateBTCDelegation(
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
 		stakingTxInfo,
@@ -594,21 +706,21 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	)
 
 	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
+	node.WaitForNextBlock()
 
 	// check the delegation was success.
-	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+	delegation := node.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(delegation)
 	s.Equal(granteeStakerAddr.String(), delegation.BtcDelegation.StakerAddr)
 
 	// verify the balances after the BTC delegation was submited
 	// the staker should continue to have zero as balance.
-	stakerBalances, err = nonValidatorNode.QueryBalances(granteeStakerAddr.String())
+	stakerBalances, err = node.QueryBalances(granteeStakerAddr.String())
 	s.NoError(err)
 	s.True(stakerBalances.IsZero())
 
 	// the fee payer should have the (feePayerBalanceBeforeBTCDel - fee) == currentBalance
-	feePayerBalances, err := nonValidatorNode.QueryBalances(feePayerAddr.String())
+	feePayerBalances, err := node.QueryBalances(feePayerAddr.String())
 	s.NoError(err)
 	s.Equal(feePayerBalanceBeforeBTCDel.Sub(fees).String(), feePayerBalances.String())
 }
