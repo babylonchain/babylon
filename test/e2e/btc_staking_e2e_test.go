@@ -667,12 +667,13 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 
 	// tries to create a send transaction putting the freegranter as feepayer, it should FAIL
 	// since we only gave grant for BTC delegation msgs.
-	outBuff, _, err := node.BankSendOutput(
+	outBuff, errBuff, err := node.BankSendOutput(
 		wGratee, node.PublicAddress, stakerBalance.String(),
 		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
 	)
-	s.Require().Contains(outBuff.String(), fmt.Sprintf("code: %d", feegrant.ErrMessageNotAllowed.ABCICode()))
-	s.Require().Contains(outBuff.String(), feegrant.ErrMessageNotAllowed.Error())
+	outputStr := outBuff.String() + errBuff.String()
+	s.Require().Contains(outputStr, fmt.Sprintf("code: %d", feegrant.ErrMessageNotAllowed.ABCICode()))
+	s.Require().Contains(outputStr, feegrant.ErrMessageNotAllowed.Error())
 	s.Nil(err)
 
 	// staker should not have lost any balance.
