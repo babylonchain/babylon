@@ -10,6 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	FlagPrintInterval = "print-interval"
+)
+
 func OpenDB(dir string) (dbm.DB, error) {
 	switch {
 	case strings.HasSuffix(dir, ".db"):
@@ -54,7 +58,18 @@ func getModuleName(key string, modules []string) (string, error) {
 	return "", fmt.Errorf("no module found for key %s", key)
 }
 
-func PrintDBStats(db dbm.DB, moduleNames []string) {
+func printModuleStats(stats map[string]*ModuleStats, totalSizeBytes int) {
+	fmt.Printf("****************** Printing module stats ******************\n")
+	for k, v := range stats {
+		fmt.Printf("Module %s:\n", k)
+		fmt.Printf("Number of tree state nodes: %d\n", v.NodeCount)
+		fmt.Printf("Total size of of module storage: %d bytes\n", v.TotalSizeBytes)
+		fmt.Printf("Fraction of total size: %.3f\n", float64(v.TotalSizeBytes)/float64(totalSizeBytes))
+	}
+	fmt.Printf("****************** Printed stats for all Babylon modules ******************\n")
+}
+
+func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 
 	prefix := map[string]*ModuleStats{}
 	for _, name := range moduleNames {
@@ -73,6 +88,10 @@ func PrintDBStats(db dbm.DB, moduleNames []string) {
 
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
+		if count != 0 && count%printInterval == 0 {
+			printModuleStats(prefix, totalSizeBytes)
+		}
+
 		fullKey := itr.Key()
 		fullValue := itr.Value()
 		fullKeyString := string(fullKey)
@@ -99,14 +118,10 @@ func PrintDBStats(db dbm.DB, moduleNames []string) {
 	if err := itr.Error(); err != nil {
 		panic(err)
 	}
+	fmt.Printf("****************** Finished iterating over whole database ******************\n")
 	fmt.Printf("DB contains %d entries\n", count)
 	fmt.Printf("Total size of database: %d bytes\n", totalSizeBytes)
-	for k, v := range prefix {
-		fmt.Printf("Module %s:\n", k)
-		fmt.Printf("Number of tree state nodes: %d\n", v.NodeCount)
-		fmt.Printf("Total size of of module storage: %d bytes\n", v.TotalSizeBytes)
-		fmt.Printf("Fraction of total size: %.3f\n", float64(v.TotalSizeBytes)/float64(totalSizeBytes))
-	}
+	printModuleStats(prefix, totalSizeBytes)
 }
 
 func ModuleSizeCmd() *cobra.Command {
@@ -115,6 +130,16 @@ func ModuleSizeCmd() *cobra.Command {
 		Short: "print sizes of each module in the database",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			d, err := cmd.Flags().GetInt(FlagPrintInterval)
+
+			if err != nil {
+				return err
+			}
+
+			if d <= 0 {
+				return fmt.Errorf("print interval must be greater than 0")
+			}
+
 			pathToDB := args[0]
 
 			babylonApp := app.NewTmpBabylonApp()
@@ -127,11 +152,13 @@ func ModuleSizeCmd() *cobra.Command {
 				return err
 			}
 
-			PrintDBStats(db, names)
+			PrintDBStats(db, names, d)
 
 			return nil
 		},
 	}
+
+	cmd.Flags().Int(FlagPrintInterval, 100000, "interval between printing databse stats")
 
 	return cmd
 }
