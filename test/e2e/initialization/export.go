@@ -16,6 +16,7 @@ type Node struct {
 	ConfigDir     string `json:"configDir"`
 	Mnemonic      string `json:"mnemonic"`
 	PublicAddress string `json:"publicAddress"`
+	WalletName    string `json:"walletName"`
 	SecretKey     cryptotypes.PrivKey
 	PublicKey     []byte `json:"publicKey"`
 	PeerId        string `json:"peerId"`

@@ -2,6 +2,7 @@ package chain
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonchain/babylon/test/e2e/containers"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
@@ -43,9 +45,8 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 }
 
 func (n *NodeConfig) CreateBTCDelegation(
-	babylonPK *secp256k1.PubKey,
 	btcPk *bbn.BIP340PubKey,
-	pop *bstypes.ProofOfPossession,
+	pop *bstypes.ProofOfPossessionBTC,
 	stakingTxInfo *btcctypes.TransactionInfo,
 	fpPK *bbn.BIP340PubKey,
 	stakingTimeBlocks uint16,
@@ -57,13 +58,11 @@ func (n *NodeConfig) CreateBTCDelegation(
 	unbondingTime uint16,
 	unbondingValue btcutil.Amount,
 	delUnbondingSlashingSig *bbn.BIP340Signature,
-) {
+	fromWalletName string,
+	generateOnly bool,
+	overallFlags ...string,
+) (outStr string) {
 	n.LogActionF("creating BTC delegation")
-
-	// get babylon PK hex
-	babylonPKBytes, err := babylonPK.Marshal()
-	require.NoError(n.t, err)
-	babylonPKHex := hex.EncodeToString(babylonPKBytes)
 
 	btcPkHex := btcPk.MarshalHex()
 
@@ -94,10 +93,23 @@ func (n *NodeConfig) CreateBTCDelegation(
 	unbondingValueStr := sdkmath.NewInt(int64(unbondingValue)).String()
 	delUnbondingSlashingSigHex := delUnbondingSlashingSig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex, "--from=val"}
-	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	cmd := []string{
+		"babylond", "tx", "btcstaking", "create-btc-delegation",
+		btcPkHex, popHex, stakingTxInfoHex, fpPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
+		n.FlagChainID(), "--log_format=json",
+	}
+
+	if generateOnly {
+		cmd = append(cmd, "--generate-only")
+	} else {
+		cmd = append(cmd, "-b=sync", "--yes")
+	}
+
+	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
+	return outBuff.String()
 }
 
 func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte) {

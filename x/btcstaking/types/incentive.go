@@ -87,7 +87,7 @@ func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation) {
 	btcDelDistInfo := &BTCDelDistInfo{
 		BtcPk:         btcDel.BtcPk,
-		BabylonPk:     btcDel.BabylonPk,
+		StakerAddr:    btcDel.StakerAddr,
 		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
 		VotingPower:   btcDel.TotalSat,
 	}
@@ -107,5 +107,5 @@ func (v *FinalityProviderDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdkmath.L
 }
 
 func (d *BTCDelDistInfo) GetAddress() sdk.AccAddress {
-	return sdk.AccAddress(d.BabylonPk.Address())
+	return sdk.MustAccAddressFromBech32(d.StakerAddr)
 }

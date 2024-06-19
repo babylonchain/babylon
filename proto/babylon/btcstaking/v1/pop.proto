@@ -27,6 +27,17 @@ message ProofOfPossession {
     bytes btc_sig = 3;
 }
 
+// ProofOfPossessionBTC is the proof of possession that a Babylon
+// address and a Bitcoin secp256k1 secret key are held by the same
+// person
+message ProofOfPossessionBTC {
+    // btc_sig_type indicates the type of btc_sig in the pop
+    BTCSigType btc_sig_type = 1;
+    // btc_sig is the signature generated via sign(sk_btc, babylon_staker_address)
+    // the signature follows encoding in either BIP-340 spec or BIP-322 spec
+    bytes btc_sig = 2;
+}
+
 // BIP322Sig is a BIP-322 signature together with the address corresponding to
 // the signer
 message BIP322Sig {
