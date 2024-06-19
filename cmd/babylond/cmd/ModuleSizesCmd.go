@@ -15,6 +15,9 @@ const (
 )
 
 func OpenDB(dir string) (dbm.DB, error) {
+	fmt.Printf("Opening database at: %s\n", dir)
+	defer fmt.Printf("Opened database at: %s\n", dir)
+
 	switch {
 	case strings.HasSuffix(dir, ".db"):
 		dir = dir[:len(dir)-3]
@@ -70,7 +73,7 @@ func printModuleStats(stats map[string]*ModuleStats, totalSizeBytes int) {
 }
 
 func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
-
+	fmt.Printf("****************** Starting to iterate over whole database ******************\n")
 	prefix := map[string]*ModuleStats{}
 	for _, name := range moduleNames {
 		prefix[name] = &ModuleStats{
@@ -85,6 +88,7 @@ func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("****************** Retrived database iterator ******************\n")
 
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
@@ -142,9 +146,11 @@ func ModuleSizeCmd() *cobra.Command {
 
 			pathToDB := args[0]
 
+			fmt.Printf("Try to get Babylon module names\n")
 			babylonApp := app.NewTmpBabylonApp()
 
 			names := babylonApp.ModuleManager.ModuleNames()
+			fmt.Printf("Got Babylon module names\n")
 
 			db, err := OpenDB(pathToDB)
 
