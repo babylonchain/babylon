@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 
-	"github.com/babylonchain/babylon/app"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/spf13/cobra"
 )
@@ -13,6 +13,11 @@ import (
 const (
 	FlagPrintInterval = "print-interval"
 )
+
+// r is a regular expression that matched the store key prefix
+// we cannot use modules names direclty as sometimes module key != store key
+// for example account module has store key "acc" and module key "auth"
+var r, _ = regexp.Compile("s/k:[A-Za-z]+/")
 
 func OpenDB(dir string) (dbm.DB, error) {
 	fmt.Printf("Opening database at: %s\n", dir)
@@ -61,13 +66,17 @@ func getModuleName(key string, modules []string) (string, error) {
 	return "", fmt.Errorf("no module found for key %s", key)
 }
 
+func extractStoreKey(fullKey string) string {
+	return r.FindString(fullKey)
+}
+
 func printModuleStats(stats map[string]*ModuleStats, totalCount uint64, numErrors uint64, totalSizeBytes int) {
 	fmt.Printf("****************** Printing module stats ******************\n")
 	fmt.Printf("Total number of nodes in db: %d\n", totalCount)
 	fmt.Printf("Total number of unknown nodes: %d\n", numErrors)
 	fmt.Printf("Total size of database: %d bytes\n", totalSizeBytes)
 	for k, v := range stats {
-		fmt.Printf("Module %s:\n", k)
+		fmt.Printf("Store key %s:\n", k)
 		fmt.Printf("Number of tree state nodes: %d\n", v.NodeCount)
 		fmt.Printf("Total size of of module storage: %d bytes\n", v.TotalSizeBytes)
 		fmt.Printf("Fraction of total size: %.3f\n", float64(v.TotalSizeBytes)/float64(totalSizeBytes))
@@ -75,15 +84,9 @@ func printModuleStats(stats map[string]*ModuleStats, totalCount uint64, numError
 	fmt.Printf("****************** Printed stats for all Babylon modules ******************\n")
 }
 
-func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
+func PrintDBStats(db dbm.DB, printInterval int) {
 	fmt.Printf("****************** Starting to iterate over whole database ******************\n")
-	prefix := map[string]*ModuleStats{}
-	for _, name := range moduleNames {
-		prefix[name] = &ModuleStats{
-			NodeCount:      0,
-			TotalSizeBytes: 0,
-		}
-	}
+	storeKeyStats := make(map[string]*ModuleStats)
 
 	count := uint64(0)
 	numErrors := uint64(0)
@@ -98,26 +101,30 @@ func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 	for ; itr.Valid(); itr.Next() {
 		count++
 		if count%uint64(printInterval) == 0 {
-			printModuleStats(prefix, count, numErrors, totalSizeBytes)
+			printModuleStats(storeKeyStats, count, numErrors, totalSizeBytes)
 		}
 
 		fullKey := itr.Key()
 		fullValue := itr.Value()
 		fullKeyString := string(fullKey)
 
-		moduleName, err := getModuleName(fullKeyString, moduleNames)
+		extractedStoreKey := extractStoreKey(fullKeyString)
 
-		if err != nil {
-			fmt.Printf("Error: %s\n", err)
+		if extractedStoreKey == "" {
+			// storekey that do not conform to regex
 			numErrors++
 			continue
 		}
 
-		prefix[moduleName].NodeCount++
+		if _, ok := storeKeyStats[extractedStoreKey]; !ok {
+			storeKeyStats[extractedStoreKey] = &ModuleStats{}
+		}
+
+		storeKeyStats[extractedStoreKey].NodeCount++
 
 		keyValueSize := len(fullKey) + len(fullValue)
 
-		prefix[moduleName].TotalSizeBytes += keyValueSize
+		storeKeyStats[extractedStoreKey].TotalSizeBytes += keyValueSize
 		totalSizeBytes += keyValueSize
 	}
 
@@ -125,7 +132,7 @@ func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 		panic(err)
 	}
 	fmt.Printf("****************** Finished iterating over whole database ******************\n")
-	printModuleStats(prefix, count, numErrors, totalSizeBytes)
+	printModuleStats(storeKeyStats, count, numErrors, totalSizeBytes)
 }
 
 func ModuleSizeCmd() *cobra.Command {
@@ -146,23 +153,13 @@ func ModuleSizeCmd() *cobra.Command {
 
 			pathToDB := args[0]
 
-			fmt.Printf("Try to get Babylon module names\n")
-			babylonApp := app.NewTmpBabylonApp()
-
-			names := babylonApp.ModuleManager.ModuleNames()
-			fmt.Printf("Got Babylon module names\n")
-			for _, name := range names {
-				fmt.Printf("Module name: %s\n", name)
-			}
-			fmt.Printf("Got Babylon module names\n")
-
 			db, err := OpenDB(pathToDB)
 
 			if err != nil {
 				return err
 			}
 
-			PrintDBStats(db, names, d)
+			PrintDBStats(db, d)
 
 			return nil
 		},
