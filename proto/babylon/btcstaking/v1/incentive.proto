@@ -3,7 +3,6 @@ package babylon.btcstaking.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
-import "cosmos/crypto/secp256k1/keys.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
