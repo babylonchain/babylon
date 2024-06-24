@@ -108,6 +108,7 @@ func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 		moduleName, err := getModuleName(fullKeyString, moduleNames)
 
 		if err != nil {
+			fmt.Printf("Error: %s\n", err)
 			numErrors++
 			continue
 		}
