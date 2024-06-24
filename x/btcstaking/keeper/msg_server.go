@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -60,8 +61,13 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	fpAddr, err := sdk.AccAddressFromBech32(req.Addr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
+	}
+
 	// verify proof of possession
-	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
+	if err := req.Pop.Verify(fpAddr, req.BtcPk, ms.btcNet); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
@@ -84,7 +90,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	fp := types.FinalityProvider{
 		Description: req.Description,
 		Commission:  req.Commission,
-		BabylonPk:   req.BabylonPk,
+		Addr:        fpAddr.String(),
 		BtcPk:       req.BtcPk,
 		Pop:         req.Pop,
 	}
@@ -116,15 +122,20 @@ func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEdit
 		return nil, types.ErrCommissionGTMaxRate
 	}
 
+	// TODO: check to index the finality provider by his address instead of the BTC pk
 	// find the finality provider with the given BTC PK
 	fp, err := ms.GetFinalityProvider(ctx, req.BtcPk)
 	if err != nil {
 		return nil, err
 	}
 
+	fpAddr, err := sdk.AccAddressFromBech32(req.Addr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
+	}
+
 	// ensure the signer corresponds to the finality provider's Babylon address
-	fpBabylonAddr := sdk.AccAddress(fp.BabylonPk.Address())
-	if req.Signer != fpBabylonAddr.String() {
+	if !strings.EqualFold(fpAddr.String(), fp.Addr) {
 		return nil, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address")
 	}
 

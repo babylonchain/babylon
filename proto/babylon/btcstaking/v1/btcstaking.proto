@@ -17,6 +17,7 @@ message FinalityProvider {
         (cosmos_proto.scalar)  = "cosmos.Dec",
         (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
     ];
+    // addr is the bech32 address identifier of the finality provider.
     string addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
     // btc_pk is the Bitcoin secp256k1 PK of this finality provider
     // the PK follows encoding in BIP-340 spec

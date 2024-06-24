@@ -74,7 +74,8 @@ type FinalityProvider struct {
 	Description *types.Description `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
 	// commission defines the commission rate of the finality provider.
 	Commission *cosmossdk_io_math.LegacyDec `protobuf:"bytes,2,opt,name=commission,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"commission,omitempty"`
-	Addr       string                       `protobuf:"bytes,3,opt,name=addr,proto3" json:"addr,omitempty"`
+	// addr is the bech32 address identifier of the finality provider.
+	Addr string `protobuf:"bytes,3,opt,name=addr,proto3" json:"addr,omitempty"`
 	// btc_pk is the Bitcoin secp256k1 PK of this finality provider
 	// the PK follows encoding in BIP-340 spec
 	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,4,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`

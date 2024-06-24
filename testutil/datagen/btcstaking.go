@@ -1,7 +1,6 @@
 package datagen
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -72,20 +70,18 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	bbnPK := bbnSK.PubKey()
-	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
-	if !ok {
-		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")
-	}
+
+	fpAddr := sdk.AccAddress(bbnPK.Address())
 	// pop
-	pop, err := bstypes.NewPoP(bbnSK, btcSK)
+	pop, err := bstypes.NewPoPBTC(fpAddr, btcSK)
 	if err != nil {
 		return nil, err
 	}
 	return &bstypes.FinalityProvider{
 		Description: description,
 		Commission:  &commission,
-		BabylonPk:   secp256k1PK,
 		BtcPk:       bip340PK,
+		Addr:        fpAddr.String(),
 		Pop:         pop,
 	}, nil
 }

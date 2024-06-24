@@ -33,9 +33,6 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if _, err := m.Description.EnsureLength(); err != nil {
 		return err
 	}
-	if m.BabylonPk == nil {
-		return fmt.Errorf("empty Babylon public key")
-	}
 	if m.BtcPk == nil {
 		return fmt.Errorf("empty BTC public key")
 	}
@@ -45,14 +42,10 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if m.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
-	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+	if _, err := sdk.AccAddressFromBech32(m.Addr); err != nil {
 		return err
 	}
-	if err := m.Pop.ValidateBasic(); err != nil {
-		return err
-	}
-
-	return nil
+	return m.Pop.ValidateBasic()
 }
 
 func (m *MsgEditFinalityProvider) ValidateBasic() error {

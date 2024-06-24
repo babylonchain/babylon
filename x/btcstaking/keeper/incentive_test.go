@@ -38,7 +38,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 			_, _, fp := h.CreateFinalityProvider(r)
 			if i < numFpsWithVotingPower {
 				// these finality providers will receive BTC delegations and have voting power
-				fpsWithVotingPowerMap[fp.BabylonPk.String()] = fp
+				fpsWithVotingPowerMap[fp.Addr] = fp
 			}
 		}
 
@@ -74,7 +74,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		activeFPs := dc.GetActiveFinalityProviders(maxNumFps)
 		for _, fpDistInfo := range activeFPs {
 			require.Equal(t, fpDistInfo.TotalVotingPower, numBTCDels*stakingValue)
-			fp, ok := fpsWithVotingPowerMap[fpDistInfo.BabylonPk.String()]
+			fp, ok := fpsWithVotingPowerMap[fpDistInfo.Addr]
 			require.True(t, ok)
 			require.Equal(t, fpDistInfo.Commission, fp.Commission)
 			require.Len(t, fpDistInfo.BtcDels, int(numBTCDels))

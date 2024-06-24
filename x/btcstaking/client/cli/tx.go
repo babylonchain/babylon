@@ -103,16 +103,15 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 			}
 
 			// get PoP
-			pop, err := types.NewPoPFromHex(args[2])
+			pop, err := types.NewPoPBTCFromHex(args[2])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgCreateFinalityProvider{
-				Signer:      clientCtx.FromAddress.String(),
+				Addr:        clientCtx.FromAddress.String(),
 				Description: &description,
 				Commission:  &rate,
-				BabylonPk:   &babylonPK,
 				BtcPk:       btcPK,
 				Pop:         pop,
 			}
@@ -177,7 +176,7 @@ func NewEditFinalityProviderCmd() *cobra.Command {
 			}
 
 			msg := types.MsgEditFinalityProvider{
-				Signer:      clientCtx.FromAddress.String(),
+				Addr:        clientCtx.FromAddress.String(),
 				BtcPk:       btcPK,
 				Description: &description,
 				Commission:  &rate,

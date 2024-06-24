@@ -116,7 +116,7 @@ func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider 
 	return &types.FinalityProvider{
 		Description: fp.Description,
 		Commission:  fp.Commission,
-		BabylonPk:   fp.BabylonPk,
+		Addr:        fp.Addr,
 		BtcPk:       fp.BtcPk,
 		Pop:         fp.Pop,
 	}
@@ -128,10 +128,9 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
 	h.NoError(err)
 	msgNewFp := types.MsgCreateFinalityProvider{
-		Signer:      datagen.GenRandomAccount().Address,
+		Addr:        fp.Addr,
 		Description: fp.Description,
 		Commission:  fp.Commission,
-		BabylonPk:   fp.BabylonPk,
 		BtcPk:       fp.BtcPk,
 		Pop:         fp.Pop,
 	}
