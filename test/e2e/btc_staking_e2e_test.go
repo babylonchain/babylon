@@ -838,7 +838,7 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 func (s *BTCStakingTestSuite) equalFinalityProviderResp(fp *bstypes.FinalityProvider, fpResp *bstypes.FinalityProviderResponse) {
 	s.Equal(fp.Description, fpResp.Description)
 	s.Equal(fp.Commission, fpResp.Commission)
-	s.Equal(fp.BabylonPk, fpResp.BabylonPk)
+	s.Equal(fp.Addr, fpResp.Addr)
 	s.Equal(fp.BtcPk, fpResp.BtcPk)
 	s.Equal(fp.Pop, fpResp.Pop)
 	s.Equal(fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
@@ -849,7 +849,7 @@ func (s *BTCStakingTestSuite) equalFinalityProviderResp(fp *bstypes.FinalityProv
 func (s *BTCStakingTestSuite) CreateRandomFP(node *chain.NodeConfig) (newFP *bstypes.FinalityProvider) {
 	newFP, err := datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, node.SecretKey)
 	s.NoError(err)
-	node.CreateFinalityProvider(newFP.BabylonPk, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
+	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
 
 	// wait for a block so that above txs take effect
 	node.WaitForNextBlock()

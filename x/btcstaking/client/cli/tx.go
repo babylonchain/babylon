@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 
@@ -52,8 +51,8 @@ func GetTxCmd() *cobra.Command {
 
 func NewCreateFinalityProviderCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-finality-provider [babylon_pk] [btc_pk] [pop]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "create-finality-provider [btc_pk] [pop]",
+		Args:  cobra.ExactArgs(2),
 		Short: "Create a finality provider",
 		Long: strings.TrimSpace(
 			`Create a finality provider.`, // TODO: example
@@ -86,24 +85,14 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 				return err
 			}
 
-			// get Babylon PK
-			babylonPKBytes, err := hex.DecodeString(args[0])
-			if err != nil {
-				return err
-			}
-			var babylonPK secp256k1.PubKey
-			if err := babylonPK.Unmarshal(babylonPKBytes); err != nil {
-				return err
-			}
-
 			// get BTC PK
-			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 			if err != nil {
 				return err
 			}
 
 			// get PoP
-			pop, err := types.NewPoPBTCFromHex(args[2])
+			pop, err := types.NewPoPBTCFromHex(args[1])
 			if err != nil {
 				return err
 			}
