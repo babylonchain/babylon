@@ -61,8 +61,11 @@ func getModuleName(key string, modules []string) (string, error) {
 	return "", fmt.Errorf("no module found for key %s", key)
 }
 
-func printModuleStats(stats map[string]*ModuleStats, totalSizeBytes int) {
+func printModuleStats(stats map[string]*ModuleStats, totalCount uint64, numErrors uint64, totalSizeBytes int) {
 	fmt.Printf("****************** Printing module stats ******************\n")
+	fmt.Printf("Total number of nodes in db: %d\n", totalCount)
+	fmt.Printf("Total number of unknown nodes: %d\n", numErrors)
+	fmt.Printf("Total size of database: %d bytes\n", totalSizeBytes)
 	for k, v := range stats {
 		fmt.Printf("Module %s:\n", k)
 		fmt.Printf("Number of tree state nodes: %d\n", v.NodeCount)
@@ -82,7 +85,8 @@ func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 		}
 	}
 
-	count := 0
+	count := uint64(0)
+	numErrors := uint64(0)
 	totalSizeBytes := 0
 	itr, err := db.Iterator(nil, nil)
 	if err != nil {
@@ -92,8 +96,9 @@ func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
-		if count != 0 && count%printInterval == 0 {
-			printModuleStats(prefix, totalSizeBytes)
+		count++
+		if count%uint64(printInterval) == 0 {
+			printModuleStats(prefix, count, numErrors, totalSizeBytes)
 		}
 
 		fullKey := itr.Key()
@@ -103,11 +108,8 @@ func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 		moduleName, err := getModuleName(fullKeyString, moduleNames)
 
 		if err != nil {
+			numErrors++
 			continue
-		}
-
-		if err != nil {
-			fmt.Printf("Error making node: %s\n", err.Error())
 		}
 
 		prefix[moduleName].NodeCount++
@@ -116,16 +118,13 @@ func PrintDBStats(db dbm.DB, moduleNames []string, printInterval int) {
 
 		prefix[moduleName].TotalSizeBytes += keyValueSize
 		totalSizeBytes += keyValueSize
-		count++
 	}
 
 	if err := itr.Error(); err != nil {
 		panic(err)
 	}
 	fmt.Printf("****************** Finished iterating over whole database ******************\n")
-	fmt.Printf("DB contains %d entries\n", count)
-	fmt.Printf("Total size of database: %d bytes\n", totalSizeBytes)
-	printModuleStats(prefix, totalSizeBytes)
+	printModuleStats(prefix, count, numErrors, totalSizeBytes)
 }
 
 func ModuleSizeCmd() *cobra.Command {
@@ -150,6 +149,10 @@ func ModuleSizeCmd() *cobra.Command {
 			babylonApp := app.NewTmpBabylonApp()
 
 			names := babylonApp.ModuleManager.ModuleNames()
+			fmt.Printf("Got Babylon module names\n")
+			for _, name := range names {
+				fmt.Printf("Module name: %s\n", name)
+			}
 			fmt.Printf("Got Babylon module names\n")
 
 			db, err := OpenDB(pathToDB)
