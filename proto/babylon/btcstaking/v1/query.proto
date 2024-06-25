@@ -335,7 +335,7 @@ message FinalityProviderResponse {
   // the PK follows encoding in BIP-340 spec
   bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // pop is the proof of possession of the BTC_PK by the fp addr.
-  // Essentially is the signature from the BTC SK on the fp addr.
+  // Essentially is the signature where the BTC SK sigs the fp addr.
   ProofOfPossessionBTC pop = 5;
   // slashed_babylon_height indicates the Babylon height when
   // the finality provider is slashed.
