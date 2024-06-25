@@ -18,7 +18,7 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 	// get all the voters for the height
 	voterBTCPKs := k.GetVoters(ctx, uint64(height))
 
-	// Iterate over all the validators which *should* have signed this block
+	// Iterate over all the finality providers which *should* have signed this block
 	// store whether or not they have actually signed it, identify inactive
 	// ones, and apply punishment
 	for fpPkHex, _ := range fpSet {
@@ -75,7 +75,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, params final
 	}
 	index := (height - signInfo.StartHeight) % signedBlocksWindow
 
-	// determine if the validator signed the previous block
+	// determine if the finality provider signed the previous block
 	previous, err := k.GetMissedBlockBitmapValue(ctx, fpPk, index)
 	if err != nil {
 		return fmt.Errorf("failed to get the finality provider's bitmap value: %w", err)
@@ -125,7 +125,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, params final
 	minHeight := signInfo.StartHeight + signedBlocksWindow
 	maxMissed := signedBlocksWindow - minSignedPerWindow
 
-	// if we are past the minimum height and the validator has missed too many blocks, punish them
+	// if we are past the minimum height and the finality provider has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
 		modifiedSignInfo = true
 		fp, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fpPk.MustMarshal())
@@ -133,7 +133,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, params final
 			return err
 		}
 		if fp != nil && !fp.IsJailed() {
-			// Inactivity identified: jail the validator
+			// Inactivity identified: jail the finality provider
 			// TODO currently we only tag the finality provider as jailed
 			//  we need to implement actual punishment
 
@@ -146,8 +146,8 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, params final
 
 			signInfo.JailedUntil = sdkCtx.HeaderInfo().Time.Add(params.JailDuration)
 
-			// We need to reset the counter & bitmap so that the validator won't be
-			// immediately slashed for downtime upon re-bonding.
+			// We need to reset the counter & bitmap so that the finality provider won't be
+			// immediately jailed upon re-bonding.
 			// We don't set the start height as this will get correctly set
 			// once they bond again in the AfterValidatorBonded hook!
 			signInfo.MissedBlocksCounter = 0

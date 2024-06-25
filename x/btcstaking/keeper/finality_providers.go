@@ -68,7 +68,6 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 }
 
 // JailFinalityProvider jails a finality provider with the given PK
-// A jailed finality provider will temporarily lose voting power
 func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
 	// ensure finality provider exists
 	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
