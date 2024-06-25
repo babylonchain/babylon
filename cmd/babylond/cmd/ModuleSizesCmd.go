@@ -51,35 +51,33 @@ func OpenDB(dir string) (dbm.DB, error) {
 }
 
 type ModuleStats struct {
-	NodeCount      int
-	TotalSizeBytes int
+	NodeCount      uint64
+	TotalSizeBytes uint64
 }
 
-func getModuleName(key string, modules []string) (string, error) {
-	for _, name := range modules {
-		stringToFind := fmt.Sprintf("k:%s", name)
-
-		if strings.Contains(key, stringToFind) {
-			return name, nil
-		}
-	}
-	return "", fmt.Errorf("no module found for key %s", key)
+type GlobalStats struct {
+	TotalNodeCount       uint64
+	TotalSizeBytes       uint64
+	UnknownStoreKeyCount uint64
+	UnknownStoreKeySize  uint64
 }
 
 func extractStoreKey(fullKey string) string {
 	return r.FindString(fullKey)
 }
 
-func printModuleStats(stats map[string]*ModuleStats, totalCount uint64, numErrors uint64, totalSizeBytes int) {
+func printModuleStats(stats map[string]*ModuleStats, gs *GlobalStats) {
 	fmt.Printf("****************** Printing module stats ******************\n")
-	fmt.Printf("Total number of nodes in db: %d\n", totalCount)
-	fmt.Printf("Total number of unknown nodes: %d\n", numErrors)
-	fmt.Printf("Total size of database: %d bytes\n", totalSizeBytes)
+	fmt.Printf("Total number of nodes in db: %d\n", gs.TotalNodeCount)
+	fmt.Printf("Total size of database: %d bytes\n", gs.TotalSizeBytes)
+	fmt.Printf("Total number of unknown storekeys: %d\n", gs.UnknownStoreKeyCount)
+	fmt.Printf("Total size of unknown storekeys: %d bytes\n", gs.UnknownStoreKeySize)
+	fmt.Printf("Fraction of unknown storekeys: %.3f\n", float64(gs.UnknownStoreKeySize)/float64(gs.TotalSizeBytes))
 	for k, v := range stats {
 		fmt.Printf("Store key %s:\n", k)
 		fmt.Printf("Number of tree state nodes: %d\n", v.NodeCount)
 		fmt.Printf("Total size of of module storage: %d bytes\n", v.TotalSizeBytes)
-		fmt.Printf("Fraction of total size: %.3f\n", float64(v.TotalSizeBytes)/float64(totalSizeBytes))
+		fmt.Printf("Fraction of total size: %.3f\n", float64(v.TotalSizeBytes)/float64(gs.TotalSizeBytes))
 	}
 	fmt.Printf("****************** Printed stats for all Babylon modules ******************\n")
 }
@@ -88,9 +86,8 @@ func PrintDBStats(db dbm.DB, printInterval int) {
 	fmt.Printf("****************** Starting to iterate over whole database ******************\n")
 	storeKeyStats := make(map[string]*ModuleStats)
 
-	count := uint64(0)
-	numErrors := uint64(0)
-	totalSizeBytes := 0
+	gs := GlobalStats{}
+
 	itr, err := db.Iterator(nil, nil)
 	if err != nil {
 		panic(err)
@@ -99,20 +96,21 @@ func PrintDBStats(db dbm.DB, printInterval int) {
 
 	defer itr.Close()
 	for ; itr.Valid(); itr.Next() {
-		count++
-		if count%uint64(printInterval) == 0 {
-			printModuleStats(storeKeyStats, count, numErrors, totalSizeBytes)
+		gs.TotalNodeCount++
+		if gs.TotalNodeCount%uint64(printInterval) == 0 {
+			printModuleStats(storeKeyStats, &gs)
 		}
 
 		fullKey := itr.Key()
 		fullValue := itr.Value()
 		fullKeyString := string(fullKey)
-
+		keyValueSize := uint64(len(fullKey) + len(fullValue))
 		extractedStoreKey := extractStoreKey(fullKeyString)
 
 		if extractedStoreKey == "" {
-			// storekey that do not conform to regex
-			numErrors++
+			gs.UnknownStoreKeyCount++
+			gs.TotalSizeBytes += keyValueSize
+			gs.UnknownStoreKeySize += keyValueSize
 			continue
 		}
 
@@ -121,18 +119,15 @@ func PrintDBStats(db dbm.DB, printInterval int) {
 		}
 
 		storeKeyStats[extractedStoreKey].NodeCount++
-
-		keyValueSize := len(fullKey) + len(fullValue)
-
 		storeKeyStats[extractedStoreKey].TotalSizeBytes += keyValueSize
-		totalSizeBytes += keyValueSize
+		gs.TotalSizeBytes += keyValueSize
 	}
 
 	if err := itr.Error(); err != nil {
 		panic(err)
 	}
 	fmt.Printf("****************** Finished iterating over whole database ******************\n")
-	printModuleStats(storeKeyStats, count, numErrors, totalSizeBytes)
+	printModuleStats(storeKeyStats, &gs)
 }
 
 func ModuleSizeCmd() *cobra.Command {
