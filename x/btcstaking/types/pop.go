@@ -67,13 +67,6 @@ func NewPoPBTCWithECDSABTCSig(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*Pr
 	return &pop, nil
 }
 
-func babylonSigToHexHash(babylonSig []byte) []byte {
-	babylonSigHash := tmhash.Sum(babylonSig)
-	babylonSigHashHex := hex.EncodeToString(babylonSigHash)
-	babylonSigHashHexBytes := []byte(babylonSigHashHex)
-	return babylonSigHashHexBytes
-}
-
 func newPoPBTCWithBIP322Sig[A btcutil.Address](
 	addressToSign sdk.AccAddress,
 	btcSK *btcec.PrivateKey,
