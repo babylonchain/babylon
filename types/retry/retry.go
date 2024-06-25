@@ -1,8 +1,9 @@
 package retry
 
 import (
+	"crypto/rand"
 	"errors"
-	"math/rand"
+	"math/big"
 	"time"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -50,6 +51,8 @@ func isExpectedErr(err error) bool {
 	return false
 }
 
+// Do executes a func with retry
+// TODO: check if this is needed, because is not being used.
 func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
 	if err := retryableFunc(); err != nil {
 		if isUnrecoverableErr(err) {
@@ -63,7 +66,10 @@ func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() er
 		}
 
 		// Add some randomness to prevent thrashing
-		jitter := time.Duration(rand.Int63n(int64(sleep)))
+		jitter, err := randDuration(int64(sleep))
+		if err != nil {
+			return err
+		}
 		sleep = sleep + jitter/2
 
 		if sleep > maxSleepTime {
@@ -77,4 +83,12 @@ func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() er
 		return Do(2*sleep, maxSleepTime, retryableFunc)
 	}
 	return nil
+}
+
+func randDuration(maxNumber int64) (dur time.Duration, err error) {
+	randNumber, err := rand.Int(rand.Reader, big.NewInt(maxNumber))
+	if err != nil {
+		return dur, err
+	}
+	return time.Duration(randNumber.Int64()), nil
 }

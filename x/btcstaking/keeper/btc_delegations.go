@@ -30,6 +30,7 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 
 	// for each finality provider the delegation restakes to, update its index
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
+		fpBTCPK := fpBTCPK // remove when update to go1.22
 		// get BTC delegation index under this finality provider
 		btcDelIndex := k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
 		if btcDelIndex == nil {

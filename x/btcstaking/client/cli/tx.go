@@ -202,8 +202,8 @@ func NewEditFinalityProviderCmd() *cobra.Command {
 
 func NewCreateBTCDelegationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-delegation [babylon_pk] [btc_pk] [pop] [staking_tx_info] [fp_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
-		Args:  cobra.ExactArgs(14),
+		Use:   "create-btc-delegation [btc_pk] [pop_hex] [staking_tx_info] [fp_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
+		Args:  cobra.ExactArgs(13),
 		Short: "Create a BTC delegation",
 		Long: strings.TrimSpace(
 			`Create a BTC delegation.`, // TODO: example
@@ -214,97 +214,86 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				return err
 			}
 
-			// get Babylon PK
-			babylonPKBytes, err := hex.DecodeString(args[0])
-			if err != nil {
-				return err
-			}
-			var babylonPK secp256k1.PubKey
-			if err := babylonPK.Unmarshal(babylonPKBytes); err != nil {
-				return err
-			}
-
 			// staker pk
-			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 
 			if err != nil {
 				return err
 			}
 
 			// get PoP
-			pop, err := types.NewPoPFromHex(args[2])
+			pop, err := types.NewPoPBTCFromHex(args[1])
 			if err != nil {
 				return err
 			}
 
 			// get staking tx info
-			stakingTxInfo, err := btcctypes.NewTransactionInfoFromHex(args[3])
+			stakingTxInfo, err := btcctypes.NewTransactionInfoFromHex(args[2])
 			if err != nil {
 				return err
 			}
 
 			// TODO: Support multiple finality providers
 			// get finality provider PK
-			fpPK, err := bbn.NewBIP340PubKeyFromHex(args[4])
+			fpPK, err := bbn.NewBIP340PubKeyFromHex(args[3])
 			if err != nil {
 				return err
 			}
 
 			// get staking time
-			stakingTime, err := parseLockTime(args[5])
+			stakingTime, err := parseLockTime(args[4])
 			if err != nil {
 				return err
 			}
 
-			stakingValue, err := parseBtcAmount(args[6])
+			stakingValue, err := parseBtcAmount(args[5])
 			if err != nil {
 				return err
 			}
 
 			// get slashing tx
-			slashingTx, err := types.NewBTCSlashingTxFromHex(args[7])
+			slashingTx, err := types.NewBTCSlashingTxFromHex(args[6])
 			if err != nil {
 				return err
 			}
 
 			// get delegator sig on slashing tx
-			delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[8])
+			delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[7])
 			if err != nil {
 				return err
 			}
 
 			// get unbonding tx
-			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[9])
+			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[8])
 			if err != nil {
 				return err
 			}
 
 			// get unbonding slashing tx
-			unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[10])
+			unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[9])
 			if err != nil {
 				return err
 			}
 
 			// get staking time
-			unbondingTime, err := parseLockTime(args[11])
+			unbondingTime, err := parseLockTime(args[10])
 			if err != nil {
 				return err
 			}
 
-			unbondingValue, err := parseBtcAmount(args[12])
+			unbondingValue, err := parseBtcAmount(args[11])
 			if err != nil {
 				return err
 			}
 
 			// get delegator sig on unbonding slashing tx
-			delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[13])
+			delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[12])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgCreateBTCDelegation{
-				Signer:                        clientCtx.FromAddress.String(),
-				BabylonPk:                     &babylonPK,
+				StakerAddr:                    clientCtx.FromAddress.String(),
 				BtcPk:                         btcPK,
 				FpBtcPkList:                   []bbn.BIP340PubKey{*fpPK},
 				Pop:                           pop,

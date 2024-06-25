@@ -5,6 +5,7 @@ PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
+PROJECT_NAME ?= babylon
 BUILDDIR ?= $(CURDIR)/build
 HTTPS_GIT := https://github.com/babylonchain/babylon.git
 DOCKER := $(shell which docker)
@@ -341,6 +342,18 @@ format:
 .PHONY: format
 
 ###############################################################################
+###                                Gosec                                    ###
+###############################################################################
+
+gosec:
+	$(DOCKER) run --rm -it -w /$(PROJECT_NAME)/ -v $(CURDIR):/$(PROJECT_NAME) securego/gosec -exclude-generated -exclude-dir=/$(PROJECT_NAME)/testutil -exclude-dir=/$(PROJECT_NAME)/test -conf /$(PROJECT_NAME)/gosec.json /$(PROJECT_NAME)/...
+
+gosec-local:
+	gosec -exclude-generated -exclude-dir=$(CURDIR)/testutil -exclude-dir=$(CURDIR)/test -conf $(CURDIR)/gosec.json $(CURDIR)/...
+
+.PHONY: gosec gosec-local
+
+###############################################################################
 ###                                 Devdoc                                  ###
 ###############################################################################
 
@@ -426,8 +439,9 @@ localnet-start-nodes: init-testnet-dirs
 # localnet-start will run a with 4 nodes with 4 nodes, a bitcoin instance, and a vigilante instance
 localnet-start: localnet-stop build-docker localnet-start-nodes
 
-# localnet-stop will stop all localnets running
+# localnet-stop will clean up and stop all localnets running
 localnet-stop:
+	rm -rf $(CURDIR)/.testnets
 	docker-compose down
 
 build-test-wasm:

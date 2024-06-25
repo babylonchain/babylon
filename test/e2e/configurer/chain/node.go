@@ -141,11 +141,16 @@ func (n *NodeConfig) WaitUntilBtcHeight(height uint64) {
 }
 
 func (n *NodeConfig) WaitForNextBlock() {
+	n.WaitForNextBlocks(1)
+}
+
+func (n *NodeConfig) WaitForNextBlocks(numberOfBlocks uint64) {
 	latest := n.LatestBlockNumber()
+	blockToWait := latest + numberOfBlocks
 	n.WaitForCondition(func() bool {
 		newLatest := n.LatestBlockNumber()
-		return newLatest > latest
-	}, fmt.Sprintf("Timed out waiting for next block. Current height is: %d", latest))
+		return newLatest > blockToWait
+	}, fmt.Sprintf("Timed out waiting for block %d. Current height is: %d", latest, blockToWait))
 }
 
 func (n *NodeConfig) extractOperatorAddressIfValidator() error {

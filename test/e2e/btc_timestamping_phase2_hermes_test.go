@@ -120,7 +120,7 @@ func (s *BTCTimestampingPhase2HermesTestSuite) Test1IbcCheckpointingPhase2Hermes
 		if err != nil {
 			return false
 		}
-		s.T().Logf("next sequence send at ZoneConcierge is %d", nextSequenceSendResp.NextSequenceSend)
+		babylonNode.LogActionF("next sequence send at ZoneConcierge is %d", nextSequenceSendResp.NextSequenceSend)
 		return nextSequenceSendResp.NextSequenceSend >= endEpochNum-startEpochNum+1+1
 	}, time.Minute, time.Second*2)
 
@@ -131,17 +131,17 @@ func (s *BTCTimestampingPhase2HermesTestSuite) Test1IbcCheckpointingPhase2Hermes
 		if err != nil {
 			return false
 		}
-		s.T().Logf("next sequence receive at Babylon contract is %d", nextSequenceRecv.NextSequenceReceive)
+		czNode.LogActionF("next sequence receive at Babylon contract is %d", nextSequenceRecv.NextSequenceReceive)
 		return nextSequenceRecv.NextSequenceReceive >= endEpochNum-startEpochNum+1+1
 	}, time.Minute, time.Second*2)
 
-	// Ensure the IBC packet acknowledgements (on chain B) are there
+	// Ensure the IBC packet acknowledgements (on chain B) are there and do not contain error
 	nextSequence := nextSequenceRecv.NextSequenceReceive
 	for seq := uint64(1); seq < nextSequence; seq++ {
 		var seqResp *channeltypes.QueryPacketAcknowledgementResponse
 		s.Eventually(func() bool {
 			seqResp, err = czNode.QueryPacketAcknowledgement(czChannel.ChannelId, czChannel.PortId, seq)
-			s.T().Logf("acknowledgement resp of IBC packet #%d: %v, err: %v", seq, seqResp, err)
+			czNode.LogActionF("acknowledgement resp of IBC packet #%d: %v, err: %v", seq, seqResp, err)
 			return err == nil
 		}, time.Minute, time.Second*2)
 	}

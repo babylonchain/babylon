@@ -38,8 +38,8 @@ message BTCDelDistInfo {
     // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
     // the PK follows encoding in BIP-340 spec
     bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // babylon_pk is the Babylon public key of the BTC delegation
-    cosmos.crypto.secp256k1.PubKey babylon_pk = 2;
+    // staker_addr is the address to receive rewards from BTC delegation.
+    string staker_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
     // staking_tx_hash is the staking tx hash of the BTC delegation
     string staking_tx_hash = 3;
     // voting_power is the voting power of the BTC delegation
