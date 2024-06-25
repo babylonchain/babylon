@@ -350,12 +350,12 @@ func CheckTransactions(
 		return fmt.Errorf("slashing and funding transactions must not be nil")
 	}
 
-	if blockchain.CheckTransactionSanity(btcutil.NewTx(slashingTx)) != nil {
-		return fmt.Errorf("slashing transaction does not obey BTC rules")
+	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(slashingTx)); err != nil {
+		return fmt.Errorf("slashing transaction does not obey BTC rules: %w", err)
 	}
 
-	if blockchain.CheckTransactionSanity(btcutil.NewTx(fundingTransaction)) != nil {
-		return fmt.Errorf("funding transaction does not obey BTC rules")
+	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(fundingTransaction)); err != nil {
+		return fmt.Errorf("funding transaction does not obey BTC rules: %w", err)
 	}
 
 	// Check if slashing tx min fee is valid

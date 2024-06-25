@@ -67,6 +67,12 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		// we do not care for inputs in staking tx
 		stakingTx := wire.NewMsgTx(2)
+		bogusInputHashBytes := [32]byte{}
+		bogusInputHash, _ := chainhash.NewHash(bogusInputHashBytes[:])
+		stakingTx.AddTxIn(
+			wire.NewTxIn(wire.NewOutPoint(bogusInputHash, 0), nil, nil),
+		)
+
 		stakingOutputIdx := r.Intn(5)
 		// always more outputs than stakingOutputIdx
 		stakingTxNumOutputs := r.Intn(5) + 10
@@ -302,5 +308,5 @@ func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
 		&chaincfg.MainNetParams,
 	)
 	require.Error(t, err)
-	require.EqualError(t, err, "slashing transaction does not obey BTC rules")
+	require.EqualError(t, err, "slashing transaction does not obey BTC rules: transaction output value of 1152921504606846975 is higher than max allowed value of 2.1e+15")
 }
