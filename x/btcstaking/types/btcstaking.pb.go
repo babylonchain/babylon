@@ -79,7 +79,8 @@ type FinalityProvider struct {
 	// btc_pk is the Bitcoin secp256k1 PK of this finality provider
 	// the PK follows encoding in BIP-340 spec
 	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,4,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
-	// pop is the proof of possession of babylon_pk and btc_pk
+	// pop is the proof of possession of the btc_pk, where the BTC
+	// private key signs the bech32 bbn addr of the finality provider.
 	Pop *ProofOfPossessionBTC `protobuf:"bytes,5,opt,name=pop,proto3" json:"pop,omitempty"`
 	// slashed_babylon_height indicates the Babylon height when
 	// the finality provider is slashed.
