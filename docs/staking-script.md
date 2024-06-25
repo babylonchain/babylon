@@ -181,13 +181,13 @@ The timelock path locks the staker's Bitcoin for a pre-determined number of
 Bitcoin blocks. It commits to a script of the form:
 
 ```
-<StakerPK> OP_CHECKSIGVERIFY  <Timelock_Blocks> OP_CHECKSEQUENCEVERIFY
+<StakerPK> OP_CHECKSIGVERIFY  <TimelockBlocks> OP_CHECKSEQUENCEVERIFY
 ```
 
 where:
 
 - `<StakerPK>` is the BTC staker's public key..
-- `<Timelock_Blocks>` is the lockup period denoted in Bitcoin blocks. The
+- `<TimelockBlocks>` is the lockup period denoted in Bitcoin blocks. The
   timelock comes into effect after the Bitcoin transaction has been included in a
   mined block. In essence, the script denotes that only the staker can unlock the
   funds after the timelock has passed. It must be lower than `65535`.
@@ -283,13 +283,13 @@ The timelock path locks the staker's Bitcoin for a pre-determined number of
 Bitcoin blocks. It commits to a script of the form:
 
 ```
-<Staker_PK> OP_CHECKSIGVERIFY  <Timelock_Blocks> OP_CHECKSEQUENCEVERIFY`
+<StakerPK> OP_CHECKSIGVERIFY  <TimelockBlocks> OP_CHECKSEQUENCEVERIFY`
 ```
 
 where:
 
-- Staker_PK is btc staker public key
-- Timelock_Blocks is unbonding time. It must be lower or equal 65535, but larger
+- `<StakerPK>` is btc staker public key
+- `<TimelockBlocks>` is unbonding time. It must be lower or equal 65535, but larger
   than `max(MinUnbondingTime, CheckpointFinalizationTimeout)`. `MinUnbondingTime`
   and `CheckpointFinalizationTimeout` are Babylon parameters.
 
