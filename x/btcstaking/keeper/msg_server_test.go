@@ -11,7 +11,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -172,7 +171,7 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		// ensure consistency between the msg and the BTC delegation in DB
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.Equal(h.t, msgCreateBTCDel.BabylonPk, actualDel.BabylonPk)
+		require.Equal(h.t, msgCreateBTCDel.StakerAddr, actualDel.StakerAddr)
 		require.Equal(h.t, msgCreateBTCDel.Pop, actualDel.Pop)
 		require.Equal(h.t, msgCreateBTCDel.StakingTx.Transaction, actualDel.StakingTx)
 		require.Equal(h.t, msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
@@ -587,13 +586,12 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	stakingMsgTx := testStakingInfo.StakingTx
 	serializedStakingTx, err := bbn.SerializeBTCTx(stakingMsgTx)
 	require.NoError(t, err)
-	// random signer
-	signer := datagen.GenRandomAccount().Address
 	// random Babylon SK
-	delBabylonSK, delBabylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-	require.NoError(t, err)
+	acc := datagen.GenRandomAccount()
+	stakerAddr := sdk.MustAccAddressFromBech32(acc.Address)
+
 	// PoP
-	pop, err := types.NewPoP(delBabylonSK, delSK)
+	pop, err := types.NewPoPBTC(stakerAddr, delSK)
 	require.NoError(t, err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
@@ -643,8 +641,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	// all good, construct and send MsgCreateBTCDelegation message
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
-		Signer:                        signer,
-		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
+		StakerAddr:                    stakerAddr.String(),
 		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
 		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
 		Pop:                           pop,

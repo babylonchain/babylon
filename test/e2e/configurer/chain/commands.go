@@ -1,15 +1,19 @@
 package chain
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
+	"github.com/babylonchain/babylon/test/e2e/containers"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -23,15 +27,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	flagKeyringTest = "--keyring-backend=test"
+)
+
 func (n *NodeConfig) GetWallet(walletName string) string {
 	n.LogActionF("retrieving wallet %s", walletName)
-	cmd := []string{"babylond", "keys", "show", walletName, "--keyring-backend=test"}
+	cmd := []string{"babylond", "keys", "show", walletName, flagKeyringTest, containers.FlagHome}
 	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
 	require.NoError(n.t, err)
-	re := regexp.MustCompile("bbn(.{38})")
+	re := regexp.MustCompile("bbn(.{39})")
 	walletAddr := fmt.Sprintf("%s\n", re.FindString(outBuf.String()))
 	walletAddr = strings.TrimSuffix(walletAddr, "\n")
-	n.LogActionF("wallet %s found, waller address - %s", walletName, walletAddr)
+	n.LogActionF("wallet %s found, wallet address - %s", walletName, walletAddr)
+	return walletAddr
+}
+
+// KeysAdd creates a new key in the keyring
+func (n *NodeConfig) KeysAdd(walletName string, overallFlags ...string) string {
+	n.LogActionF("adding new wallet %s", walletName)
+	cmd := []string{"babylond", "keys", "add", walletName, flagKeyringTest, containers.FlagHome}
+	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	require.NoError(n.t, err)
+	re := regexp.MustCompile("bbn(.{39})")
+	walletAddr := fmt.Sprintf("%s\n", re.FindString(outBuf.String()))
+	walletAddr = strings.TrimSuffix(walletAddr, "\n")
+	n.LogActionF("wallet %s created, address - %s", walletName, walletAddr)
 	return walletAddr
 }
 
@@ -69,12 +90,27 @@ func (n *NodeConfig) FailIBCTransfer(from, recipient, amount string) {
 	n.LogActionF("Failed to send IBC transfer (as expected)")
 }
 
-func (n *NodeConfig) BankSend(amount string, sendAddress string, receiveAddress string) {
-	n.LogActionF("bank sending %s from address %s to %s", amount, sendAddress, receiveAddress)
-	cmd := []string{"babylond", "tx", "bank", "send", sendAddress, receiveAddress, amount, "--from=val"}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+func (n *NodeConfig) BankSendFromNode(receiveAddress, amount string) {
+	n.BankSend(n.WalletName, receiveAddress, amount)
+}
+
+func (n *NodeConfig) BankSend(fromWallet, to, amount string, overallFlags ...string) {
+	fromAddr := n.GetWallet(fromWallet)
+	n.LogActionF("bank sending %s from wallet %s to %s", amount, fromWallet, to)
+	cmd := []string{"babylond", "tx", "bank", "send", fromAddr, to, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
 	require.NoError(n.t, err)
-	n.LogActionF("successfully sent bank sent %s from address %s to %s", amount, sendAddress, receiveAddress)
+	n.LogActionF("successfully sent bank sent %s from address %s to %s", amount, fromWallet, to)
+}
+
+func (n *NodeConfig) BankSendOutput(fromWallet, to, amount string, overallFlags ...string) (out bytes.Buffer, errBuff bytes.Buffer, err error) {
+	fromAddr := n.GetWallet(fromWallet)
+	n.LogActionF("bank sending %s from wallet %s to %s", amount, fromWallet, to)
+	cmd := []string{
+		"babylond", "tx", "bank", "send", fromAddr, to, amount, fmt.Sprintf("--from=%s", fromWallet),
+		n.FlagChainID(), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata",
+	}
+	return n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 }
 
 func (n *NodeConfig) SendHeaderHex(headerHex string) {
@@ -233,6 +269,101 @@ func (n *NodeConfig) WithdrawReward(sType, from string) {
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully withdrawn")
+}
+
+// TxMultisigSign sign a tx in a file with one wallet for a multisig address.
+func (n *NodeConfig) TxMultisigSign(walletName, multisigAddr, txFileFullPath, fileName string, overallFlags ...string) (fullFilePathInContainer string) {
+	return n.TxSign(walletName, txFileFullPath, fileName, fmt.Sprintf("--multisig=%s", multisigAddr))
+}
+
+// TxSign sign a tx in a file with one wallet.
+func (n *NodeConfig) TxSign(walletName, txFileFullPath, fileName string, overallFlags ...string) (fullFilePathInContainer string) {
+	n.LogActionF("wallet %s sign tx file %s", walletName, txFileFullPath)
+	cmd := []string{
+		"babylond", "tx", "sign", txFileFullPath,
+		fmt.Sprintf("--from=%s", walletName),
+		n.FlagChainID(), flagKeyringTest, containers.FlagHome,
+	}
+	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	require.NoError(n.t, err)
+
+	return n.WriteFile(fileName, outBuf.String())
+}
+
+// TxMultisign sign a tx in a file.
+func (n *NodeConfig) TxMultisign(walletNameMultisig, txFileFullPath, outputFileName string, signedFiles []string, overallFlags ...string) (signedTxFilePath string) {
+	n.LogActionF("%s multisig tx file %s", walletNameMultisig, txFileFullPath)
+	cmd := []string{
+		"babylond", "tx", "multisign", txFileFullPath, walletNameMultisig,
+		n.FlagChainID(),
+		flagKeyringTest, containers.FlagHome,
+	}
+	cmd = append(cmd, signedFiles...)
+	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	require.NoError(n.t, err)
+
+	return n.WriteFile(outputFileName, outBuf.String())
+}
+
+// TxBroadcast broadcast a signed transaction to the chain.
+func (n *NodeConfig) TxBroadcast(txSignedFileFullPath string, overallFlags ...string) {
+	n.LogActionF("broadcast tx file %s", txSignedFileFullPath)
+	cmd := []string{
+		"babylond", "tx", "broadcast", txSignedFileFullPath,
+		n.FlagChainID(),
+	}
+	_, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+	require.NoError(n.t, err)
+}
+
+// TxFeeGrant creates a fee grant tx. Which the granter is the one that will
+// pay the fees for the grantee to submit txs for free.
+func (n *NodeConfig) TxFeeGrant(granter, grantee string, overallFlags ...string) {
+	n.LogActionF("tx fee grant, granter: %s - grantee: %s", granter, grantee)
+	cmd := []string{
+		"babylond", "tx", "feegrant", "grant", granter, grantee,
+		n.FlagChainID(),
+	}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+	require.NoError(n.t, err)
+}
+
+// TxSignBroadcast signs the tx from the wallet and broadcast to chain.
+func (n *NodeConfig) TxSignBroadcast(walletName, txFileFullPath string) {
+	fileName := fmt.Sprintf("tx-signed-%s.json", walletName)
+	signedTxToBroadcast := n.TxSign(walletName, txFileFullPath, fileName)
+	n.TxBroadcast(signedTxToBroadcast)
+}
+
+// TxMultisignBroadcast signs the tx from each wallet and the multisig and broadcast to chain.
+func (n *NodeConfig) TxMultisignBroadcast(walletNameMultisig, txFileFullPath string, walleNameSigners []string) {
+	multisigAddr := n.GetWallet(walletNameMultisig)
+
+	signedFiles := make([]string, len(walleNameSigners))
+	for i, wName := range walleNameSigners {
+		fileName := fmt.Sprintf("tx-signed-%s.json", wName)
+		signedFiles[i] = n.TxMultisigSign(wName, multisigAddr, txFileFullPath, fileName)
+	}
+
+	signedTxToBroadcast := n.TxMultisign(walletNameMultisig, txFileFullPath, "tx-multisigned.json", signedFiles)
+	n.TxBroadcast(signedTxToBroadcast)
+}
+
+// WriteFile writes a new file in the config dir of the node where it is volume mounted to the
+// babylon home inside the container and returns the full file path inside the container.
+func (n *NodeConfig) WriteFile(fileName, content string) (fullFilePathInContainer string) {
+	b := bytes.NewBufferString(content)
+	fileFullPath := filepath.Join(n.ConfigDir, fileName)
+
+	err := os.WriteFile(fileFullPath, b.Bytes(), 0644)
+	require.NoError(n.t, err)
+
+	return filepath.Join(containers.BabylonHomePath, fileName)
+}
+
+// FlagChainID returns the flag of the chainID.
+func (n *NodeConfig) FlagChainID() string {
+	return fmt.Sprintf("--chain-id=%s", n.chainId)
 }
 
 // ParseBTCHeaderInfoResponseToInfo turns an BTCHeaderInfoResponse back to BTCHeaderInfo.

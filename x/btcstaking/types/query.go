@@ -7,6 +7,7 @@ import (
 // NewBTCDelegationResponse returns a new delegation response structure.
 func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus) (resp *BTCDelegationResponse) {
 	resp = &BTCDelegationResponse{
+		StakerAddr:           btcDel.StakerAddr,
 		BtcPk:                btcDel.BtcPk,
 		FpBtcPkList:          btcDel.FpBtcPkList,
 		StartHeight:          btcDel.StartHeight,

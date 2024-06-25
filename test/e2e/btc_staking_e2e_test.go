@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -10,10 +11,14 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/x/feegrant"
+	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
@@ -31,7 +36,7 @@ var (
 	net = &chaincfg.SimNetParams
 	// finality provider
 	fpBTCSK, _, _ = datagen.GenRandomBTCKeyPair(r)
-	fp            *bstypes.FinalityProvider
+	cacheFP       *bstypes.FinalityProvider
 	// BTC delegation
 	delBTCSK, delBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
 	// covenant
@@ -75,21 +80,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	/*
-		create a random finality provider on Babylon
-	*/
-	// NOTE: we use the node's secret key as Babylon secret key for the finality provider
-	fp, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nonValidatorNode.SecretKey)
-	s.NoError(err)
-	nonValidatorNode.CreateFinalityProvider(fp.BabylonPk, fp.BtcPk, fp.Pop, fp.Description.Moniker, fp.Description.Identity, fp.Description.Website, fp.Description.SecurityContact, fp.Description.Details, fp.Commission)
-
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlock()
-
-	// query the existence of finality provider and assert equivalence
-	actualFps := nonValidatorNode.QueryFinalityProviders()
-	s.Len(actualFps, 1)
-	s.equalFinalityProviderResp(fp, actualFps[0])
+	cacheFP = s.CreateRandomFP(nonValidatorNode)
 
 	/*
 		create a random BTC delegation under this finality provider
@@ -100,88 +91,24 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	// minimal required unbonding time
 	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
 
-	// get covenant BTC PKs
-	covenantBTCPKs := []*btcec.PublicKey{}
-	for _, covenantPK := range params.CovenantPks {
-		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
-	}
-	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
-	delBabylonSK := nonValidatorNode.SecretKey
-	pop, err := bstypes.NewPoP(delBabylonSK, delBTCSK)
+	// NOTE: we use the node's address for the BTC delegation
+	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
+	pop, err := bstypes.NewPoPBTC(stakerAddr, delBTCSK)
 	s.NoError(err)
+
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
-	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
-		r,
-		s.T(),
-		net,
-		delBTCSK,
-		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
-		covenantBTCPKs,
-		covenantQuorum,
-		stakingTimeBlocks,
-		stakingValue,
-		params.SlashingAddress,
-		params.SlashingRate,
-		unbondingTime,
-	)
+	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, cacheFP)
 
-	stakingMsgTx := testStakingInfo.StakingTx
-	stakingTxHash := stakingMsgTx.TxHash().String()
-	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
-	s.NoError(err)
-
-	// generate proper delegator sig
-	delegatorSig, err := testStakingInfo.SlashingTx.Sign(
-		stakingMsgTx,
-		datagen.StakingOutIdx,
-		stakingSlashingPathInfo.GetPkScriptPath(),
-		delBTCSK,
-	)
-	s.NoError(err)
-
-	// submit staking tx to Bitcoin and get inclusion proof
-	currentBtcTipResp, err := nonValidatorNode.QueryTip()
-	s.NoError(err)
-	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
-	s.NoError(err)
-
-	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
-	nonValidatorNode.InsertHeader(&blockWithStakingTx.HeaderBytes)
-	// make block k-deep
-	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
-		nonValidatorNode.InsertNewEmptyBtcHeader(r)
-	}
-	stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
-
-	// generate BTC undelegation stuff
-	stkTxHash := testStakingInfo.StakingTx.TxHash()
-	unbondingValue := stakingValue - datagen.UnbondingTxFee // TODO: parameterise fee
-	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
-		r,
-		s.T(),
-		net,
-		delBTCSK,
-		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
-		covenantBTCPKs,
-		covenantQuorum,
-		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
-		stakingTimeBlocks,
-		unbondingValue,
-		params.SlashingAddress,
-		params.SlashingRate,
-		unbondingTime,
-	)
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)
 
 	// submit the message for creating BTC delegation
 	nonValidatorNode.CreateBTCDelegation(
-		delBabylonSK.PubKey().(*secp256k1.PubKey),
 		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
 		pop,
 		stakingTxInfo,
-		fp.BtcPk,
+		cacheFP.BtcPk,
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		testStakingInfo.SlashingTx,
@@ -189,15 +116,16 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		testUnbondingInfo.UnbondingTx,
 		testUnbondingInfo.SlashingTx,
 		uint16(unbondingTime),
-		btcutil.Amount(unbondingValue),
+		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
 		delUnbondingSlashingSig,
+		nonValidatorNode.WalletName,
+		false,
 	)
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
-	nonValidatorNode.WaitForNextBlock()
 
-	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
 	s.Len(pendingDelSet, 1)
 	pendingDels := pendingDelSet[0]
 	s.Len(pendingDels.Dels, 1)
@@ -205,8 +133,9 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 
 	// check delegation
-	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
+	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(delegation)
+	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
 }
 
 // Test2SubmitCovenantSignature is an end-to-end test for user
@@ -218,7 +147,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.NoError(err)
 
 	// get last BTC delegation
-	pendingDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	pendingDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
 	s.Len(pendingDelsSet, 1)
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
@@ -303,7 +232,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	nonValidatorNode.WaitForNextBlock()
 
 	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 1)
 
 	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
@@ -362,7 +291,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	nonValidatorNode.WaitForNextBlock()
 	var prCommitMap map[uint64]*ftypes.PubRandCommitResponse
 	s.Eventually(func() bool {
-		prCommitMap = nonValidatorNode.QueryListPubRandCommit(fp.BtcPk)
+		prCommitMap = nonValidatorNode.QueryListPubRandCommit(cacheFP.BtcPk)
 		return len(prCommitMap) > 0
 	}, time.Minute, time.Second*5)
 	s.Equal(prCommitMap[activatedHeight].NumPubRand, msgCommitPubRandList.NumPubRand)
@@ -391,7 +320,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature
-	nonValidatorNode.AddFinalitySig(fp.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+	nonValidatorNode.AddFinalitySig(cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 	// ensure vote is eventually cast
 	nonValidatorNode.WaitForNextBlock()
@@ -401,7 +330,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		return len(votes) > 0
 	}, time.Minute, time.Second*5)
 	s.Equal(1, len(votes))
-	s.Equal(votes[0].MarshalHex(), fp.BtcPk.MarshalHex())
+	s.Equal(votes[0].MarshalHex(), cacheFP.BtcPk.MarshalHex())
 	// once the vote is cast, ensure block is finalised
 	finalizedBlock := nonValidatorNode.QueryIndexedBlock(activatedHeight)
 	s.NotEmpty(finalizedBlock)
@@ -493,7 +422,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 
-	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
+	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(cacheFP.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 1)
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
@@ -527,6 +456,295 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	unbondDel, err := ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
 	s.NoError(err)
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
+}
+
+// Test6MultisigBTCDelegation is an end-to-end test to create a BTC delegation
+// with multisignature. It also utilizes the cacheFP populated at
+// Test1CreateFinalityProviderAndDelegation.
+func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	w1, w2, wMultisig := "multisig-holder-1", "multisig-holder-2", "multisig-2of2"
+
+	nonValidatorNode.KeysAdd(w1)
+	nonValidatorNode.KeysAdd(w2)
+	// creates and fund multisig
+	multisigAddr := nonValidatorNode.KeysAdd(wMultisig, []string{fmt.Sprintf("--multisig=%s,%s", w1, w2), "--multisig-threshold=2"}...)
+	nonValidatorNode.BankSendFromNode(multisigAddr, "100000ubbn")
+
+	// create a random BTC delegation under the cached finality provider
+	// BTC staking params, BTC delegation key pairs and PoP
+	params := nonValidatorNode.QueryBTCStakingParams()
+
+	// minimal required unbonding time
+	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+
+	// NOTE: we use the multisig address for the BTC delegation
+	multisigStakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
+	pop, err := bstypes.NewPoPBTC(multisigStakerAddr, delBTCSK)
+	s.NoError(err)
+
+	// generate staking tx and slashing tx
+	stakingTimeBlocks := uint16(math.MaxUint16)
+	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, params, stakingTimeBlocks, cacheFP)
+
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
+	s.NoError(err)
+
+	// submit the message for only generate the Tx to create BTC delegation
+	jsonTx := nonValidatorNode.CreateBTCDelegation(
+		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		pop,
+		stakingTxInfo,
+		cacheFP.BtcPk,
+		stakingTimeBlocks,
+		btcutil.Amount(stakingValue),
+		testStakingInfo.SlashingTx,
+		delegatorSig,
+		testUnbondingInfo.UnbondingTx,
+		testUnbondingInfo.SlashingTx,
+		uint16(unbondingTime),
+		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
+		delUnbondingSlashingSig,
+		multisigAddr,
+		true,
+	)
+
+	// write the tx to a file
+	fullPathTxBTCDelegation := nonValidatorNode.WriteFile("tx.json", jsonTx)
+	// signs the tx with the 2 wallets and the multisig and broadcast the tx
+	nonValidatorNode.TxMultisignBroadcast(wMultisig, fullPathTxBTCDelegation, []string{w1, w2})
+
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+
+	// check delegation with the multisig staker address exists.
+	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+	s.NotNil(delegation)
+	s.Equal(multisigAddr, delegation.BtcDelegation.StakerAddr)
+}
+
+// Test7BTCDelegationFeeGrant is an end-to-end test to create a BTC delegation
+// from a BTC delegator that does not have funds to pay for fees. It also
+// utilizes the cacheFP populated at Test1CreateFinalityProviderAndDelegation.
+func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	wGratee, wGranter := "grantee", "granter"
+	feePayerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGranter))
+	granteeStakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.KeysAdd(wGratee))
+
+	feePayerBalanceBeforeBTCDel := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(100000))
+	fees := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(50000))
+
+	// fund the granter
+	nonValidatorNode.BankSendFromNode(feePayerAddr.String(), feePayerBalanceBeforeBTCDel.String())
+
+	// create a random BTC delegation under the cached finality provider
+	// BTC staking btcStkParams, BTC delegation key pairs and PoP
+	btcStkParams := nonValidatorNode.QueryBTCStakingParams()
+
+	// minimal required unbonding time
+	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+
+	// NOTE: we use the grantee staker address for the BTC delegation PoP
+	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, delBTCSK)
+	s.NoError(err)
+
+	// generate staking tx and slashing tx
+	stakingTimeBlocks := uint16(math.MaxUint16) - 5
+	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(nonValidatorNode, btcStkParams, stakingTimeBlocks, cacheFP)
+
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
+	s.NoError(err)
+
+	// conceive the fee grant from the payer to the staker.
+	nonValidatorNode.TxFeeGrant(feePayerAddr.String(), granteeStakerAddr.String(), fmt.Sprintf("--from=%s", wGranter))
+	// wait for a block to take effect the fee grant tx.
+	nonValidatorNode.WaitForNextBlock()
+
+	// staker should not have any balance.
+	stakerBalances, err := nonValidatorNode.QueryBalances(granteeStakerAddr.String())
+	s.NoError(err)
+	s.True(stakerBalances.IsZero())
+
+	// submit the message to create BTC delegation
+	nonValidatorNode.CreateBTCDelegation(
+		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		pop,
+		stakingTxInfo,
+		cacheFP.BtcPk,
+		stakingTimeBlocks,
+		btcutil.Amount(stakingValue),
+		testStakingInfo.SlashingTx,
+		delegatorSig,
+		testUnbondingInfo.UnbondingTx,
+		testUnbondingInfo.SlashingTx,
+		uint16(unbondingTime),
+		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
+		delUnbondingSlashingSig,
+		wGratee,
+		false,
+		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
+		fmt.Sprintf("--fees=%s", fees.String()),
+	)
+
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+
+	// check the delegation was success.
+	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+	s.NotNil(delegation)
+	s.Equal(granteeStakerAddr.String(), delegation.BtcDelegation.StakerAddr)
+
+	// verify the balances after the BTC delegation was submited
+	// the staker should continue to have zero as balance.
+	stakerBalances, err = nonValidatorNode.QueryBalances(granteeStakerAddr.String())
+	s.NoError(err)
+	s.True(stakerBalances.IsZero())
+
+	// the fee payer should have the (feePayerBalanceBeforeBTCDel - fee) == currentBalance
+	feePayerBalances, err := nonValidatorNode.QueryBalances(feePayerAddr.String())
+	s.NoError(err)
+	s.Equal(feePayerBalanceBeforeBTCDel.Sub(fees).String(), feePayerBalances.String())
+}
+
+// Test8BTCDelegationFeeGrantTyped is an end-to-end test to create a BTC delegation
+// from a BTC delegator that does not have funds to pay for fees and explore scenarios
+// to verify if the feeGrant is respected by the msg type and also spend limits. It also
+// utilizes the cacheFP populated at Test1CreateFinalityProviderAndDelegation.
+func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	node, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	wGratee, wGranter := "staker", "feePayer"
+	feePayerAddr := sdk.MustAccAddressFromBech32(node.KeysAdd(wGranter))
+	granteeStakerAddr := sdk.MustAccAddressFromBech32(node.KeysAdd(wGratee))
+
+	feePayerBalanceBeforeBTCDel := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(100000))
+	stakerBalance := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(100))
+	fees := sdk.NewCoin(params.DefaultBondDenom, sdkmath.NewInt(50000))
+
+	// fund the granter and the staker
+	node.BankSendFromNode(feePayerAddr.String(), feePayerBalanceBeforeBTCDel.String())
+	node.BankSendFromNode(granteeStakerAddr.String(), stakerBalance.String())
+
+	// create a random BTC delegation under the cached finality provider
+	// BTC staking btcStkParams, BTC delegation key pairs and PoP
+	btcStkParams := node.QueryBTCStakingParams()
+
+	// minimal required unbonding time
+	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+
+	// NOTE: we use the grantee staker address for the BTC delegation PoP
+	pop, err := bstypes.NewPoPBTC(granteeStakerAddr, delBTCSK)
+	s.NoError(err)
+
+	// generate staking tx and slashing tx
+	stakingTimeBlocks := uint16(math.MaxUint16) - 2
+	testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig := s.BTCStakingUnbondSlashInfo(node, btcStkParams, stakingTimeBlocks, cacheFP)
+
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
+	s.NoError(err)
+
+	// conceive the fee grant from the payer to the staker only for one specific msg type.
+	node.TxFeeGrant(
+		feePayerAddr.String(), granteeStakerAddr.String(),
+		fmt.Sprintf("--from=%s", wGranter),
+		fmt.Sprintf("--%s=%s", feegrantcli.FlagSpendLimit, fees.String()),
+		fmt.Sprintf("--%s=%s", feegrantcli.FlagAllowedMsgs, sdk.MsgTypeURL(&bstypes.MsgCreateBTCDelegation{})),
+	)
+	// wait for a block to take effect the fee grant tx.
+	node.WaitForNextBlock()
+
+	// tries to create a send transaction putting the freegranter as feepayer, it should FAIL
+	// since we only gave grant for BTC delegation msgs.
+	outBuff, errBuff, err := node.BankSendOutput(
+		wGratee, node.PublicAddress, stakerBalance.String(),
+		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
+	)
+	outputStr := outBuff.String() + errBuff.String()
+	s.Require().Contains(outputStr, fmt.Sprintf("code: %d", feegrant.ErrMessageNotAllowed.ABCICode()))
+	s.Require().Contains(outputStr, feegrant.ErrMessageNotAllowed.Error())
+	s.Nil(err)
+
+	// staker should not have lost any balance.
+	stakerBalances, err := node.QueryBalances(granteeStakerAddr.String())
+	s.Require().NoError(err)
+	s.Require().Equal(stakerBalance.String(), stakerBalances.String())
+
+	// submit the message to create BTC delegation using the fee grant
+	// but putting as fee more than the spend limit
+	// it should fail by exceeding the fee limit.
+	output := node.CreateBTCDelegation(
+		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		pop,
+		stakingTxInfo,
+		cacheFP.BtcPk,
+		stakingTimeBlocks,
+		btcutil.Amount(stakingValue),
+		testStakingInfo.SlashingTx,
+		delegatorSig,
+		testUnbondingInfo.UnbondingTx,
+		testUnbondingInfo.SlashingTx,
+		uint16(unbondingTime),
+		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
+		delUnbondingSlashingSig,
+		wGratee,
+		false,
+		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
+		fmt.Sprintf("--fees=%s", fees.Add(stakerBalance).String()),
+	)
+	s.Require().Contains(output, fmt.Sprintf("code: %d", feegrant.ErrFeeLimitExceeded.ABCICode()))
+	s.Require().Contains(output, feegrant.ErrFeeLimitExceeded.Error())
+
+	// submit the message to create BTC delegation using the fee grant at the max of spend limit
+	node.CreateBTCDelegation(
+		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK),
+		pop,
+		stakingTxInfo,
+		cacheFP.BtcPk,
+		stakingTimeBlocks,
+		btcutil.Amount(stakingValue),
+		testStakingInfo.SlashingTx,
+		delegatorSig,
+		testUnbondingInfo.UnbondingTx,
+		testUnbondingInfo.SlashingTx,
+		uint16(unbondingTime),
+		btcutil.Amount(testUnbondingInfo.UnbondingInfo.UnbondingOutput.Value),
+		delUnbondingSlashingSig,
+		wGratee,
+		false,
+		fmt.Sprintf("--fee-granter=%s", feePayerAddr.String()),
+		fmt.Sprintf("--fees=%s", fees.String()),
+	)
+
+	// wait for a block so that above txs take effect
+	node.WaitForNextBlock()
+
+	// check the delegation was success.
+	delegation := node.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+	s.NotNil(delegation)
+	s.Equal(granteeStakerAddr.String(), delegation.BtcDelegation.StakerAddr)
+
+	// verify the balances after the BTC delegation was submited
+	// the staker should continue to have zero as balance.
+	stakerBalances, err = node.QueryBalances(granteeStakerAddr.String())
+	s.NoError(err)
+	s.Equal(stakerBalance.String(), stakerBalances.String())
+
+	// the fee payer should have the (feePayerBalanceBeforeBTCDel - fee) == currentBalance
+	feePayerBalances, err := node.QueryBalances(feePayerAddr.String())
+	s.NoError(err)
+	s.Equal(feePayerBalanceBeforeBTCDel.Sub(fees).String(), feePayerBalances.String())
 }
 
 // ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
@@ -566,8 +784,7 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 	}
 
 	btcDel = &bstypes.BTCDelegation{
-		// missing BabylonPk, Pop
-		// these fields are not sent out to the client on BTCDelegationResponse
+		StakerAddr:       resp.StakerAddr,
 		BtcPk:            resp.BtcPk,
 		FpBtcPkList:      resp.FpBtcPkList,
 		StartHeight:      resp.StartHeight,
@@ -626,4 +843,111 @@ func (s *BTCStakingTestSuite) equalFinalityProviderResp(fp *bstypes.FinalityProv
 	s.Equal(fp.Pop, fpResp.Pop)
 	s.Equal(fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	s.Equal(fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
+}
+
+// CreateRandomFP creates a random finality provider.
+func (s *BTCStakingTestSuite) CreateRandomFP(node *chain.NodeConfig) (newFP *bstypes.FinalityProvider) {
+	newFP, err := datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, node.SecretKey)
+	s.NoError(err)
+	node.CreateFinalityProvider(newFP.BabylonPk, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
+
+	// wait for a block so that above txs take effect
+	node.WaitForNextBlock()
+
+	// query the existence of finality provider and assert equivalence
+	actualFps := node.QueryFinalityProviders()
+	s.Len(actualFps, 1)
+	s.equalFinalityProviderResp(newFP, actualFps[0])
+
+	return newFP
+}
+
+// CovenantBTCPKs returns the covenantBTCPks as slice from parameters
+func CovenantBTCPKs(params *bstypes.Params) []*btcec.PublicKey {
+	// get covenant BTC PKs
+	covenantBTCPKs := make([]*btcec.PublicKey, len(params.CovenantPks))
+	for i, covenantPK := range params.CovenantPks {
+		covenantBTCPKs[i] = covenantPK.MustToBTCPK()
+	}
+	return covenantBTCPKs
+}
+
+// BTCStakingUnbondSlashInfo generate BTC information to create BTC delegation.
+func (s *BTCStakingTestSuite) BTCStakingUnbondSlashInfo(
+	node *chain.NodeConfig,
+	params *bstypes.Params,
+	stakingTimeBlocks uint16,
+	fp *bstypes.FinalityProvider,
+) (
+	testStakingInfo *datagen.TestStakingSlashingInfo,
+	stakingTxInfo *btcctypes.TransactionInfo,
+	testUnbondingInfo *datagen.TestUnbondingSlashingInfo,
+	delegatorSig *bbn.BIP340Signature,
+) {
+	covenantBTCPKs := CovenantBTCPKs(params)
+	// minimal required unbonding time
+	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+
+	testStakingInfo = datagen.GenBTCStakingSlashingInfo(
+		r,
+		s.T(),
+		net,
+		delBTCSK,
+		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
+		covenantBTCPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		params.SlashingAddress,
+		params.SlashingRate,
+		unbondingTime,
+	)
+
+	// submit staking tx to Bitcoin and get inclusion proof
+	currentBtcTipResp, err := node.QueryTip()
+	s.NoError(err)
+	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	s.NoError(err)
+
+	stakingMsgTx := testStakingInfo.StakingTx
+
+	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
+	node.InsertHeader(&blockWithStakingTx.HeaderBytes)
+	// make block k-deep
+	for i := 0; i < initialization.BabylonBtcConfirmationPeriod; i++ {
+		node.InsertNewEmptyBtcHeader(r)
+	}
+	stakingTxInfo = btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
+
+	// generate BTC undelegation stuff
+	stkTxHash := testStakingInfo.StakingTx.TxHash()
+	unbondingValue := stakingValue - datagen.UnbondingTxFee
+	testUnbondingInfo = datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		s.T(),
+		net,
+		delBTCSK,
+		[]*btcec.PublicKey{fp.BtcPk.MustToBTCPK()},
+		covenantBTCPKs,
+		covenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		stakingTimeBlocks,
+		unbondingValue,
+		params.SlashingAddress,
+		params.SlashingRate,
+		unbondingTime,
+	)
+
+	stakingSlashingPathInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
+	s.NoError(err)
+
+	delegatorSig, err = testStakingInfo.SlashingTx.Sign(
+		stakingMsgTx,
+		datagen.StakingOutIdx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		delBTCSK,
+	)
+	s.NoError(err)
+
+	return testStakingInfo, stakingTxInfo, testUnbondingInfo, delegatorSig
 }

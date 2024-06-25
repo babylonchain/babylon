@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -54,7 +55,7 @@ func NewGenesisKey(delAddr sdk.ValAddress, blsPubKey *bls12381.PublicKey, pop *P
 }
 
 func LoadGenesisKeyFromFile(filePath string) (*GenesisKey, error) {
-	genBlsJSONBytes, err := os.ReadFile(filePath)
+	genBlsJSONBytes, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	btcstktypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
@@ -127,11 +128,12 @@ func replaceModOnGenesis(
 }
 
 func getBtcStakingGenStateFromFile(cdc codec.Codec, inputFilePath string) (*btcstktypes.GenesisState, error) {
-	if !cmtos.FileExists(inputFilePath) {
-		return nil, fmt.Errorf("input file %s does not exists", inputFilePath)
+	filePath := filepath.Clean(inputFilePath)
+	if !cmtos.FileExists(filePath) {
+		return nil, fmt.Errorf("input file %s does not exists", filePath)
 	}
 
-	bz, err := os.ReadFile(inputFilePath)
+	bz, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

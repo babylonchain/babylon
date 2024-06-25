@@ -5,7 +5,7 @@ headers from other PoS blockchains. These BTC timestamps allow PoS blockchains
 integrating with Babylon to achieve Bitcoin security, i.e., forking the PoS
 blockchain is as hard as forking Bitcoin. The Zone Concierge module leverages
 the IBC protocol to receive PoS blockchains' headers and provide them with
-succint and provable information about their timestamps.
+succinct and provable information about their timestamps.
 
 There are two phases of integration for a PoS blockchain:
 

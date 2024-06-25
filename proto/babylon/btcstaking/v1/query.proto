@@ -244,46 +244,48 @@ message QueryBTCDelegationResponse {
 
 // BTCDelegationResponse is the client needed information from a BTCDelegation with the current status based on parameters.
 message BTCDelegationResponse {
+  // staker_addr is the address to receive rewards from BTC delegation.
+  string staker_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
   // the PK follows encoding in BIP-340 spec
-  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  bytes btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
   // this BTC delegation delegates to
-  repeated bytes fp_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  repeated bytes fp_btc_pk_list = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
-  uint64 start_height = 3;
+  uint64 start_height = 4;
   // end_height is the end height of the BTC delegation
   // it is the end BTC height of the timelock - w
-  uint64 end_height = 4;
+  uint64 end_height = 5;
   // total_sat is the total amount of BTC stakes in this delegation
   // quantified in satoshi
-  uint64 total_sat = 5;
+  uint64 total_sat = 6;
   // staking_tx_hex is the hex string of staking tx
-  string staking_tx_hex = 6;
+  string staking_tx_hex = 7;
   // slashing_tx_hex is the hex string of slashing tx
-  string slashing_tx_hex = 7;
+  string slashing_tx_hex = 8;
   // delegator_slash_sig_hex is the signature on the slashing tx
   // by the delegator (i.e., SK corresponding to btc_pk) as string hex.
   // It will be a part of the witness for the staking tx output.
-  string delegator_slash_sig_hex = 8;
+  string delegator_slash_sig_hex = 9;
   // covenant_sigs is a list of adaptor signatures on the slashing tx
   // by each covenant member
   // It will be a part of the witness for the staking tx output.
-  repeated CovenantAdaptorSignatures covenant_sigs = 9;
+  repeated CovenantAdaptorSignatures covenant_sigs = 10;
   // staking_output_idx is the index of the staking output in the staking tx
-  uint32 staking_output_idx = 10;
+  uint32 staking_output_idx = 11;
   // whether this delegation is active
-  bool active = 11;
+  bool active = 12;
   // descriptive status of current delegation.
-  string status_desc = 12;
+  string status_desc = 13;
   // unbonding_time used in unbonding output timelock path and in slashing transactions
   // change outputs
-  uint32 unbonding_time = 13;
+  uint32 unbonding_time = 14;
   // undelegation_response is the undelegation info of this delegation.
-  BTCUndelegationResponse undelegation_response = 14;
+  BTCUndelegationResponse undelegation_response = 15;
   // params version used to validate delegation
-  uint32 params_version = 15;
+  uint32 params_version = 16;
 }
 
 // BTCUndelegationResponse provides all necessary info about the undeleagation

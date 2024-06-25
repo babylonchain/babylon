@@ -369,7 +369,7 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 			proofOfPossession, err := privval.BuildPoP(node.consensusKey.PrivKey, node.consensusKey.BlsPrivKey)
 
 			if err != nil {
-				panic("It should be possible to build proof of possesion from validator private keys")
+				panic("It should be possible to build proof of possession from validator private keys")
 			}
 
 			valPubKey, err := cryptocodec.FromCmtPubKeyInterface(node.consensusKey.PubKey)

@@ -247,6 +247,7 @@ func (n *internalNode) export() *Node {
 		ConfigDir:     n.configDir(),
 		Mnemonic:      n.mnemonic,
 		PublicAddress: addr.String(),
+		WalletName:    n.keyInfo.Name,
 		SecretKey:     n.privateKey,
 		PublicKey:     pub.Bytes(),
 		PeerId:        n.peerId,

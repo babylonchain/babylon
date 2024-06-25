@@ -89,7 +89,7 @@ func saveClientConfig(homePath string, cliConf *config.ClientConfig) error {
 
 // ensureConfigPath creates a directory configPath if it does not exist
 func ensureConfigPath(configPath string) error {
-	return os.MkdirAll(configPath, os.ModePerm)
+	return os.MkdirAll(filepath.Clean(configPath), 0750)
 }
 
 func writeConfigToFile(configFilePath string, config *config.ClientConfig) error {

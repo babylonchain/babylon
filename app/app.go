@@ -170,7 +170,7 @@ var (
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	wasmCapabilities = []string{"iterator", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "babylon"}
+	wasmCapabilities = []string{"iterator", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "staking", "babylon"}
 
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string

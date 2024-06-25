@@ -21,6 +21,8 @@ const (
 	// The maximum number of times debug logs are printed to console
 	// per CLI command.
 	maxDebugLogsPerCommand = 3
+	BabylonHomePath        = "/home/babylon/babylondata"
+	FlagHome               = "--home=" + BabylonHomePath
 )
 
 var errRegex = regexp.MustCompile(`(E|e)rror`)
@@ -256,11 +258,11 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Entrypoint: []string{
 			"sh",
 			"-c",
-			"babylond start --home /home/babylon/babylondata",
+			"babylond start " + FlagHome,
 		},
 		ExposedPorts: []string{"26656", "26657", "1317", "9090"},
 		Mounts: []string{
-			fmt.Sprintf("%s/:/home/babylon/babylondata", valCondifDir),
+			fmt.Sprintf("%s/:%s", valCondifDir, BabylonHomePath),
 			fmt.Sprintf("%s/bytecode:/bytecode", pwd),
 		},
 	}

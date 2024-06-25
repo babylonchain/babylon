@@ -14,7 +14,7 @@ import (
 	"github.com/babylonchain/babylon/privval"
 )
 
-// CmdCreateBls CLI command to create BLS file with proof of possesion.
+// CmdCreateBls CLI command to create BLS file with proof of possession.
 func CmdCreateBls() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-bls",

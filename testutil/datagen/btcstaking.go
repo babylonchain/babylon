@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -112,21 +113,8 @@ func GenRandomBTCDelegation(
 	if err != nil {
 		return nil, err
 	}
+	staker := GenRandomAccount()
 
-	// BTC delegation Babylon key pairs
-	bbnSK, bbnPK, err := GenRandomSecp256k1KeyPair(r)
-	if err != nil {
-		return nil, err
-	}
-	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
-	if !ok {
-		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")
-	}
-	// pop
-	pop, err := bstypes.NewPoP(bbnSK, delSK)
-	if err != nil {
-		return nil, err
-	}
 	// staking/slashing tx
 	stakingSlashingInfo := GenBTCStakingSlashingInfo(
 		r,
@@ -168,8 +156,12 @@ func GenRandomBTCDelegation(
 	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
+
+	pop, err := bstypes.NewPoPBTC(sdk.MustAccAddressFromBech32(staker.Address), delSK)
+	require.NoError(t, err)
+
 	del := &bstypes.BTCDelegation{
-		BabylonPk:        secp256k1PK,
+		StakerAddr:       staker.Address,
 		BtcPk:            delBTCPK,
 		Pop:              pop,
 		FpBtcPkList:      fpBTCPKs,

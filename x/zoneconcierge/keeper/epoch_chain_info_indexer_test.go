@@ -39,7 +39,8 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		hooks.AfterEpochEnds(ctx, epochNum)
 
 		// check if the chain info of this epoch is recorded or not
-		chainInfo, err := zcKeeper.GetEpochChainInfo(ctx, czChainID, epochNum)
+		chainInfoWithProof, err := zcKeeper.GetEpochChainInfo(ctx, czChainID, epochNum)
+		chainInfo := chainInfoWithProof.ChainInfo
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numHeaders, chainInfo.TimestampedHeadersCount)

@@ -14,7 +14,7 @@ message EventNewFinalityProvider { FinalityProvider fp = 1; }
 // - non-existing -> pending, which happens upon `MsgCreateBTCDelegation`
 // - pending -> active, which happens upon `MsgAddCovenantSigs`
 // - active -> unbonded, which happens upon `MsgBTCUndelegate` or upon staking tx timelock expires
-message EventBTCDelegationStateUpdate { 
+message EventBTCDelegationStateUpdate {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;
@@ -22,7 +22,7 @@ message EventBTCDelegationStateUpdate {
   BTCDelegationStatus new_state = 2;
 }
 
-// EventSelectiveSlashing is the event emitted when an adversarial 
+// EventSelectiveSlashing is the event emitted when an adversarial
 // finality provider selectively slashes a BTC delegation. This will
 // result in slashing of all BTC delegations under this finality provider.
 message EventSelectiveSlashing {

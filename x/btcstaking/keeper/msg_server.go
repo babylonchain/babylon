@@ -179,8 +179,13 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - is smaller than math.MaxUint16 (due to check in req.ValidateBasic())
 	validatedUnbondingTime := uint16(req.UnbondingTime)
 
+	stakerAddr, err := sdk.AccAddressFromBech32(req.StakerAddr)
+	if err != nil {
+		return nil, types.ErrInvalidStakingTx.Wrapf("invalid staker addr %s: %v", req.StakerAddr, err)
+	}
+
 	// verify proof of possession
-	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
+	if err := req.Pop.Verify(stakerAddr, req.BtcPk, ms.btcNet); err != nil {
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
 	}
 
@@ -315,7 +320,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// have voting power only when 1) its corresponding staking tx is k-deep,
 	// and 2) it receives a covenant signature
 	newBTCDel := &types.BTCDelegation{
-		BabylonPk:        req.BabylonPk,
+		StakerAddr:       stakerAddr.String(),
 		BtcPk:            req.BtcPk,
 		Pop:              req.Pop,
 		FpBtcPkList:      req.FpBtcPkList,
