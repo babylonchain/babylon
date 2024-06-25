@@ -189,6 +189,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		CreateBlsKeyCmd(),
 		GenBlsCmd(),
 		AddGenBlsCmd(gentxModule.GenTxValidator),
+		ModuleSizeCmd(),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),
 	)
