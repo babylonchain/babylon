@@ -1,8 +1,10 @@
 package btcstaking
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
+	"slices"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -24,7 +26,9 @@ const (
 )
 
 var (
-	unspendableKeyPathKey = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+	unspendableKeyPathKey    = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+	errBuildingStakingInfo   = fmt.Errorf("error building staking info")
+	errBuildingUnbondingInfo = fmt.Errorf("error building unbonding info")
 )
 
 func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
@@ -267,6 +271,14 @@ type babylonScriptPaths struct {
 	slashingPathScript []byte
 }
 
+// ContainsKey checks if the given key is present in the given slice of keys
+// comparison is done in schnorr serialized format (32 byte keys)
+func ContainsKey(keys []*btcec.PublicKey, key *btcec.PublicKey) bool {
+	return slices.ContainsFunc(keys, func(k *btcec.PublicKey) bool {
+		return bytes.Equal(schnorr.SerializePubKey(k), schnorr.SerializePubKey(key))
+	})
+}
+
 func newBabylonScriptPaths(
 	stakerKey *btcec.PublicKey,
 	fpKeys []*btcec.PublicKey,
@@ -276,6 +288,14 @@ func newBabylonScriptPaths(
 ) (*babylonScriptPaths, error) {
 	if stakerKey == nil {
 		return nil, fmt.Errorf("staker key is nil")
+	}
+
+	if ContainsKey(fpKeys, stakerKey) {
+		return nil, fmt.Errorf("finality provider keys contain staker key")
+	}
+
+	if ContainsKey(covenantKeys, stakerKey) {
+		return nil, fmt.Errorf("covenant keys contain staker key")
 	}
 
 	timeLockPathScript, err := buildTimeLockScript(stakerKey, lockTime)
@@ -353,7 +373,7 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", err, errBuildingStakingInfo)
 	}
 
 	var unbondingPaths [][]byte
@@ -371,13 +391,13 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", err, errBuildingStakingInfo)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", err, errBuildingStakingInfo)
 	}
 
 	stakingOutput := wire.NewTxOut(int64(stakingAmount), taprootPkScript)
@@ -433,7 +453,7 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", err, errBuildingUnbondingInfo)
 	}
 
 	var unbondingPaths [][]byte
@@ -449,13 +469,13 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", err, errBuildingUnbondingInfo)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", err, errBuildingUnbondingInfo)
 	}
 
 	unbondingOutput := wire.NewTxOut(int64(unbondingAmount), taprootPkScript)

@@ -310,3 +310,67 @@ func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
 	require.Error(t, err)
 	require.EqualError(t, err, "slashing transaction does not obey BTC rules: transaction output value of 1152921504606846975 is higher than max allowed value of 2.1e+15")
 }
+
+func TestNotAllowStakerKeyToBeFinalityProviderKey(t *testing.T) {
+	r := rand.New(rand.NewSource(0))
+	sd := genValidStakingScriptData(t, r)
+
+	// Construct staking transaction using the provided parameters
+	stakingTx, err := btcstaking.BuildStakingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.StakerKey},
+		[]*btcec.PublicKey{sd.CovenantKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(10000),
+		&chaincfg.MainNetParams,
+	)
+	require.Nil(t, stakingTx)
+	require.Error(t, err)
+	require.EqualError(t, err, "finality provider keys contain staker key: error building staking info")
+
+	unbondingTx, err := btcstaking.BuildUnbondingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.StakerKey},
+		[]*btcec.PublicKey{sd.CovenantKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(10000),
+		&chaincfg.MainNetParams,
+	)
+	require.Nil(t, unbondingTx)
+	require.Error(t, err)
+	require.EqualError(t, err, "finality provider keys contain staker key: error building unbonding info")
+}
+
+func TestNotAllowStakerKeyToBeCovenantKey(t *testing.T) {
+	r := rand.New(rand.NewSource(0))
+	sd := genValidStakingScriptData(t, r)
+
+	// Construct staking transaction using the provided parameters
+	stakingTx, err := btcstaking.BuildStakingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		[]*btcec.PublicKey{sd.StakerKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(10000),
+		&chaincfg.MainNetParams,
+	)
+	require.Nil(t, stakingTx)
+	require.Error(t, err)
+	require.EqualError(t, err, "covenant keys contain staker key: error building staking info")
+
+	unbondingTx, err := btcstaking.BuildUnbondingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		[]*btcec.PublicKey{sd.StakerKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(10000),
+		&chaincfg.MainNetParams,
+	)
+	require.Nil(t, unbondingTx)
+	require.Error(t, err)
+	require.EqualError(t, err, "covenant keys contain staker key: error building unbonding info")
+}
