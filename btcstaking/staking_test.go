@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
@@ -66,6 +67,12 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		// we do not care for inputs in staking tx
 		stakingTx := wire.NewMsgTx(2)
+		bogusInputHashBytes := [32]byte{}
+		bogusInputHash, _ := chainhash.NewHash(bogusInputHashBytes[:])
+		stakingTx.AddTxIn(
+			wire.NewTxIn(wire.NewOutPoint(bogusInputHash, 0), nil, nil),
+		)
+
 		stakingOutputIdx := r.Intn(5)
 		// always more outputs than stakingOutputIdx
 		stakingTxNumOutputs := r.Intn(5) + 10
@@ -239,4 +246,67 @@ func FuzzGeneratingSignatureValidation(f *testing.F) {
 
 		require.NoError(t, err)
 	})
+}
+
+func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	// we do not care for inputs in staking tx
+	stakingTx := wire.NewMsgTx(2)
+	slashingLockTime := uint16(100)
+	minStakingValue := 10000
+	minFee := 2000
+	slashingRate := sdkmath.LegacyNewDecWithPrec(1000, 4)
+	sd := genValidStakingScriptData(t, r)
+
+	info, err := btcstaking.BuildStakingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		[]*btcec.PublicKey{sd.CovenantKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(r.Intn(5000)+minStakingValue),
+		&chaincfg.MainNetParams,
+	)
+
+	require.NoError(t, err)
+	stakingTx.AddTxOut(info.StakingOutput)
+	bogusInputHashBytes := [32]byte{}
+	bogusInputHash, _ := chainhash.NewHash(bogusInputHashBytes[:])
+	stakingTx.AddTxIn(
+		wire.NewTxIn(wire.NewOutPoint(bogusInputHash, 0), nil, nil),
+	)
+
+	slashingAddress, err := genRandomBTCAddress(r)
+	require.NoError(t, err)
+
+	// Construct slashing transaction using the provided parameters
+	slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
+		stakingTx,
+		uint32(0),
+		slashingAddress,
+		sd.StakerKey,
+		slashingLockTime,
+		int64(minFee),
+		slashingRate,
+		&chaincfg.MainNetParams,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, slashingTx)
+
+	slashingTx.TxOut[0].Value = math.MaxInt64 / 8
+	slashingTx.TxOut[1].Value = math.MaxInt64 / 8
+
+	err = btcstaking.CheckTransactions(
+		slashingTx,
+		stakingTx,
+		uint32(0),
+		int64(minFee),
+		slashingRate,
+		slashingAddress,
+		sd.StakerKey,
+		slashingLockTime,
+		&chaincfg.MainNetParams,
+	)
+	require.Error(t, err)
+	require.EqualError(t, err, "slashing transaction does not obey BTC rules: transaction output value of 1152921504606846975 is higher than max allowed value of 2.1e+15")
 }
