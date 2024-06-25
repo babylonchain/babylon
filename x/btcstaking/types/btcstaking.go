@@ -30,7 +30,7 @@ func (fp *FinalityProvider) ValidateBasic() error {
 		return fmt.Errorf("empty proof of possession")
 	}
 	if err := fp.Pop.ValidateBasic(); err != nil {
-		return err
+		return fmt.Errorf("PoP is not valid: %w", err)
 	}
 
 	return nil

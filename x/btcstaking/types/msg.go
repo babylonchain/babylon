@@ -43,7 +43,7 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 		return fmt.Errorf("empty proof of possession")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Addr); err != nil {
-		return err
+		return fmt.Errorf("invalid FP addr: %s - %v", m.Addr, err)
 	}
 	return m.Pop.ValidateBasic()
 }
