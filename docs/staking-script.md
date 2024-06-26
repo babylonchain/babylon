@@ -151,6 +151,7 @@ The requirements for a valid slashing transaction are:
 
 In the below scripts, there are three entities, each represented by BTC public
 key:
+
 - `StakerPK` - BTC staker public key
 - `FinalityProviderPk` - finality provider public key
 - `CovenantPk1..CovenantPkN` - public keys of covenant committee members

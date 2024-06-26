@@ -1,6 +1,7 @@
 package btcstaking_test
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -327,7 +328,7 @@ func TestNotAllowStakerKeyToBeFinalityProviderKey(t *testing.T) {
 	)
 	require.Nil(t, stakingTx)
 	require.Error(t, err)
-	require.EqualError(t, err, "finality provider keys contain staker key: error building staking info")
+	require.True(t, errors.Is(err, btcstaking.ErrDuplicatedKeyInScript))
 
 	unbondingTx, err := btcstaking.BuildUnbondingInfo(
 		sd.StakerKey,
@@ -340,7 +341,7 @@ func TestNotAllowStakerKeyToBeFinalityProviderKey(t *testing.T) {
 	)
 	require.Nil(t, unbondingTx)
 	require.Error(t, err)
-	require.EqualError(t, err, "finality provider keys contain staker key: error building unbonding info")
+	require.True(t, errors.Is(err, btcstaking.ErrDuplicatedKeyInScript))
 }
 
 func TestNotAllowStakerKeyToBeCovenantKey(t *testing.T) {
@@ -359,7 +360,7 @@ func TestNotAllowStakerKeyToBeCovenantKey(t *testing.T) {
 	)
 	require.Nil(t, stakingTx)
 	require.Error(t, err)
-	require.EqualError(t, err, "covenant keys contain staker key: error building staking info")
+	require.True(t, errors.Is(err, btcstaking.ErrDuplicatedKeyInScript))
 
 	unbondingTx, err := btcstaking.BuildUnbondingInfo(
 		sd.StakerKey,
@@ -372,5 +373,37 @@ func TestNotAllowStakerKeyToBeCovenantKey(t *testing.T) {
 	)
 	require.Nil(t, unbondingTx)
 	require.Error(t, err)
-	require.EqualError(t, err, "covenant keys contain staker key: error building unbonding info")
+	require.True(t, errors.Is(err, btcstaking.ErrDuplicatedKeyInScript))
+}
+
+func TestNotAllowFinalityProviderKeysAsCovenantKeys(t *testing.T) {
+	r := rand.New(rand.NewSource(0))
+	sd := genValidStakingScriptData(t, r)
+
+	// Construct staking transaction using the provided parameters
+	stakingTx, err := btcstaking.BuildStakingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(10000),
+		&chaincfg.MainNetParams,
+	)
+	require.Nil(t, stakingTx)
+	require.Error(t, err)
+	require.True(t, errors.Is(err, btcstaking.ErrDuplicatedKeyInScript))
+
+	unbondingTx, err := btcstaking.BuildUnbondingInfo(
+		sd.StakerKey,
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		[]*btcec.PublicKey{sd.FinalityProviderKey},
+		1,
+		sd.StakingTime,
+		btcutil.Amount(10000),
+		&chaincfg.MainNetParams,
+	)
+	require.Nil(t, unbondingTx)
+	require.Error(t, err)
+	require.True(t, errors.Is(err, btcstaking.ErrDuplicatedKeyInScript))
 }

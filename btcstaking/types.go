@@ -1,10 +1,8 @@
 package btcstaking
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
-	"slices"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -29,6 +27,7 @@ var (
 	unspendableKeyPathKey    = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
 	errBuildingStakingInfo   = fmt.Errorf("error building staking info")
 	errBuildingUnbondingInfo = fmt.Errorf("error building unbonding info")
+	ErrDuplicatedKeyInScript = fmt.Errorf("duplicated key in script")
 )
 
 func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
@@ -271,12 +270,36 @@ type babylonScriptPaths struct {
 	slashingPathScript []byte
 }
 
-// ContainsKey checks if the given key is present in the given slice of keys
-// comparison is done in schnorr serialized format (32 byte keys)
-func ContainsKey(keys []*btcec.PublicKey, key *btcec.PublicKey) bool {
-	return slices.ContainsFunc(keys, func(k *btcec.PublicKey) bool {
-		return bytes.Equal(schnorr.SerializePubKey(k), schnorr.SerializePubKey(key))
-	})
+func keyToString(key *btcec.PublicKey) string {
+	return hex.EncodeToString(schnorr.SerializePubKey(key))
+}
+
+func checkForDuplicateKeys(
+	stakerKey *btcec.PublicKey,
+	fpKeys []*btcec.PublicKey,
+	covenantKeys []*btcec.PublicKey,
+) error {
+	keyMap := make(map[string]bool)
+
+	keyMap[keyToString(stakerKey)] = true
+
+	for _, key := range fpKeys {
+		keyStr := keyToString(key)
+		if keyMap[keyStr] {
+			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
+		}
+		keyMap[keyStr] = true
+	}
+
+	for _, key := range covenantKeys {
+		keyStr := keyToString(key)
+		if keyMap[keyStr] {
+			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
+		}
+		keyMap[keyStr] = true
+	}
+
+	return nil
 }
 
 func newBabylonScriptPaths(
@@ -290,12 +313,8 @@ func newBabylonScriptPaths(
 		return nil, fmt.Errorf("staker key is nil")
 	}
 
-	if ContainsKey(fpKeys, stakerKey) {
-		return nil, fmt.Errorf("finality provider keys contain staker key")
-	}
-
-	if ContainsKey(covenantKeys, stakerKey) {
-		return nil, fmt.Errorf("covenant keys contain staker key")
+	if err := checkForDuplicateKeys(stakerKey, fpKeys, covenantKeys); err != nil {
+		return nil, fmt.Errorf("error building scripts: %w", err)
 	}
 
 	timeLockPathScript, err := buildTimeLockScript(stakerKey, lockTime)
@@ -373,7 +392,7 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", err, errBuildingStakingInfo)
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -391,13 +410,13 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", err, errBuildingStakingInfo)
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", err, errBuildingStakingInfo)
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	stakingOutput := wire.NewTxOut(int64(stakingAmount), taprootPkScript)
@@ -453,7 +472,7 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", err, errBuildingUnbondingInfo)
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -469,13 +488,13 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", err, errBuildingUnbondingInfo)
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", err, errBuildingUnbondingInfo)
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	unbondingOutput := wire.NewTxOut(int64(unbondingAmount), taprootPkScript)
