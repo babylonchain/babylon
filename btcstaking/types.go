@@ -279,24 +279,28 @@ func checkForDuplicateKeys(
 	fpKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
 ) error {
-	keyMap := make(map[string]bool)
+	keyMap := make(map[string]struct{})
 
-	keyMap[keyToString(stakerKey)] = true
+	keyMap[keyToString(stakerKey)] = struct{}{}
 
 	for _, key := range fpKeys {
 		keyStr := keyToString(key)
-		if keyMap[keyStr] {
+
+		if _, ok := keyMap[keyStr]; ok {
 			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
 		}
-		keyMap[keyStr] = true
+
+		keyMap[keyStr] = struct{}{}
 	}
 
 	for _, key := range covenantKeys {
 		keyStr := keyToString(key)
-		if keyMap[keyStr] {
+
+		if _, ok := keyMap[keyStr]; ok {
 			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
 		}
-		keyMap[keyStr] = true
+
+		keyMap[keyStr] = struct{}{}
 	}
 
 	return nil
