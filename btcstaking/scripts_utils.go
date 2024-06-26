@@ -55,9 +55,9 @@ func SortKeys(keys []*btcec.PublicKey) []*btcec.PublicKey {
 
 // prepareKeys prepares keys to be used in multisig script
 // Validates:
-// - whether there are at lest 2 keys
-// - whether there are no duplicate keys
+// - whether there are at least 2 keys
 // returns copy of the slice of keys sorted lexicographically
+// Note: It is up to the caller to ensure that the keys are unique
 func prepareKeysForMultisigScript(keys []*btcec.PublicKey) ([]*btcec.PublicKey, error) {
 	if len(keys) < 2 {
 		return nil, fmt.Errorf("cannot create multisig script with less than 2 keys")
@@ -65,19 +65,14 @@ func prepareKeysForMultisigScript(keys []*btcec.PublicKey) ([]*btcec.PublicKey, 
 
 	sortedKeys := SortKeys(keys)
 
-	for i := 0; i < len(sortedKeys)-1; i++ {
-		if bytes.Equal(schnorr.SerializePubKey(sortedKeys[i]), schnorr.SerializePubKey(sortedKeys[i+1])) {
-			return nil, fmt.Errorf("duplicate key in list of keys")
-		}
-	}
-
 	return sortedKeys, nil
 }
 
 // buildMultiSigScript creates multisig script with given keys and signer threshold to
 // successfully execute script
-// it validates whether provided keys are unique and the threshold is not greater than number of keys
+// it validates whether threshold is not greater than number of keys
 // If there is only one key provided it will return single key sig script
+// Note: It is up to the caller to ensure that the keys are unique
 func buildMultiSigScript(
 	keys []*btcec.PublicKey,
 	threshold uint32,
