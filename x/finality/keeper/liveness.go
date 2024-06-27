@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/types"
-	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
 )
 
 // HandleLiveness handles liveness of each active finality provider for a given height
@@ -21,23 +20,24 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 	// Iterate over all the finality providers which *should* have signed this block
 	// store whether or not they have actually signed it, identify inactive
 	// ones, and apply punishment
-	for fpPkHex, _ := range fpSet {
+	for fpPkHex := range fpSet {
 		fpPk, err := types.NewBIP340PubKeyFromHex(fpPkHex)
 		if err != nil {
-			panic(fmt.Errorf("invalid finality provider public key %s: %w", fpPk, err))
+			panic(fmt.Errorf("invalid finality provider public key %s: %w", fpPkHex, err))
 		}
 
 		_, ok := voterBTCPKs[fpPkHex]
 		missed := !ok
 
-		err = k.HandleFinalityProviderLiveness(ctx, k.GetParams(ctx), fpPk, missed, height)
+		err = k.HandleFinalityProviderLiveness(ctx, fpPk, missed, height)
 		if err != nil {
 			panic(fmt.Errorf("failed to handle liveness of finality provider %s: %w", fpPkHex, err))
 		}
 	}
 }
 
-func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, params finalitytypes.Params, fpPk *types.BIP340PubKey, missed bool, height int64) error {
+func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.BIP340PubKey, missed bool, height int64) error {
+	params := k.GetParams(ctx)
 	// don't update missed blocks when finality provider is already jailed
 	val, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fpPk.MustMarshal())
 	if err != nil {
@@ -149,7 +149,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, params final
 			// We need to reset the counter & bitmap so that the finality provider won't be
 			// immediately jailed upon re-bonding.
 			// We don't set the start height as this will get correctly set
-			// once they bond again in the AfterValidatorBonded hook!
+			// once they bond again in the AfterFinalityProviderActivated hook
 			signInfo.MissedBlocksCounter = 0
 			err = k.DeleteMissedBlockBitmap(ctx, fpPk)
 			if err != nil {
