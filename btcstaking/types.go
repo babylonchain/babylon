@@ -24,7 +24,10 @@ const (
 )
 
 var (
-	unspendableKeyPathKey = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+	unspendableKeyPathKey    = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+	errBuildingStakingInfo   = fmt.Errorf("error building staking info")
+	errBuildingUnbondingInfo = fmt.Errorf("error building unbonding info")
+	ErrDuplicatedKeyInScript = fmt.Errorf("duplicated key in script")
 )
 
 func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
@@ -267,6 +270,42 @@ type babylonScriptPaths struct {
 	slashingPathScript []byte
 }
 
+func keyToString(key *btcec.PublicKey) string {
+	return hex.EncodeToString(schnorr.SerializePubKey(key))
+}
+
+func checkForDuplicateKeys(
+	stakerKey *btcec.PublicKey,
+	fpKeys []*btcec.PublicKey,
+	covenantKeys []*btcec.PublicKey,
+) error {
+	keyMap := make(map[string]struct{})
+
+	keyMap[keyToString(stakerKey)] = struct{}{}
+
+	for _, key := range fpKeys {
+		keyStr := keyToString(key)
+
+		if _, ok := keyMap[keyStr]; ok {
+			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
+		}
+
+		keyMap[keyStr] = struct{}{}
+	}
+
+	for _, key := range covenantKeys {
+		keyStr := keyToString(key)
+
+		if _, ok := keyMap[keyStr]; ok {
+			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
+		}
+
+		keyMap[keyStr] = struct{}{}
+	}
+
+	return nil
+}
+
 func newBabylonScriptPaths(
 	stakerKey *btcec.PublicKey,
 	fpKeys []*btcec.PublicKey,
@@ -276,6 +315,10 @@ func newBabylonScriptPaths(
 ) (*babylonScriptPaths, error) {
 	if stakerKey == nil {
 		return nil, fmt.Errorf("staker key is nil")
+	}
+
+	if err := checkForDuplicateKeys(stakerKey, fpKeys, covenantKeys); err != nil {
+		return nil, fmt.Errorf("error building scripts: %w", err)
 	}
 
 	timeLockPathScript, err := buildTimeLockScript(stakerKey, lockTime)
@@ -353,7 +396,7 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -371,13 +414,13 @@ func BuildStakingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
 	}
 
 	stakingOutput := wire.NewTxOut(int64(stakingAmount), taprootPkScript)
@@ -433,7 +476,7 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	var unbondingPaths [][]byte
@@ -449,13 +492,13 @@ func BuildUnbondingInfo(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	taprootPkScript, err := sh.taprootPkScript(net)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
 	}
 
 	unbondingOutput := wire.NewTxOut(int64(unbondingAmount), taprootPkScript)

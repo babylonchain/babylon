@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
@@ -214,7 +215,7 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 	return nil
 }
 
-// ValidateSlashingTx performs basic checks on a slashing transaction:
+// validateSlashingTx performs basic checks on a slashing transaction:
 // - the slashing transaction is not nil.
 // - the slashing transaction has exactly one input.
 // - the slashing transaction is non-replaceable.
@@ -225,7 +226,7 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 //   - neither of the outputs are considered dust.
 //
 // - the min fee for slashing tx is preserved
-func ValidateSlashingTx(
+func validateSlashingTx(
 	slashingTx *wire.MsgTx,
 	slashingAddress btcutil.Address,
 	slashingRate sdkmath.LegacyDec,
@@ -329,6 +330,7 @@ func ValidateSlashingTx(
 }
 
 // CheckTransactions validates all relevant data of slashing and funding transaction.
+// - both transactions are valid from pov of BTC rules
 // - funding transaction has output committing to the provided script
 // - slashing transaction is valid
 // - slashing transaction input hash is pointing to funding transaction hash
@@ -344,6 +346,18 @@ func CheckTransactions(
 	slashingChangeLockTime uint16,
 	net *chaincfg.Params,
 ) error {
+	if slashingTx == nil || fundingTransaction == nil {
+		return fmt.Errorf("slashing and funding transactions must not be nil")
+	}
+
+	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(slashingTx)); err != nil {
+		return fmt.Errorf("slashing transaction does not obey BTC rules: %w", err)
+	}
+
+	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(fundingTransaction)); err != nil {
+		return fmt.Errorf("funding transaction does not obey BTC rules: %w", err)
+	}
+
 	// Check if slashing tx min fee is valid
 	if slashingTxMinFee <= 0 {
 		return fmt.Errorf("slashing transaction min fee must be larger than 0")
@@ -360,7 +374,7 @@ func CheckTransactions(
 
 	stakingOutput := fundingTransaction.TxOut[fundingOutputIdx]
 	// 3. Check if slashing transaction is valid
-	if err := ValidateSlashingTx(
+	if err := validateSlashingTx(
 		slashingTx,
 		slashingAddress,
 		slashingRate,
