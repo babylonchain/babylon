@@ -56,3 +56,8 @@ var (
 func FinalityProviderSigningInfoKey(pk *types.BIP340PubKey) []byte {
 	return append(FinalityProviderSigningInfoKeyPrefix, address.MustLengthPrefix(pk.MustMarshal())...)
 }
+
+// FinalityProviderMissedBlockBitmapKey - stored by finality provider public key in BIP340
+func FinalityProviderMissedBlockBitmapKey(pk *types.BIP340PubKey) []byte {
+	return append(FinalityProviderMissedBlockBitmapKeyPrefix, address.MustLengthPrefix(pk.MustMarshal())...)
+}

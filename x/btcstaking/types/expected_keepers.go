@@ -25,3 +25,7 @@ type CheckpointingKeeper interface {
 	GetEpoch(ctx context.Context) *etypes.Epoch
 	GetLastFinalizedEpoch(ctx context.Context) uint64
 }
+
+type BtcStakingHooks interface {
+	AfterFinalityProviderActivated(ctx context.Context, fpPk *bbn.BIP340PubKey) error
+}
