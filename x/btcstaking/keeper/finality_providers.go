@@ -76,8 +76,8 @@ func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error 
 	}
 
 	// ensure finality provider is not slashed yet
-	if fp.IsJailed() {
-		return fmt.Errorf("the finality provider is already jailed")
+	if fp.IsJailed() || fp.IsSlashed() {
+		return fmt.Errorf("the finality provider is already jailed or slashed")
 	}
 
 	// set finality provider to be slashed

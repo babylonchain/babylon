@@ -39,12 +39,12 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.BIP340PubKey, missed bool, height int64) error {
 	params := k.GetParams(ctx)
 	// don't update missed blocks when finality provider is already jailed
-	val, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fpPk.MustMarshal())
+	fp, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fpPk.MustMarshal())
 	if err != nil {
 		return err
 	}
 
-	if val.IsJailed() {
+	if fp.IsJailed() || fp.IsSlashed() {
 		return nil
 	}
 
