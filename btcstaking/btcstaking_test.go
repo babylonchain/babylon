@@ -41,10 +41,10 @@ func GenerateTestScenario(
 
 	finalityProviderKeys := make([]*btcec.PrivateKey, numFinalityProviderKeys)
 	for i := uint32(0); i < numFinalityProviderKeys; i++ {
-		covenantPrivKey, err := btcec.NewPrivateKey()
+		finalityProviderPrivKey, err := btcec.NewPrivateKey()
 		require.NoError(t, err)
 
-		finalityProviderKeys[i] = covenantPrivKey
+		finalityProviderKeys[i] = finalityProviderPrivKey
 	}
 
 	covenantKeys := make([]*btcec.PrivateKey, numCovenantKeys)
