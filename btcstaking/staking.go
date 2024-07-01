@@ -520,22 +520,7 @@ func EncSignTxWithOneScriptSpendInputStrict(
 
 	fundingOutput := fundingTx.TxOut[fundingOutputIdx]
 
-	tapLeaf := txscript.NewBaseTapLeaf(signedScriptPath)
-
-	inputFetcher := txscript.NewCannedPrevOutputFetcher(
-		fundingOutput.PkScript,
-		fundingOutput.Value,
-	)
-
-	sigHashes := txscript.NewTxSigHashes(txToSign, inputFetcher)
-
-	sigHash, err := txscript.CalcTapscriptSignaturehash(
-		sigHashes,
-		txscript.SigHashDefault,
-		txToSign,
-		0,
-		inputFetcher,
-		tapLeaf)
+	sigHash, err := getSigHash(txToSign, fundingOutput, signedScriptPath)
 	if err != nil {
 		return nil, err
 	}
@@ -574,31 +559,20 @@ func checkTxBeforeSigning(txToSign *wire.MsgTx, fundingTx *wire.MsgTx, fundingOu
 	return nil
 }
 
-// VerifyTransactionSigWithOutput verifies that:
-// - provided transaction has exactly one input
-// - provided signature is valid schnorr BIP340 signature
-// - provided signature is signing whole provided transaction	(SigHashDefault)
-func VerifyTransactionSigWithOutput(
-	transaction *wire.MsgTx,
-	fundingOutput *wire.TxOut,
-	script []byte,
-	pubKey *btcec.PublicKey,
-	signature []byte) error {
-
+// getSigHash returns the sig hash of the given tx spending the given tx output
+// via the given script path
+// signatures over this tx have to be signed over the message being the sig hash
+func getSigHash(transaction *wire.MsgTx, fundingOutput *wire.TxOut, script []byte) ([]byte, error) {
 	if fundingOutput == nil {
-		return fmt.Errorf("funding output must not be nil")
+		return nil, fmt.Errorf("funding output must not be nil")
 	}
 
 	if transaction == nil {
-		return fmt.Errorf("tx to verify not be nil")
+		return nil, fmt.Errorf("tx to verify not be nil")
 	}
 
 	if len(transaction.TxIn) != 1 {
-		return fmt.Errorf("tx to sign must have exactly one input")
-	}
-
-	if pubKey == nil {
-		return fmt.Errorf("public key must not be nil")
+		return nil, fmt.Errorf("tx to sign must have exactly one input")
 	}
 
 	tapLeaf := txscript.NewBaseTapLeaf(script)
@@ -610,23 +584,37 @@ func VerifyTransactionSigWithOutput(
 
 	sigHashes := txscript.NewTxSigHashes(transaction, inputFetcher)
 
-	sigHash, err := txscript.CalcTapscriptSignaturehash(
+	return txscript.CalcTapscriptSignaturehash(
 		sigHashes, txscript.SigHashDefault, transaction, 0, inputFetcher, tapLeaf,
 	)
+}
 
+// VerifyTransactionSigWithOutput verifies that:
+// - provided transaction has exactly one input
+// - provided signature is valid schnorr BIP340 signature
+// - provided signature is signing whole provided transaction	(SigHashDefault)
+func VerifyTransactionSigWithOutput(
+	transaction *wire.MsgTx,
+	fundingOutput *wire.TxOut,
+	script []byte,
+	pubKey *btcec.PublicKey,
+	signature []byte,
+) error {
+	if pubKey == nil {
+		return fmt.Errorf("public key must not be nil")
+	}
+
+	sigHash, err := getSigHash(transaction, fundingOutput, script)
 	if err != nil {
 		return err
 	}
 
 	parsedSig, err := schnorr.ParseSignature(signature)
-
 	if err != nil {
 		return err
 	}
 
-	valid := parsedSig.Verify(sigHash, pubKey)
-
-	if !valid {
+	if !parsedSig.Verify(sigHash, pubKey) {
 		return fmt.Errorf("signature is not valid")
 	}
 
@@ -645,31 +633,14 @@ func EncVerifyTransactionSigWithOutput(
 	encKey *asig.EncryptionKey,
 	signature *asig.AdaptorSignature,
 ) error {
-	if transaction == nil {
-		return fmt.Errorf("tx to verify not be nil")
-	}
-
-	if len(transaction.TxIn) != 1 {
-		return fmt.Errorf("tx to sign must have exactly one input")
-	}
-
 	if pubKey == nil {
 		return fmt.Errorf("public key must not be nil")
 	}
+	if encKey == nil {
+		return fmt.Errorf("encryption key must not be nil")
+	}
 
-	tapLeaf := txscript.NewBaseTapLeaf(script)
-
-	inputFetcher := txscript.NewCannedPrevOutputFetcher(
-		fundingOut.PkScript,
-		fundingOut.Value,
-	)
-
-	sigHashes := txscript.NewTxSigHashes(transaction, inputFetcher)
-
-	sigHash, err := txscript.CalcTapscriptSignaturehash(
-		sigHashes, txscript.SigHashDefault, transaction, 0, inputFetcher, tapLeaf,
-	)
-
+	sigHash, err := getSigHash(transaction, fundingOut, script)
 	if err != nil {
 		return err
 	}
