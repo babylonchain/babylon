@@ -80,7 +80,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	cacheFP = s.CreateRandomFP(nonValidatorNode)
+	cacheFP = s.CreateNodeFP(nonValidatorNode)
 
 	/*
 		create a random BTC delegation under this finality provider
@@ -838,18 +838,22 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 func (s *BTCStakingTestSuite) equalFinalityProviderResp(fp *bstypes.FinalityProvider, fpResp *bstypes.FinalityProviderResponse) {
 	s.Equal(fp.Description, fpResp.Description)
 	s.Equal(fp.Commission, fpResp.Commission)
-	s.Equal(fp.BabylonPk, fpResp.BabylonPk)
+	s.Equal(fp.Addr, fpResp.Addr)
 	s.Equal(fp.BtcPk, fpResp.BtcPk)
 	s.Equal(fp.Pop, fpResp.Pop)
 	s.Equal(fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	s.Equal(fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
 }
 
-// CreateRandomFP creates a random finality provider.
-func (s *BTCStakingTestSuite) CreateRandomFP(node *chain.NodeConfig) (newFP *bstypes.FinalityProvider) {
-	newFP, err := datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, node.SecretKey)
+// CreateNodeFP creates a random finality provider.
+func (s *BTCStakingTestSuite) CreateNodeFP(node *chain.NodeConfig) (newFP *bstypes.FinalityProvider) {
+	// the node is the new FP
+	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	s.NoError(err)
-	node.CreateFinalityProvider(newFP.BabylonPk, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
+
+	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpBTCSK, nodeAddr)
+	s.NoError(err)
+	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission)
 
 	// wait for a block so that above txs take effect
 	node.WaitForNextBlock()

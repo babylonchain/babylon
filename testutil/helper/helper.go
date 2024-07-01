@@ -139,6 +139,10 @@ func (h *Helper) Error(err error) {
 	require.Error(h.t, err)
 }
 
+func (h *Helper) EqualError(err, expected error) {
+	require.EqualError(h.t, err, expected.Error())
+}
+
 func (h *Helper) getExtendedVotesFromValSet(
 	epochNum uint64,
 	height uint64,

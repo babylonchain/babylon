@@ -49,10 +49,9 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 			msg := &types.MsgCreateFinalityProvider{
-				Signer:      datagen.GenRandomAccount().Address,
+				Addr:        fp.Addr,
 				Description: fp.Description,
 				Commission:  fp.Commission,
-				BabylonPk:   fp.BabylonPk,
 				BtcPk:       fp.BtcPk,
 				Pop:         fp.Pop,
 			}
@@ -70,10 +69,9 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		// duplicated finality providers should not pass
 		for _, fp2 := range fps {
 			msg := &types.MsgCreateFinalityProvider{
-				Signer:      datagen.GenRandomAccount().Address,
+				Addr:        fp2.Addr,
 				Description: fp2.Description,
 				Commission:  fp2.Commission,
-				BabylonPk:   fp2.BabylonPk,
 				BtcPk:       fp2.BtcPk,
 				Pop:         fp2.Pop,
 			}
@@ -94,7 +92,6 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 
 		// generate new finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
-		fpAddr := sdk.AccAddress(fp.BabylonPk.Address())
 		require.NoError(t, err)
 		// insert the finality provider
 		h.AddFinalityProvider(fp)
@@ -107,7 +104,7 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 
 		// scenario 1: editing finality provider should succeed
 		msg := &types.MsgEditFinalityProvider{
-			Signer:      fpAddr.String(),
+			Addr:        fp.Addr,
 			BtcPk:       *fp.BtcPk,
 			Description: newDescription,
 			Commission:  &newCommission,
@@ -122,14 +119,15 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 		// scenario 2: message from an unauthorised signer should fail
 		newCommission = datagen.GenRandomCommission(r)
 		newDescription = datagen.GenRandomDescription(r)
+		invalidAddr := datagen.GenRandomAccount().Address
 		msg = &types.MsgEditFinalityProvider{
-			Signer:      datagen.GenRandomAccount().Address,
+			Addr:        invalidAddr,
 			BtcPk:       *fp.BtcPk,
 			Description: newDescription,
 			Commission:  &newCommission,
 		}
 		_, err = msgSrvr.EditFinalityProvider(h.Ctx, msg)
-		h.Error(err)
+		h.EqualError(err, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address"))
 		errStatus := status.Convert(err)
 		require.Equal(t, codes.PermissionDenied, errStatus.Code())
 	})

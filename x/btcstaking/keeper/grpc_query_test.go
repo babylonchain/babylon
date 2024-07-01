@@ -147,7 +147,7 @@ func FuzzFinalityProvider(f *testing.F) {
 
 			// check keys from map matches those in returned response
 			require.Equal(t, v.BtcPk.MarshalHex(), resp.FinalityProvider.BtcPk.MarshalHex())
-			require.Equal(t, v.BabylonPk, resp.FinalityProvider.BabylonPk)
+			require.Equal(t, v.Addr, resp.FinalityProvider.Addr)
 		}
 
 		// check some random non-existing guy
