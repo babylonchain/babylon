@@ -1,7 +1,6 @@
 package datagen
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
@@ -48,11 +45,7 @@ func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.Fina
 }
 
 func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.FinalityProvider, error) {
-	bbnSK, _, err := GenRandomSecp256k1KeyPair(r)
-	if err != nil {
-		return nil, err
-	}
-	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, bbnSK)
+	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, GenRandomAccount().GetAddress())
 }
 
 func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {
@@ -63,7 +56,7 @@ func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
 	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 }
 
-func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey) (*bstypes.FinalityProvider, error) {
+func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
 	// description
@@ -71,21 +64,16 @@ func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.Priva
 	// key pairs
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-	bbnPK := bbnSK.PubKey()
-	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
-	if !ok {
-		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")
-	}
 	// pop
-	pop, err := bstypes.NewPoP(bbnSK, btcSK)
+	pop, err := bstypes.NewPoPBTC(fpAddr, btcSK)
 	if err != nil {
 		return nil, err
 	}
 	return &bstypes.FinalityProvider{
 		Description: description,
 		Commission:  &commission,
-		BabylonPk:   secp256k1PK,
 		BtcPk:       bip340PK,
+		Addr:        fpAddr.String(),
 		Pop:         pop,
 	}, nil
 }

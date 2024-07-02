@@ -36,10 +36,9 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		fp, err := datagen.GenRandomFinalityProvider(r)
 		h.NoError(err)
 		msg := &types.MsgCreateFinalityProvider{
-			Signer:      datagen.GenRandomAccount().Address,
+			Addr:        fp.Addr,
 			Description: fp.Description,
 			Commission:  fp.Commission,
-			BabylonPk:   fp.BabylonPk,
 			BtcPk:       fp.BtcPk,
 			Pop:         fp.Pop,
 		}

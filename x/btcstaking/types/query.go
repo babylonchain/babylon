@@ -61,7 +61,7 @@ func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight, votingPowe
 	return &FinalityProviderResponse{
 		Description:          f.Description,
 		Commission:           f.Commission,
-		BabylonPk:            f.BabylonPk,
+		Addr:                 f.Addr,
 		BtcPk:                f.BtcPk,
 		Pop:                  f.Pop,
 		SlashedBabylonHeight: f.SlashedBabylonHeight,

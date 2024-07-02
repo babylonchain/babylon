@@ -14,19 +14,6 @@ enum BTCSigType {
     ECDSA = 2;
 }
 
-// ProofOfPossession is the proof of possession that a Babylon secp256k1
-// secret key and a Bitcoin secp256k1 secret key are held by the same
-// person
-message ProofOfPossession {
-    // btc_sig_type indicates the type of btc_sig in the pop
-    BTCSigType btc_sig_type = 1;
-    // babylon_sig is the signature generated via sign(sk_babylon, pk_btc)
-    bytes babylon_sig = 2;
-    // btc_sig is the signature generated via sign(sk_btc, babylon_sig)
-    // the signature follows encoding in either BIP-340 spec or BIP-322 spec
-    bytes btc_sig = 3;
-}
-
 // ProofOfPossessionBTC is the proof of possession that a Babylon
 // address and a Bitcoin secp256k1 secret key are held by the same
 // person

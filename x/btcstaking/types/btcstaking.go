@@ -9,6 +9,7 @@ import (
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {
@@ -21,8 +22,8 @@ func (fp *FinalityProvider) IsInactive() bool {
 
 func (fp *FinalityProvider) ValidateBasic() error {
 	// ensure fields are non-empty and well-formatted
-	if fp.BabylonPk == nil {
-		return fmt.Errorf("empty Babylon public key")
+	if _, err := sdk.AccAddressFromBech32(fp.Addr); err != nil {
+		return fmt.Errorf("invalid finality provider address: %s - %w", fp.Addr, err)
 	}
 	if fp.BtcPk == nil {
 		return fmt.Errorf("empty BTC public key")
@@ -34,7 +35,7 @@ func (fp *FinalityProvider) ValidateBasic() error {
 		return fmt.Errorf("empty proof of possession")
 	}
 	if err := fp.Pop.ValidateBasic(); err != nil {
-		return err
+		return fmt.Errorf("PoP is not valid: %w", err)
 	}
 
 	return nil

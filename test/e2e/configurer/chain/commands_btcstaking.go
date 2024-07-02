@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -13,8 +15,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/stretchr/testify/require"
 
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonchain/babylon/test/e2e/containers"
@@ -23,13 +23,9 @@ import (
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
-func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
+func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
 	n.LogActionF("creating finality provider")
 
-	// get babylon PK hex
-	babylonPKBytes, err := babylonPK.Marshal()
-	require.NoError(n.t, err)
-	babylonPKHex := hex.EncodeToString(babylonPKBytes)
 	// get BTC PK hex
 	btcPKHex := btcPK.MarshalHex()
 	// get pop hex
@@ -37,7 +33,9 @@ func (n *NodeConfig) CreateFinalityProvider(babylonPK *secp256k1.PubKey, btcPK *
 	require.NoError(n.t, err)
 
 	cmd := []string{
-		"babylond", "tx", "btcstaking", "create-finality-provider", babylonPKHex, btcPKHex, popHex, "--from=val", "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
+		"babylond", "tx", "btcstaking", "create-finality-provider", btcPKHex, popHex,
+		fmt.Sprintf("--from=%s", walletAddrOrName), "--moniker", moniker, "--identity", identity, "--website", website,
+		"--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
 	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)

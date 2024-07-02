@@ -309,7 +309,7 @@ func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
 		&chaincfg.MainNetParams,
 	)
 	require.Error(t, err)
-	require.EqualError(t, err, "slashing transaction does not obey BTC rules: transaction output value of 1152921504606846975 is higher than max allowed value of 2.1e+15")
+	require.EqualError(t, err, "slashing transaction does not obey BTC rules: transaction output value is higher than max allowed value: 1152921504606846975 > 2.1e+15 ")
 }
 
 func TestNotAllowStakerKeyToBeFinalityProviderKey(t *testing.T) {
