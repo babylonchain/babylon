@@ -41,6 +41,7 @@ require (
 	cosmossdk.io/x/upgrade v0.1.1
 	github.com/CosmWasm/wasmvm/v2 v2.0.0
 	github.com/avast/retry-go/v4 v4.5.1
+	github.com/bits-and-blooms/bitset v1.10.0
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil v1.1.5
@@ -150,7 +151,6 @@ require (
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/aws/aws-sdk-go v1.44.312 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
-	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect

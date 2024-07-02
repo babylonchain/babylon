@@ -2,14 +2,16 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"sort"
 
 	"cosmossdk.io/store/prefix"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 /* power distribution update */
@@ -53,6 +55,14 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
 	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
+
+	// find newly bonded finality providers and execute the hooks
+	newBondedFinalityProviders := newDc.FindNewActiveFinalityProviders(dc, maxActiveFps)
+	for _, fp := range newBondedFinalityProviders {
+		if err := k.hooks.AfterFinalityProviderActivated(ctx, fp.BtcPk); err != nil {
+			panic(fmt.Errorf("failed to execute after finality provider %s bonded", fp.BtcPk.MarshalHex()))
+		}
+	}
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)

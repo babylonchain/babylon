@@ -698,6 +698,8 @@ func NewBabylonApp(
 		app.IncentiveKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.BTCStakingKeeper = *app.BTCStakingKeeper.SetHooks(btcstakingtypes.NewMultiBtcStakingHooks(app.FinalityKeeper.Hooks()))
+	app.FinalityKeeper = *app.FinalityKeeper.SetHooks(finalitytypes.NewMultiFinalityHooks(app.BTCStakingKeeper.Hooks()))
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

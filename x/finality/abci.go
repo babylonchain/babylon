@@ -6,6 +6,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/x/finality/keeper"
 	"github.com/babylonchain/babylon/x/finality/types"
@@ -27,7 +28,9 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		// tally all non-finalised blocks
 		k.TallyBlocks(ctx)
 		// jail inactive finality providers if there are any
-		k.HandleLiveness(ctx)
+		// TODO: decide which height to use the handle liveness
+		height := sdk.UnwrapSDKContext(ctx).HeaderInfo().Height
+		k.HandleLiveness(ctx, height)
 	}
 
 	return []abci.ValidatorUpdate{}, nil

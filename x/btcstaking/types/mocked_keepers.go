@@ -182,3 +182,40 @@ func (mr *MockCheckpointingKeeperMockRecorder) GetLastFinalizedEpoch(ctx interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastFinalizedEpoch", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetLastFinalizedEpoch), ctx)
 }
+
+// MockBtcStakingHooks is a mock of BtcStakingHooks interface.
+type MockBtcStakingHooks struct {
+	ctrl     *gomock.Controller
+	recorder *MockBtcStakingHooksMockRecorder
+}
+
+// MockBtcStakingHooksMockRecorder is the mock recorder for MockBtcStakingHooks.
+type MockBtcStakingHooksMockRecorder struct {
+	mock *MockBtcStakingHooks
+}
+
+// NewMockBtcStakingHooks creates a new mock instance.
+func NewMockBtcStakingHooks(ctrl *gomock.Controller) *MockBtcStakingHooks {
+	mock := &MockBtcStakingHooks{ctrl: ctrl}
+	mock.recorder = &MockBtcStakingHooksMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockBtcStakingHooks) EXPECT() *MockBtcStakingHooksMockRecorder {
+	return m.recorder
+}
+
+// AfterFinalityProviderActivated mocks base method.
+func (m *MockBtcStakingHooks) AfterFinalityProviderActivated(ctx context.Context, fpPk *types.BIP340PubKey) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterFinalityProviderActivated", ctx, fpPk)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterFinalityProviderActivated indicates an expected call of AfterFinalityProviderActivated.
+func (mr *MockBtcStakingHooksMockRecorder) AfterFinalityProviderActivated(ctx, fpPk interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFinalityProviderActivated", reflect.TypeOf((*MockBtcStakingHooks)(nil).AfterFinalityProviderActivated), ctx, fpPk)
+}

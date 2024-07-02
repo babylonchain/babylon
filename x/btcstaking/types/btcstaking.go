@@ -16,8 +16,8 @@ func (fp *FinalityProvider) IsSlashed() bool {
 	return fp.SlashedBabylonHeight > 0
 }
 
-func (fp *FinalityProvider) IsJailed() bool {
-	return fp.Jailed
+func (fp *FinalityProvider) IsInactive() bool {
+	return fp.Inactive
 }
 
 func (fp *FinalityProvider) ValidateBasic() error {

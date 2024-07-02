@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 
+	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
@@ -22,4 +23,12 @@ type BTCStakingKeeper interface {
 // IncentiveKeeper defines the expected interface needed to distribute rewards.
 type IncentiveKeeper interface {
 	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *bstypes.VotingPowerDistCache)
+}
+
+type BtcStakingHooks interface {
+	AfterFinalityProviderActivated(ctx context.Context, btcPk *bbn.BIP340PubKey) error
+}
+
+type FinalityHooks interface {
+	AfterInactiveFinalityProviderDetected(ctx context.Context, btcPk *bbn.BIP340PubKey) error
 }

@@ -349,6 +349,6 @@ message FinalityProviderResponse {
   uint64 height = 8;
   // voting_power is the voting power of this finality provider at the given height
   uint64 voting_power = 9;
-  // jailed defines whether the finality provider has been jailed
-  bool jailed = 10;
+  // inactive defines whether the finality provider is detected inactive
+  bool inactive = 10;
 }
