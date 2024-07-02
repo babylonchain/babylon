@@ -18,7 +18,6 @@ type BTCStakingKeeper interface {
 	GetVotingPowerDistCache(ctx context.Context, height uint64) (*bstypes.VotingPowerDistCache, error)
 	RemoveVotingPowerDistCache(ctx context.Context, height uint64)
 	GetLastFinalizedEpoch(ctx context.Context) uint64
-	JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 }
 
 // IncentiveKeeper defines the expected interface needed to distribute rewards.

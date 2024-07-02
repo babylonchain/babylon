@@ -3,9 +3,7 @@ package keeper_test
 import (
 	"math/rand"
 	"testing"
-	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -35,11 +33,10 @@ func FuzzHandleLiveness(f *testing.F) {
 		params := fKeeper.GetParams(ctx)
 		fpPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
-		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(&bstypes.FinalityProvider{Jailed: false}, nil).AnyTimes()
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(&bstypes.FinalityProvider{Inactive: false}, nil).AnyTimes()
 		signingInfo := types.NewFinalityProviderSigningInfo(
 			fpPk,
 			1,
-			time.Unix(0, 0),
 			0,
 		)
 		err = fKeeper.FinalityProviderSigningTracker.Set(ctx, fpPk.MustMarshal(), signingInfo)
@@ -72,7 +69,6 @@ func FuzzHandleLiveness(f *testing.F) {
 				require.Equal(t, int64(missingCount), signingInfo.MissedBlocksCounter)
 			} else {
 				// the fp is jailed, so the signingInfo is reset
-				require.Equal(t, sdk.UnwrapSDKContext(ctx).HeaderInfo().Time.Add(params.JailDuration), signingInfo.JailedUntil)
 				require.Equal(t, int64(0), signingInfo.MissedBlocksCounter)
 			}
 		}

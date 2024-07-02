@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"errors"
-	"time"
 
 	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,7 +33,6 @@ func (h Hooks) AfterFinalityProviderActivated(ctx context.Context, fpPk *bbntype
 		signingInfo = types.NewFinalityProviderSigningInfo(
 			fpPk,
 			sdkCtx.BlockHeight(),
-			time.Unix(0, 0),
 			0,
 		)
 	}

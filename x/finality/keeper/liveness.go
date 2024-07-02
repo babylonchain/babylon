@@ -38,17 +38,17 @@ func (k Keeper) HandleLiveness(ctx context.Context, height int64) {
 }
 
 // HandleFinalityProviderLiveness updates the voting history of the given finality provider and
-// jails the finality provider if the number of missed block is reached to the threshold in a
+// detect inactive the finality provider if the number of missed block is reached to the threshold in a
 // sliding window
 func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.BIP340PubKey, missed bool, height int64) error {
 	params := k.GetParams(ctx)
-	// don't update missed blocks when finality provider is already jailed
 	fp, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fpPk.MustMarshal())
 	if err != nil {
 		return err
 	}
 
-	if fp.IsJailed() || fp.IsSlashed() {
+	// don't update missed blocks when finality provider is already detected as inactive or slashed
+	if fp.IsInactive() || fp.IsSlashed() {
 		return nil
 	}
 
@@ -87,10 +87,8 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 			return err
 		}
 
-		signInfo.JailedUntil = sdkCtx.HeaderInfo().Time.Add(params.JailDuration)
-
 		// We need to reset the counter & bitmap so that the finality provider won't be
-		// immediately jailed upon re-bonding.
+		// immediately detected as inactive upon re-bonding.
 		// We don't set the start height as this will get correctly set
 		// once they bond again in the AfterFinalityProviderActivated hook
 		signInfo.MissedBlocksCounter = 0
@@ -105,7 +103,6 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 			"public_key", fpPk.MarshalHex(),
 			"min_height", minHeight,
 			"threshold", minSignedPerWindow,
-			"jailed_until", signInfo.JailedUntil,
 		)
 	}
 

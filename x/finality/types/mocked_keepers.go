@@ -151,20 +151,6 @@ func (mr *MockBTCStakingKeeperMockRecorder) HasFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasFinalityProvider), ctx, fpBTCPK)
 }
 
-// JailFinalityProvider mocks base method.
-func (m *MockBTCStakingKeeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "JailFinalityProvider", ctx, fpBTCPK)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// JailFinalityProvider indicates an expected call of JailFinalityProvider.
-func (mr *MockBTCStakingKeeperMockRecorder) JailFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JailFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).JailFinalityProvider), ctx, fpBTCPK)
-}
-
 // RemoveVotingPowerDistCache mocks base method.
 func (m *MockBTCStakingKeeper) RemoveVotingPowerDistCache(ctx context.Context, height uint64) {
 	m.ctrl.T.Helper()

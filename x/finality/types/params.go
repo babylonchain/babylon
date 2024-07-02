@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"time"
 
 	"cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -12,7 +11,6 @@ import (
 // Default parameter namespace
 const (
 	DefaultSignedBlocksWindow = int64(100)
-	DefaultJailDuration       = 60 * 10 * time.Second
 	DefaultMinPubRand         = 100
 )
 
@@ -27,7 +25,6 @@ func DefaultParams() Params {
 	return Params{
 		SignedBlocksWindow: DefaultSignedBlocksWindow,
 		MinSignedPerWindow: DefaultMinSignedPerWindow,
-		JailDuration:       DefaultJailDuration,
 		MinPubRand:         DefaultMinPubRand,
 	}
 }
@@ -56,9 +53,6 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateMinSignedPerWindow(p.MinSignedPerWindow); err != nil {
-		return err
-	}
-	if err := validateJailDuration(p.JailDuration); err != nil {
 		return err
 	}
 	if err := validateMinPubRand(p.MinPubRand); err != nil {
@@ -95,19 +89,6 @@ func validateMinSignedPerWindow(i interface{}) error {
 	}
 	if v.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("min signed per window too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateJailDuration(i interface{}) error {
-	v, ok := i.(time.Duration)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v <= 0 {
-		return fmt.Errorf("downtime jail duration must be positive: %s", v)
 	}
 
 	return nil

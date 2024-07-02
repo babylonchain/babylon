@@ -67,28 +67,6 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	return nil
 }
 
-// JailFinalityProvider jails a finality provider with the given PK
-func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
-	// ensure finality provider exists
-	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
-	if err != nil {
-		return err
-	}
-
-	// ensure finality provider is not slashed yet
-	if fp.IsJailed() || fp.IsSlashed() {
-		return fmt.Errorf("the finality provider is already jailed or slashed")
-	}
-
-	// set finality provider to be slashed
-	fp.Jailed = true
-	k.SetFinalityProvider(ctx, fp)
-
-	// TODO record jailed event
-
-	return nil
-}
-
 // finalityProviderStore returns the KVStore of the finality provider set
 // prefix: FinalityProviderKey
 // key: Bitcoin secp256k1 PK

@@ -27,11 +27,11 @@ func (h Hooks) AfterInactiveFinalityProviderDetected(ctx context.Context, fpPk *
 		return err
 	}
 
-	if fp.Jailed {
-		return fmt.Errorf("the finality provider %s is already jailed", fpPk.MarshalHex())
+	if fp.IsInactive() {
+		return fmt.Errorf("the finality provider %s is already detected as inactive", fpPk.MarshalHex())
 	}
 
-	fp.Jailed = true
+	fp.Inactive = true
 
 	h.k.SetFinalityProvider(ctx, fp)
 
