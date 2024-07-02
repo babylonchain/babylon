@@ -6,12 +6,12 @@ import (
 	"github.com/babylonchain/babylon/types"
 )
 
-// combine multiple staking hooks, all hook functions are run in array sequence
+// combine multiple BTC staking hooks, all hook functions are run in array sequence
 var _ BtcStakingHooks = &MultiBtcStakingHooks{}
 
 type MultiBtcStakingHooks []BtcStakingHooks
 
-func NewMultiStakingHooks(hooks ...BtcStakingHooks) MultiBtcStakingHooks {
+func NewMultiBtcStakingHooks(hooks ...BtcStakingHooks) MultiBtcStakingHooks {
 	return hooks
 }
 

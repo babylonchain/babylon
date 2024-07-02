@@ -29,3 +29,7 @@ type IncentiveKeeper interface {
 type BtcStakingHooks interface {
 	AfterFinalityProviderActivated(ctx context.Context, btcPk *bbn.BIP340PubKey) error
 }
+
+type FinalityHooks interface {
+	AfterInactiveFinalityProviderDetected(ctx context.Context, btcPk *bbn.BIP340PubKey) error
+}

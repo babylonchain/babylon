@@ -262,3 +262,40 @@ func (mr *MockBtcStakingHooksMockRecorder) AfterFinalityProviderActivated(ctx, b
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFinalityProviderActivated", reflect.TypeOf((*MockBtcStakingHooks)(nil).AfterFinalityProviderActivated), ctx, btcPk)
 }
+
+// MockFinalityHooks is a mock of FinalityHooks interface.
+type MockFinalityHooks struct {
+	ctrl     *gomock.Controller
+	recorder *MockFinalityHooksMockRecorder
+}
+
+// MockFinalityHooksMockRecorder is the mock recorder for MockFinalityHooks.
+type MockFinalityHooksMockRecorder struct {
+	mock *MockFinalityHooks
+}
+
+// NewMockFinalityHooks creates a new mock instance.
+func NewMockFinalityHooks(ctrl *gomock.Controller) *MockFinalityHooks {
+	mock := &MockFinalityHooks{ctrl: ctrl}
+	mock.recorder = &MockFinalityHooksMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFinalityHooks) EXPECT() *MockFinalityHooksMockRecorder {
+	return m.recorder
+}
+
+// AfterInactiveFinalityProviderDetected mocks base method.
+func (m *MockFinalityHooks) AfterInactiveFinalityProviderDetected(ctx context.Context, btcPk *types.BIP340PubKey) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterInactiveFinalityProviderDetected", ctx, btcPk)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterInactiveFinalityProviderDetected indicates an expected call of AfterInactiveFinalityProviderDetected.
+func (mr *MockFinalityHooksMockRecorder) AfterInactiveFinalityProviderDetected(ctx, btcPk interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterInactiveFinalityProviderDetected", reflect.TypeOf((*MockFinalityHooks)(nil).AfterInactiveFinalityProviderDetected), ctx, btcPk)
+}

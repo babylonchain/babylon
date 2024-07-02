@@ -79,13 +79,10 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 	// if we are past the minimum height and the finality provider has missed too many blocks, punish them
 	if height > minHeight && signInfo.MissedBlocksCounter > maxMissed {
 		updated = true
-		// Inactivity identified: jail the finality provider
-		// TODO currently we only tag the finality provider as jailed
-		//  we need to implement actual punishment
-
 		// TODO emit event
 
-		err = k.BTCStakingKeeper.JailFinalityProvider(ctx, fpPk.MustMarshal())
+		// Inactivity detected
+		err = k.hooks.AfterInactiveFinalityProviderDetected(ctx, fpPk)
 		if err != nil {
 			return err
 		}

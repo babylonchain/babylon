@@ -27,11 +27,15 @@ func FuzzHandleLiveness(f *testing.F) {
 		bsKeeper.EXPECT().GetParams(gomock.Any()).Return(bstypes.Params{MaxActiveFinalityProviders: 100}).AnyTimes()
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
+
+		mockedHooks := types.NewMockFinalityHooks(ctrl)
+		mockedHooks.EXPECT().AfterInactiveFinalityProviderDetected(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		fKeeper.SetHooks(mockedHooks)
+
 		params := fKeeper.GetParams(ctx)
 		fpPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(&bstypes.FinalityProvider{Jailed: false}, nil).AnyTimes()
-		bsKeeper.EXPECT().JailFinalityProvider(gomock.Any(), fpPk.MustMarshal()).Return(nil).AnyTimes()
 		signingInfo := types.NewFinalityProviderSigningInfo(
 			fpPk,
 			1,

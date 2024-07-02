@@ -14,12 +14,12 @@ import (
 
 var _ types.BtcStakingHooks = Hooks{}
 
-// Hooks wrapper struct for slashing keeper
+// Hooks wrapper struct for finality keeper
 type Hooks struct {
 	k Keeper
 }
 
-// Return the finality hooks
+// Return the BTC staking hooks
 func (k Keeper) Hooks() Hooks {
 	return Hooks{k}
 }
