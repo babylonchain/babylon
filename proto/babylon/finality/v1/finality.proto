@@ -3,8 +3,6 @@ package babylon.finality.v1;
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
-import "google/protobuf/timestamp.proto";
-import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
 // IndexedBlock is the necessary metadata and finalization status of a block
