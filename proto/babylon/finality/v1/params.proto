@@ -2,14 +2,29 @@ syntax = "proto3";
 package babylon.finality.v1;
 
 import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+import "google/protobuf/duration.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
-
-  // min_pub_rand is the minimum number of public randomness each 
+  // signed_blocks_window defines the size of the sliding window for tracking finality provider liveness
+  int64 signed_blocks_window  = 1;
+  // min_signed_per_window defines the minimum number of blocks that a finality provider is required to sign
+  // within the sliding window to avoid being jailed
+  bytes min_signed_per_window = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // jail_duration defines the duration after which the finality provider can unjail
+  google.protobuf.Duration jail_duration = 3
+  [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+  // min_pub_rand is the minimum number of public randomness each
   // message should commit
-  uint64 min_pub_rand = 1;
+  uint64 min_pub_rand = 4;
 }

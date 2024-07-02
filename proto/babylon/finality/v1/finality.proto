@@ -3,6 +3,8 @@ package babylon.finality.v1;
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
+import "google/protobuf/timestamp.proto";
+import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
 // IndexedBlock is the necessary metadata and finalization status of a block
@@ -50,4 +52,19 @@ message Evidence {
     // fork_finality_sig is the finality signature to the fork block
     // where finality signature is an EOTS signature
     bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+}
+
+// FinalityProviderSigningInfo defines a finality provider's signing info for monitoring their
+// liveness activity.
+message FinalityProviderSigningInfo {
+    // fp_btc_pk is the BTC PK of the finality provider that casts this vote
+    bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // start_height is the block height at which finality provider become active OR was unjailed
+    int64 start_height = 2;
+    // jailed_until defines the timestamp until which the finality provider is jailed due to liveness downtime.
+    google.protobuf.Timestamp jailed_until = 3
+    [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+    // missed_blocks_counter defines a counter to avoid unnecessary array reads.
+    // Note that `Sum(MissedBlocksBitArray)` always equals `MissedBlocksCounter`.
+    int64 missed_blocks_counter = 4;
 }

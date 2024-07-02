@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"cosmossdk.io/math"
+
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -13,6 +14,10 @@ import (
 
 func (fp *FinalityProvider) IsSlashed() bool {
 	return fp.SlashedBabylonHeight > 0
+}
+
+func (fp *FinalityProvider) IsJailed() bool {
+	return fp.Jailed
 }
 
 func (fp *FinalityProvider) ValidateBasic() error {

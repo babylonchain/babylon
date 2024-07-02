@@ -65,21 +65,6 @@ func (mr *MockEpochingKeeperMockRecorder) EnqueueMsg(ctx, msg interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueMsg", reflect.TypeOf((*MockEpochingKeeper)(nil).EnqueueMsg), ctx, msg)
 }
 
-// GetAppHash mocks base method.
-func (m *MockEpochingKeeper) GetAppHash(ctx context.Context, height uint64) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAppHash", ctx, height)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAppHash indicates an expected call of GetAppHash.
-func (mr *MockEpochingKeeperMockRecorder) GetAppHash(ctx, height interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAppHash", reflect.TypeOf((*MockEpochingKeeper)(nil).GetAppHash), ctx, height)
-}
-
 // GetEpoch mocks base method.
 func (m *MockEpochingKeeper) GetEpoch(ctx context.Context) *types0.Epoch {
 	m.ctrl.T.Helper()
@@ -228,4 +213,18 @@ func (m *MockCheckpointingHooks) AfterRawCheckpointForgotten(ctx context.Context
 func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointForgotten(ctx, ckpt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointForgotten", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointForgotten), ctx, ckpt)
+}
+
+// AfterRawCheckpointSealed mocks base method.
+func (m *MockCheckpointingHooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterRawCheckpointSealed", ctx, epoch)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterRawCheckpointSealed indicates an expected call of AfterRawCheckpointSealed.
+func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointSealed(ctx, epoch interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointSealed", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointSealed), ctx, epoch)
 }

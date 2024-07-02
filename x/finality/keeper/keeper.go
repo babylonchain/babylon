@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
-
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,6 +23,11 @@ type (
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string
+
+		// FinalityProviderSigningTracker key: BIP340PubKey bytes | value: FinalityProviderSigningInfo
+		FinalityProviderSigningTracker collections.Map[[]byte, types.FinalityProviderSigningInfo]
+		// FinalityProviderMissedBlockBitmap key: BIP340PubKey bytes | value: byte key for a finality provider's missed block bitmap chunk
+		FinalityProviderMissedBlockBitmap collections.Map[collections.Pair[[]byte, uint64], []byte]
 	}
 )
 
@@ -33,6 +38,7 @@ func NewKeeper(
 	incentiveKeeper types.IncentiveKeeper,
 	authority string,
 ) Keeper {
+	sb := collections.NewSchemaBuilder(storeService)
 	return Keeper{
 		cdc:          cdc,
 		storeService: storeService,
@@ -40,6 +46,20 @@ func NewKeeper(
 		BTCStakingKeeper: btctakingKeeper,
 		IncentiveKeeper:  incentiveKeeper,
 		authority:        authority,
+		FinalityProviderSigningTracker: collections.NewMap(
+			sb,
+			types.FinalityProviderSigningInfoKeyPrefix,
+			"finality_provider_signing_info",
+			collections.BytesKey,
+			codec.CollValue[types.FinalityProviderSigningInfo](cdc),
+		),
+		FinalityProviderMissedBlockBitmap: collections.NewMap(
+			sb,
+			types.FinalityProviderMissedBlockBitmapKeyPrefix,
+			"finality_provider_missed_block_bitmap",
+			collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key),
+			collections.BytesValue,
+		),
 	}
 }
 
