@@ -7,12 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg"
 
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -24,35 +20,11 @@ var (
 	net = &chaincfg.TestNet3Params
 )
 
-func newInvalidBIP340PoP(r *rand.Rand, babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKey) *types.ProofOfPossession {
-	pop := types.ProofOfPossession{}
-
-	randomNum := datagen.RandomInt(r, 2) // 0 or 1
-
-	btcPK := btcSK.PubKey()
-	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-	babylonSig, err := babylonSK.Sign(*bip340PK)
-	if err != nil {
-		panic(err)
+func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
+	return &types.ProofOfPossessionBTC{
+		BtcSigType: types.BTCSigType_BIP340,
+		BtcSig:     datagen.GenRandomByteArray(r, 32), // fake sig hash
 	}
-
-	var babylonSigHash []byte
-	if randomNum == 0 {
-		pop.BabylonSig = babylonSig                        // correct sig
-		babylonSigHash = datagen.GenRandomByteArray(r, 32) // fake sig hash
-	} else {
-		pop.BabylonSig = datagen.GenRandomByteArray(r, uint64(len(babylonSig))) // fake sig
-		babylonSigHash = tmhash.Sum(pop.BabylonSig)                             // correct sig hash
-	}
-
-	btcSig, err := schnorr.Sign(btcSK, babylonSigHash)
-	if err != nil {
-		panic(err)
-	}
-	bip340Sig := bbn.NewBIP340SignatureFromBTCSig(btcSig)
-	pop.BtcSig = bip340Sig.MustMarshal()
-
-	return &pop
 }
 
 func FuzzPoP_BIP340(f *testing.F) {
@@ -66,19 +38,17 @@ func FuzzPoP_BIP340(f *testing.F) {
 		require.NoError(t, err)
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 
-		// generate Babylon key pair
-		babylonSK, babylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-		require.NoError(t, err)
+		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate and verify PoP, correct case
-		pop, err := types.NewPoP(babylonSK, btcSK)
+		pop, err := types.NewPoPBTC(accAddr, btcSK)
 		require.NoError(t, err)
-		err = pop.VerifyBIP340(babylonPK, bip340PK)
+		err = pop.VerifyBIP340(accAddr, bip340PK)
 		require.NoError(t, err)
 
 		// generate and verify PoP, invalid case
-		invalidPoP := newInvalidBIP340PoP(r, babylonSK, btcSK)
-		err = invalidPoP.VerifyBIP340(babylonPK, bip340PK)
+		invalidPoP := newInvalidBIP340PoP(r)
+		err = invalidPoP.VerifyBIP340(accAddr, bip340PK)
 		require.Error(t, err)
 	})
 }
@@ -94,14 +64,12 @@ func FuzzPoP_ECDSA(f *testing.F) {
 		require.NoError(t, err)
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 
-		// generate Babylon key pair
-		babylonSK, babylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-		require.NoError(t, err)
+		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate and verify PoP, correct case
-		pop, err := types.NewPoPWithECDSABTCSig(babylonSK, btcSK)
+		pop, err := types.NewPoPBTCWithECDSABTCSig(accAddr, btcSK)
 		require.NoError(t, err)
-		err = pop.VerifyECDSA(babylonPK, bip340PK)
+		err = pop.VerifyECDSA(accAddr, bip340PK)
 		require.NoError(t, err)
 	})
 }
@@ -117,14 +85,12 @@ func FuzzPoP_BIP322_P2WPKH(f *testing.F) {
 		require.NoError(t, err)
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 
-		// generate Babylon key pair
-		babylonSK, babylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-		require.NoError(t, err)
+		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate and verify PoP, correct case
-		pop, err := types.NewPoPWithBIP322P2WPKHSig(babylonSK, btcSK, net)
+		pop, err := types.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
 		require.NoError(t, err)
-		err = pop.VerifyBIP322(babylonPK, bip340PK, net)
+		err = pop.VerifyBIP322(accAddr, bip340PK, net)
 		require.NoError(t, err)
 	})
 }
@@ -140,14 +106,12 @@ func FuzzPoP_BIP322_P2Tr_BIP86(f *testing.F) {
 		require.NoError(t, err)
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 
-		// generate Babylon key pair
-		babylonSK, babylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-		require.NoError(t, err)
+		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate and verify PoP, correct case
-		pop, err := types.NewPoPWithBIP322P2TRBIP86Sig(babylonSK, btcSK, net)
+		pop, err := types.NewPoPBTCWithBIP322P2TRBIP86Sig(accAddr, btcSK, net)
 		require.NoError(t, err)
-		err = pop.VerifyBIP322(babylonPK, bip340PK, net)
+		err = pop.VerifyBIP322(accAddr, bip340PK, net)
 		require.NoError(t, err)
 	})
 }
@@ -167,24 +131,22 @@ func FuzzPop_ValidBip322SigNotMatchingBip340PubKey(f *testing.F) {
 		require.NoError(t, err)
 		bip340PK1 := bbn.NewBIP340PubKeyFromBTCPK(btcPK1)
 
-		// generate Babylon key pair
-		babylonSK, babylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-		require.NoError(t, err)
+		accAddr := datagen.GenRandomAccount().GetAddress()
 
 		// generate valid bip322 P2WPKH pop
-		pop, err := types.NewPoPWithBIP322P2WPKHSig(babylonSK, btcSK, net)
+		pop, err := types.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
 		require.NoError(t, err)
 
 		// verify bip322 pop with incorrect staker key
-		err = pop.VerifyBIP322(babylonPK, bip340PK1, net)
+		err = pop.VerifyBIP322(accAddr, bip340PK1, net)
 		require.Error(t, err)
 
 		// generate valid bip322 P2Tr pop
-		pop, err = types.NewPoPWithBIP322P2TRBIP86Sig(babylonSK, btcSK, net)
+		pop, err = types.NewPoPBTCWithBIP322P2TRBIP86Sig(accAddr, btcSK, net)
 		require.NoError(t, err)
 
 		// verify bip322 pop with incorrect staker key
-		err = pop.VerifyBIP322(babylonPK, bip340PK1, net)
+		err = pop.VerifyBIP322(accAddr, bip340PK1, net)
 		require.Error(t, err)
 	})
 }

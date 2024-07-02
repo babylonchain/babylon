@@ -4,7 +4,7 @@ module github.com/babylonchain/babylon
 
 require (
 	github.com/CosmWasm/wasmd v0.51.0
-	github.com/btcsuite/btcd v0.24.0
+	github.com/btcsuite/btcd v0.24.2
 	github.com/cometbft/cometbft v0.38.6
 	github.com/cometbft/cometbft-db v0.9.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.50.6
@@ -227,6 +227,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/strangelove-ventures/cometbft-client v0.1.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect

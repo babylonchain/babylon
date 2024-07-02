@@ -3,7 +3,6 @@ package babylon.btcstaking.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
-import "cosmos/crypto/secp256k1/keys.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
@@ -20,8 +19,8 @@ message FinalityProviderDistInfo {
     // btc_pk is the Bitcoin secp256k1 PK of this finality provider
     // the PK follows encoding in BIP-340 spec
     bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // babylon_pk is the Babylon public key of the finality provider
-    cosmos.crypto.secp256k1.PubKey babylon_pk = 2;
+    // addr is the address to receive commission from delegations.
+    string addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
     // commission defines the commission rate of finality provider
     string commission = 3  [
         (cosmos_proto.scalar)  = "cosmos.Dec",

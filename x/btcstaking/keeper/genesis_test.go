@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"bytes"
 	"math"
 	"math/rand"
 	"strings"
@@ -128,7 +127,7 @@ func TestExportGenesis(t *testing.T) {
 	correctFps := 0
 	for _, fp := range fps {
 		for _, gsfp := range gs.FinalityProviders {
-			if !bytes.Equal(fp.BabylonPk.Address(), gsfp.BabylonPk.Address()) {
+			if !strings.EqualFold(fp.Addr, gsfp.Addr) {
 				continue
 			}
 			require.EqualValues(t, fp, gsfp)
